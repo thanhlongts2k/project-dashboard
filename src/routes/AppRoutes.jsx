@@ -12,6 +12,7 @@ import DashboardOverviewPage from "../pages/DashboardOverviewPage";
 import DashboardBuDetailPage from "../pages/DashboardBuDetailPage";
 import InventoryReportPage from "../pages/InventoryReportPage";
 import ReceivableReportPage from "../pages/ReceivableReportPage";
+import DebtAgingReportPage from "../pages/DebtAgingReportPage";
 
 function LoginPageWrapper() {
   const { login, isAuthenticated } = useAuth();
@@ -268,6 +269,7 @@ export default function AppRoutes() {
         />
         <Route path="inventory" element={<InventoryReportPageWrapper />} />
         <Route path="receivables" element={<ReceivableReportPageWrapper />} />
+        <Route path="aging" element={<DebtAgingReportPage />} />
       </Route>
 
       {/* Fallback wildcard */}

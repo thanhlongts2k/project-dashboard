@@ -115,6 +115,7 @@ export default function UnifiedSubHeader({
 
       {/* RIGHT: Compact Filter & Action Controls on the same row */}
       <div
+        className="unified-sub-header-actions"
         style={{
           display: "flex",
           alignItems: "center",

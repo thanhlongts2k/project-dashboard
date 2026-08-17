@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../context/DashboardContext";
@@ -6,6 +7,7 @@ import Can from "../components/auth/Can";
 import LoadingOverlay from "../components/LoadingOverlay";
 import EmailConfigModal from "../components/EmailConfigModal";
 import UserMenu from "../components/UserMenu";
+import MobileNavDrawer from "../components/navigation/MobileNavDrawer";
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -20,13 +22,23 @@ export default function DashboardLayout() {
     handleExportAllReports,
   } = useDashboard();
   const { preserveSearch } = useDashboardFilters();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const pathname = location.pathname;
-
   const isOverviewActive = pathname === "/dashboard" || pathname === "/";
   const isBuDetailActive = pathname.startsWith("/bu");
   const isInventoryActive = pathname === "/inventory";
   const isReceivablesActive = pathname === "/receivables";
+  const isAgingActive = pathname === "/aging";
+
+  const getActiveTabKey = () => {
+    if (isOverviewActive) return "dashboard";
+    if (isBuDetailActive) return "bu";
+    if (isInventoryActive) return "inventory";
+    if (isReceivablesActive) return "receivables";
+    if (isAgingActive) return "aging";
+    return "dashboard";
+  };
 
   const handleTabClick = (targetPath) => {
     navigate(preserveSearch(targetPath));
@@ -37,214 +49,71 @@ export default function DashboardLayout() {
 
   return (
     <div className="page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f4f3ef" }}>
-      {/* TẦNG 1: Global TopBar Header */}
-      <header
-        style={{
-          background: "#fff",
-          borderBottom: "1px solid #d7d3c8",
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1400px",
-            margin: "0 auto",
-            padding: "8px 16px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
+      {/* TẦNG 1: Global TopBar Header (56px fixed on Mobile) */}
+      <header className="topbar-header">
+        <div className="topbar-container">
           {/* Brand Logo & Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div className="topbar-left">
             <div
               style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
               onClick={() => handleTabClick("/dashboard")}
             >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  background: "linear-gradient(135deg, #185FA5 0%, #3B82F6 100%)",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 16,
-                  fontWeight: 700,
-                  boxShadow: "0 2px 4px rgba(24,95,165,0.25)",
-                }}
-              >
-                📊
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", lineHeight: 1.1 }}>
+              <div className="topbar-logo">📊</div>
+              <div className="brand-title">
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", lineHeight: 1.1, whiteSpace: "nowrap" }}>
                   Executive BI
                 </div>
               </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <nav style={{ display: "flex", gap: 4, marginLeft: 8 }}>
-              <button
-                type="button"
-                className={`link-btn ${isOverviewActive ? "active" : ""}`}
-                onClick={() => handleTabClick("/dashboard")}
-                style={{
-                  height: 32,
-                  padding: "0 12px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: isOverviewActive ? 600 : 500,
-                  background: isOverviewActive ? "#185FA5" : "transparent",
-                  color: isOverviewActive ? "#fff" : "#4b5563",
-                  border: isOverviewActive ? "1px solid #185FA5" : "1px solid transparent",
-                  transition: "all 0.15s ease",
-                }}
-              >
+            {/* Desktop Navigation Tabs */}
+            <nav className="desktop-nav-tabs">
+              <button type="button" className={`link-btn nav-tab-btn ${isOverviewActive ? "active" : ""}`} onClick={() => handleTabClick("/dashboard")}>
                 📊 Tổng quan
               </button>
-              <button
-                type="button"
-                className={`link-btn ${isBuDetailActive ? "active" : ""}`}
-                onClick={() => handleTabClick(buDetailPath)}
-                style={{
-                  height: 32,
-                  padding: "0 12px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: isBuDetailActive ? 600 : 500,
-                  background: isBuDetailActive ? "#185FA5" : "transparent",
-                  color: isBuDetailActive ? "#fff" : "#4b5563",
-                  border: isBuDetailActive ? "1px solid #185FA5" : "1px solid transparent",
-                  transition: "all 0.15s ease",
-                }}
-              >
+              <button type="button" className={`link-btn nav-tab-btn ${isBuDetailActive ? "active" : ""}`} onClick={() => handleTabClick(buDetailPath)}>
                 🏢 Chi tiết BU
               </button>
-              <button
-                type="button"
-                className={`link-btn ${isInventoryActive ? "active" : ""}`}
-                onClick={() => handleTabClick("/inventory")}
-                style={{
-                  height: 32,
-                  padding: "0 12px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: isInventoryActive ? 600 : 500,
-                  background: isInventoryActive ? "#185FA5" : "transparent",
-                  color: isInventoryActive ? "#fff" : "#4b5563",
-                  border: isInventoryActive ? "1px solid #185FA5" : "1px solid transparent",
-                  transition: "all 0.15s ease",
-                }}
-              >
+              <button type="button" className={`link-btn nav-tab-btn ${isInventoryActive ? "active" : ""}`} onClick={() => handleTabClick("/inventory")}>
                 📦 Tồn kho
               </button>
-              <button
-                type="button"
-                className={`link-btn ${isReceivablesActive ? "active" : ""}`}
-                onClick={() => handleTabClick("/receivables")}
-                style={{
-                  height: 32,
-                  padding: "0 12px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: isReceivablesActive ? 600 : 500,
-                  background: isReceivablesActive ? "#185FA5" : "transparent",
-                  color: isReceivablesActive ? "#fff" : "#4b5563",
-                  border: isReceivablesActive ? "1px solid #185FA5" : "1px solid transparent",
-                  transition: "all 0.15s ease",
-                }}
-              >
+              <button type="button" className={`link-btn nav-tab-btn ${isReceivablesActive ? "active" : ""}`} onClick={() => handleTabClick("/receivables")}>
                 💰 Công nợ & Thu tiền
+              </button>
+              <button type="button" className={`link-btn nav-tab-btn ${isAgingActive ? "active" : ""}`} onClick={() => handleTabClick("/aging")}>
+                📈 Tuổi nợ
               </button>
             </nav>
           </div>
 
-          {/* Right Compact Actions & UserMenu */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Desktop Right Actions */}
+          <div className="desktop-right-actions">
             <Can perform="CONFIGURE_EMAIL">
-              <button
-                type="button"
-                className="link-btn"
-                onClick={() => setShowEmailConfig(true)}
-                style={{
-                  height: 32,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  padding: "0 11px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  background: "#fff",
-                  color: "#334155",
-                  border: "1px solid #d7d3c8",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f1f5f9";
-                  e.currentTarget.style.borderColor = "#cbd5e1";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fff";
-                  e.currentTarget.style.borderColor = "#d7d3c8";
-                }}
-                title="Cấu hình lịch tự động gửi email báo cáo (Dành riêng cho BOD)"
-              >
+              <button type="button" className="link-btn topbar-action-btn" onClick={() => setShowEmailConfig(true)} title="Cấu hình lịch gửi email tự động (BOD)">
                 <span>✉️</span>
                 <span>Lập lịch Mail</span>
               </button>
             </Can>
 
-            <button
-              type="button"
-              className="link-btn"
-              onClick={handleExportAllReports}
-              style={{
-                height: 32,
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "0 11px",
-                fontSize: 11,
-                fontWeight: 600,
-                borderRadius: 6,
-                background: "#f0fdf4",
-                color: "#166534",
-                border: "1px solid #bbf7d0",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#dcfce7";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f0fdf4";
-              }}
-              title="Xuất file PDF tổng hợp toàn bộ báo cáo"
-            >
+            <button type="button" className="link-btn topbar-export-btn" onClick={handleExportAllReports} title="Xuất PDF tổng hợp toàn bộ báo cáo">
               <span>📥</span>
               <span>Xuất Toàn Bộ</span>
             </button>
 
-            <UserMenu
-              currentUser={user?.displayName || user?.username || "User"}
-              onLogout={logout}
-              roleBadge={role}
-              onOpenEmailConfig={() => setShowEmailConfig(true)}
-            />
+            <UserMenu currentUser={user?.displayName || user?.username || "User"} onLogout={logout} roleBadge={role} onOpenEmailConfig={() => setShowEmailConfig(true)} />
+          </div>
+
+          {/* Mobile Right Unified One-Button Header (Menu Hamburger) */}
+          <div className="mobile-right-actions">
+            <button
+              type="button"
+              className="mobile-hamburger-btn touch-target"
+              onClick={() => setMobileDrawerOpen(true)}
+              aria-label="Mở menu điều hành"
+              title="Menu điều hành"
+            >
+              ☰
+            </button>
           </div>
         </div>
       </header>
@@ -253,6 +122,17 @@ export default function DashboardLayout() {
       <main style={{ flex: 1, paddingBottom: 24 }}>
         <Outlet />
       </main>
+
+      {/* Mobile Navigation Drawer */}
+      <MobileNavDrawer
+        isOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        activeTab={getActiveTabKey()}
+        onSelectTab={handleTabClick}
+        buDetailPath={buDetailPath}
+        onOpenEmailConfig={() => setShowEmailConfig(true)}
+        onExportAllReports={handleExportAllReports}
+      />
 
       {/* Global Modals & Loading */}
       {showEmailConfig && (
