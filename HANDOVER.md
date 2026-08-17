@@ -2,36 +2,32 @@
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
 **Ngày cập nhật:** 17/08/2026  
-**Trạng thái:** 🏆 **HOÀN THÀNH FIX TRIGGER MODAL LẬP LỊCH EMAIL TRÊN TOPBAR & USER MENU** (Build Success 100%)
+**Trạng thái:** 🏆 **HOÀN THÀNH TOÀN DIỆN & XUẤT BẢN CẨM NANG KIẾN TRÚC VẬN HÀNH** (Build Success 100%)
 
 ---
 
-## 1. 📌 Tóm Tắt Khắc Phục Lỗi Lập Lịch Email
+## 1. 📌 Tóm Tắt Các Hạng Mục Hoàn Tất
 
-### 1.1. Quản Lý Modal Tập Trung
-- Xóa bỏ state `emailConfigOpen` và component `<EmailConfigModal />` lặp lại bên trong `UserMenu.jsx`.
-- Đặt duy nhất 1 `<EmailConfigModal open={showEmailConfig} onClose={() => setShowEmailConfig(false)} />` tại `DashboardLayout.jsx`.
-- Cập nhật `EmailConfigModal.jsx` hỗ trợ đầy đủ cả `open`, `isOpen` và fallback `true` khi mount có điều kiện.
+### 1.1. Git Commit & Push Thành Công
+- Đã hoàn tất commit và push các bản sửa lỗi giao diện, căn lề popover, lưới 5 thẻ KPI và trigger modal lên nhánh `main`:
+  - **Commit SHA:** `a7410ed`
+  - **Commit Message:** `fix(ui-logic): resolve email modal trigger, date picker popover alignment, and 5-column grid layout`
 
-### 1.2. Đồng Bộ Trigger Kích Hoạt
-- **Nút "Lập lịch Mail" (✉️) trên TopBar:** Gắn `onClick={() => setShowEmailConfig(true)}`, thêm hiệu ứng hover đổi màu nền `#f1f5f9` và con trỏ `cursor: pointer`.
-- **Mục "Cấu hình gửi báo cáo email" trong UserMenu:** Kích hoạt thông qua callback `onOpenEmailConfig`.
-- **Bảo vệ Phân Quyền (RBAC):** Bọc `<Can perform="CONFIGURE_EMAIL">` ở cả 2 vị trí, chỉ người dùng vai trò `BOD` mới thấy và thao tác được.
-
----
-
-## 2. 🧪 Hướng Dẫn Kiểm Thử Trên Trình Duyệt
-
-1. **Kiểm tra vai trò BOD:**
-   - Đăng nhập hoặc chọn vai trò `👑 BOD` tại góc trên bên phải.
-   - Bấm vào nút **"Lập lịch Mail"** trên TopBar $\rightarrow$ Modal "Cấu hình gửi báo cáo qua email" bật lên mượt mà ngay giữa màn hình.
-   - Bấm vào Avatar user $\rightarrow$ Chọn mục **"✉️ Cấu hình gửi báo cáo email"** $\rightarrow$ Modal cũng bật lên chính xác.
-2. **Kiểm tra vai trò BU_HEAD / BU_STAFF:**
-   - Chuyển sang vai trò `🏢 BU_HEAD` hoặc `👤 BU_STAFF`.
-   - Quan sát TopBar và Menu User $\rightarrow$ Nút "Lập lịch Mail" và mục menu tự động ẩn hoàn toàn (đảm bảo bảo mật và đúng phân quyền).
+### 1.2. Xuất Bản Sách Cẩm Nang Kiến Trúc & Vận Hành Toàn Diện
+- Đã khởi tạo và hoàn thiện tài liệu **[`SYSTEM_ARCHITECTURE_AND_OPERATIONS.md`](file:///d:/Sources/project-dashboard/SYSTEM_ARCHITECTURE_AND_OPERATIONS.md)** gồm 9 chương chi tiết:
+  1. 🎯 **Tổng Quan Nghiệp Vụ & Phạm Vi Hệ Thống:** Phân rã 6 Business Units và các chỉ số KPI cốt lõi.
+  2. 🛠️ **Tech Stack & Danh Mục Dependencies:** React 19, Vite 8, React Router v7, Recharts, jsPDF, html2canvas, react-hot-toast.
+  3. 📂 **Kiến Trúc Thư Mục & Phân Bổ Mã Nguồn:** Sơ đồ cây thư mục `src/`, nguyên tắc SoC, giữ file <250 dòng.
+  4. 🌐 **Cơ Chế Điều Hướng & Quản Lý State Theo URL:** Cấu trúc định tuyến SPA, đồng bộ 2 chiều `useDashboardFilters`, bảo lưu query params `preserveSearch`.
+  5. 🛡️ **Mô Hình Phân Quyền 3 Tầng Bảo Mật (RBAC):** Ma trận 3 roles (`BOD`, `BU_HEAD`, `BU_STAFF`), Route Guard, UI Guard `<Can />`, Data Scoping & Quick Role Switcher.
+  6. 🔄 **Tầng Xử Lý Dữ Liệu & Hướng Dẫn Tích Hợp Backend:** Ép kiểu Type Coercion, tổ chức tầng mapper, đặc tả REST API payload contracts mẫu.
+  7. 🎨 **Hệ Thống Design Tokens & Bộ Component Tùy Biến:** CSS `:root`, `UnifiedSubHeader`, `DateRangePicker`, `CustomSelect`, `MetricCard`, `DataTable`.
+  8. 🚀 **Hướng Dẫn Cài Đặt, Build & Triển Khai Production:** Local Dev, Vite Build, Cấu hình Nginx SPA fallback tránh lỗi 404 khi F5.
+  9. 📜 **Quy Chuẩn Phát Triển & Bảo Trì:** 5 Nguyên tắc vàng `AGENT_GUIDELINES.md`, quy trình CHANGELOG & HANDOVER.
 
 ---
 
-## 3. 🛡️ Trạng Thái Git (Tuân thủ Nguyên Tắc 5)
-- **Build Status:** `npm run build` hoàn thành trong **540ms**, đạt **0 lỗi**.
-- **Chưa commit:** Đang chờ người dùng kiểm tra trực quan trên trình duyệt trước khi thực thi commit.
+## 2. 🧪 Kết Quả Kiểm Thử & Trạng Thái Hệ Thống
+- **Build Status:** `npm run build` hoàn thành trong **512ms**, đạt **0 lỗi**.
+- **Tương thích:** Responsive mượt mà trên Desktop (1400px+), Laptop (1280px), Tablet (840px) và Mobile (540px).
+- **Trạng thái sẵn sàng:** Sẵn sàng cho triển khai Production hoặc tích hợp API Backend thực tế.
