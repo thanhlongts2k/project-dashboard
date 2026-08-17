@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import UnifiedSubHeader from "../components/common/UnifiedSubHeader";
+import CustomSelect from "../components/common/CustomSelect";
 import OverviewKpiGrid from "../components/dashboard/OverviewKpiGrid";
 import DailyPerformanceChart from "../components/dashboard/DailyPerformanceChart";
 import BuPerformanceTable from "../components/dashboard/BuPerformanceTable";
@@ -22,7 +23,7 @@ function formatDateDisplay(date) {
 
 function buildOwnerFilteredView(data, selectedOwner) {
   if (!data) return data;
-  if (!selectedOwner || selectedOwner === "Tất cả phụ trách") return data;
+  if (!selectedOwner || selectedOwner === "Tất cả phụ trách" || selectedOwner === "all" || selectedOwner === "Tất cả") return data;
 
   const filteredRows = (data.summaryRows || []).filter(
     (row) => row?.isTotal || row?.owner === selectedOwner
@@ -102,7 +103,7 @@ export default function DashboardOverviewPage({
   const { isBOD, canAccessBu } = useAuth();
 
   const [selectedOwner, setSelectedOwner] = useState(
-    localStorage.getItem("dashboard_selected_owner") || "Tất cả phụ trách"
+    overviewFilter?.owner || "Tất cả phụ trách"
   );
   const [ownerDailySeries, setOwnerDailySeries] = useState(data?.dailySeries || []);
   const [loadingOwnerDaily, setLoadingOwnerDaily] = useState(false);
@@ -114,8 +115,10 @@ export default function DashboardOverviewPage({
   const preset = overviewFilter?.preset || "thisMonth";
 
   useEffect(() => {
-    localStorage.setItem("dashboard_selected_owner", selectedOwner);
-  }, [selectedOwner]);
+    if (overviewFilter?.owner !== undefined) {
+      setSelectedOwner(overviewFilter.owner || "Tất cả phụ trách");
+    }
+  }, [overviewFilter?.owner]);
 
   // Data Scoping: Chỉ hiển thị các BU mà user được phép xem
   const scopedData = useMemo(() => {
@@ -192,26 +195,24 @@ export default function DashboardOverviewPage({
     }
   };
 
+  const handleOwnerChange = (newOwner) => {
+    setSelectedOwner(newOwner);
+    onApplyOverviewFilter?.({ owner: newOwner });
+  };
+
   const ownerOptions = (scopedData?.header?.ownerOptions || ["Tất cả phụ trách"]).map((val) => ({
     value: val,
     label: val,
   }));
 
   const secondaryOwnerFilter = (
-    <div className="otb-owner-wrap" style={{ margin: 0 }}>
-      <select
-        className="otb-owner-select"
-        value={selectedOwner}
-        onChange={(e) => setSelectedOwner(e.target.value)}
-        style={{ height: 36, borderRadius: 8, padding: "0 10px", fontSize: 12 }}
-      >
-        {ownerOptions.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    </div>
+    <CustomSelect
+      value={selectedOwner}
+      onChange={handleOwnerChange}
+      options={ownerOptions}
+      placeholder="Chọn người phụ trách"
+      triggerStyle={{ height: 36, fontSize: 12, padding: "0 12px", minWidth: 150 }}
+    />
   );
 
   return (
@@ -224,7 +225,7 @@ export default function DashboardOverviewPage({
           startDate,
           endDate,
           preset,
-          onChangeRange: (newRange) => onApplyOverviewFilter?.({ ...newRange, owner: selectedOwner }),
+          onChangeRange: (newRange) => onApplyOverviewFilter?.(newRange),
         }}
         secondaryFilter={secondaryOwnerFilter}
         onRefresh={onRefreshDashboard}
@@ -257,7 +258,7 @@ export default function DashboardOverviewPage({
         alertRows={viewData?.alertRows || []}
       />
 
-      {/* Finance KPIs (Wrapped in Can guard) */}
+      {/* Finance KPIs */}
       <FinanceKpiGrid financeKpis={viewData?.financeKpis || []} />
     </div>
   );

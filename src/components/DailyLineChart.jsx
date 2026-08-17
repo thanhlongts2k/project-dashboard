@@ -55,19 +55,20 @@ function CustomTooltip({ active, payload, label }) {
   return (
     <div
       style={{
-        background: "#fff",
-        border: "1px solid #d9d4c7",
+        background: "#1e293b",
+        color: "#fff",
+        border: "1px solid #334155",
         borderRadius: 8,
-        padding: "10px 12px",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+        padding: "8px 12px",
+        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.2)",
         fontSize: 12,
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>{label}</div>
-      <div style={{ color: "#1D4ED8", marginBottom: 4 }}>
+      <div style={{ fontWeight: 700, marginBottom: 4, color: "#f8fafc" }}>{label}</div>
+      <div style={{ color: "#93c5fd", marginBottom: 2 }}>
         Doanh thu ngày: {formatCompact(revenue)}
       </div>
-      <div style={{ color: "#DC2626" }}>
+      <div style={{ color: "#fca5a5" }}>
         Thu tiền ngày: {formatCompact(collection)}
       </div>
     </div>
@@ -84,18 +85,9 @@ function isSunday(item) {
   return false;
 }
 
-// Khoảng đệm (px) chèn dưới/trên vùng vẽ để label không đè trục X / bị cắt nóc.
-// Đồng bộ với YAxis padding bên dưới.
 const PLOT_PADDING_BOTTOM = 26;
 const PLOT_PADDING_TOP = 14;
 
-// Label số liệu trên line — ẩn giá trị 0 để đỡ rối.
-// Quy tắc đặt số để 2 line KHÔNG BAO GIỜ đè label lên nhau:
-//  - Tại mỗi ngày, line có giá trị cao hơn → số đặt PHÍA TRÊN điểm,
-//    line thấp hơn → số đặt PHÍA DƯỚI điểm (tách tối đa 2 nhãn).
-//  - YAxis chừa đệm đáy (PLOT_PADDING_BOTTOM) nên điểm sát đáy vẫn đủ chỗ
-//    để đặt số phía dưới mà không chạm hàng ngày tháng.
-// Thêm viền trắng (halo) để số luôn đọc rõ khi cắt qua đường line.
 function makeLineLabel(fill, dataKey, chartData) {
   return function LineValueLabel({ x, y, value, index }) {
     const num = Number(value);
@@ -107,7 +99,6 @@ function makeLineLabel(fill, dataKey, chartData) {
         ? Number(point.collection) || 0
         : Number(point.revenue) || 0;
 
-    // Line này cao hơn? (bằng nhau: doanh thu ưu tiên nằm trên)
     const isHigher = dataKey === "revenue" ? num >= other : num > other;
     const dy = isHigher ? -9 : 15;
 
@@ -175,12 +166,12 @@ export default function DailyLineChart({ title, data = [] }) {
               }}
             />
 
-            {/* Doanh thu: xanh dương */}
+            {/* Doanh thu */}
             <Line
               type="monotone"
               dataKey="revenue"
               name="revenue"
-              stroke="#1D4ED8"
+              stroke="#185fa5"
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
@@ -188,16 +179,16 @@ export default function DailyLineChart({ title, data = [] }) {
             >
               <LabelList
                 dataKey="revenue"
-                content={makeLineLabel("#1D4ED8", "revenue", chartData)}
+                content={makeLineLabel("#185fa5", "revenue", chartData)}
               />
             </Line>
 
-            {/* Thu tiền: đỏ/cam để tương phản mạnh */}
+            {/* Thu tiền */}
             <Line
               type="monotone"
               dataKey="collection"
               name="collection"
-              stroke="#DC2626"
+              stroke="#dc2626"
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
@@ -205,7 +196,7 @@ export default function DailyLineChart({ title, data = [] }) {
             >
               <LabelList
                 dataKey="collection"
-                content={makeLineLabel("#DC2626", "collection", chartData)}
+                content={makeLineLabel("#dc2626", "collection", chartData)}
               />
             </Line>
           </LineChart>

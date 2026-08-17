@@ -1,5 +1,6 @@
 import { useAuth } from "../../hooks/useAuth";
 import DateRangePicker from "./DateRangePicker";
+import CustomSelect from "./CustomSelect";
 
 /**
  * UnifiedSubHeader - Tầng 2 chuẩn Executive Dashboard
@@ -26,21 +27,27 @@ export default function UnifiedSubHeader({
 
   const isBuLocked = !isBOD && availableBuTabs.length <= 1;
 
+  const buOptions = availableBuTabs.map((tab) => ({
+    value: tab.id,
+    label: isBuLocked ? `${tab.label} 🔒` : tab.label,
+  }));
+
   return (
     <div
+      className="unified-sub-header"
       style={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         flexWrap: "wrap",
         gap: 12,
-        padding: "10px 0 14px 0",
+        padding: "12px 0 16px 0",
         marginBottom: 12,
-        borderBottom: "1px solid #dcdad1",
+        borderBottom: "1px solid var(--border-card, #e2e8f0)",
       }}
     >
       {/* LEFT: Title & Subtitle or Inline BU Selector */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 260 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 260 }}>
         {buSelector ? (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h1
@@ -48,38 +55,29 @@ export default function UnifiedSubHeader({
                 margin: 0,
                 fontSize: 20,
                 fontWeight: 700,
-                color: "#1f2937",
+                color: "var(--text-main, #0f172a)",
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
               }}
             >
               <span>Dashboard Chi Tiết:</span>
-              <div className="otb-owner-wrap" style={{ display: "inline-flex", margin: 0 }}>
-                <select
-                  className="otb-owner-select"
-                  value={buSelector.activeBu}
-                  onChange={(e) => buSelector.onChangeBu?.(e.target.value)}
-                  disabled={isBuLocked}
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: isBuLocked ? "#475569" : "#185FA5",
-                    background: isBuLocked ? "#f1f5f9" : "#f0f7ff",
-                    border: isBuLocked ? "1px solid #cbd5e1" : "1px solid #bfdbfe",
-                    borderRadius: 8,
-                    padding: "4px 10px",
-                    cursor: isBuLocked ? "not-allowed" : "pointer",
-                  }}
-                  title={isBuLocked ? "Tài khoản được cố định quyền xem BU này" : "Chọn Đơn vị kinh doanh"}
-                >
-                  {availableBuTabs.map((tab) => (
-                    <option key={tab.id} value={tab.id}>
-                      {tab.label} {isBuLocked ? "🔒" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                value={buSelector.activeBu}
+                onChange={(nextBu) => buSelector.onChangeBu?.(nextBu)}
+                options={buOptions}
+                disabled={isBuLocked}
+                triggerStyle={{
+                  height: 34,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: isBuLocked ? "#475569" : "var(--color-primary, #185fa5)",
+                  background: isBuLocked ? "#f1f5f9" : "var(--color-primary-light, #f0f7ff)",
+                  border: isBuLocked ? "1px solid #cbd5e1" : "1px solid var(--color-primary-border, #bfdbfe)",
+                  borderRadius: 8,
+                  padding: "0 12px",
+                }}
+              />
             </h1>
 
             {buSelector.revenuePercentText && (
@@ -90,26 +88,26 @@ export default function UnifiedSubHeader({
                   gap: 8,
                   fontSize: 11,
                   fontWeight: 600,
-                  padding: "3px 8px",
+                  padding: "4px 10px",
                   borderRadius: 6,
-                  background: "#f4f3ef",
+                  background: "#f8fafc",
                   border: "1px solid #e2e8f0",
                 }}
               >
                 <span>DT: {buSelector.revenuePercentText}</span>
-                <span style={{ color: "#94a3b8" }}>|</span>
+                <span style={{ color: "#cbd5e1" }}>|</span>
                 <span>TT: {buSelector.collectionPercentText}</span>
               </div>
             )}
           </div>
         ) : (
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1f2937" }}>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--text-main, #0f172a)" }}>
             {title}
           </h1>
         )}
 
         {subtitle && (
-          <div style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted, #64748b)", fontWeight: 500 }}>
             {subtitle}
           </div>
         )}
@@ -138,7 +136,16 @@ export default function UnifiedSubHeader({
             onClick={onRefresh}
             disabled={loading}
             title="Làm mới dữ liệu"
-            style={{ height: 36, padding: "0 12px", borderRadius: 8, fontSize: 12 }}
+            style={{
+              height: 36,
+              padding: "0 12px",
+              borderRadius: 8,
+              fontSize: 12,
+              border: "1px solid var(--border-card, #e2e8f0)",
+              background: "#fff",
+              boxShadow: "var(--shadow-sm)",
+              cursor: "pointer",
+            }}
           >
             <svg
               width="13"
@@ -175,7 +182,16 @@ export default function UnifiedSubHeader({
             onClick={onExportPdf}
             disabled={exportingPdf}
             title="Tải báo cáo PDF trang này"
-            style={{ height: 36, padding: "0 12px", borderRadius: 8, fontSize: 12 }}
+            style={{
+              height: 36,
+              padding: "0 12px",
+              borderRadius: 8,
+              fontSize: 12,
+              border: "1px solid var(--border-card, #e2e8f0)",
+              background: "#fff",
+              boxShadow: "var(--shadow-sm)",
+              cursor: "pointer",
+            }}
           >
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
               <path

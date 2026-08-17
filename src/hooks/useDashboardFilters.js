@@ -2,65 +2,58 @@ import { useSearchParams, useLocation } from "react-router-dom";
 import { useMemo, useCallback } from "react";
 
 function formatIsoDate(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
+  if (!date) return "";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function startOfDay(d) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function endOfDay(d) {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-}
-
-function addDays(d, n) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
-
 /**
- * Tính toán lại khoảng ngày chính xác cho các preset động theo thời gian thực.
+ * Tính toán lại khoảng ngày chính xác cho các preset động.
+ * - today: hôm nay
+ * - yesterday: hôm qua
+ * - thisWeek: Thứ Hai đầu tuần -> Chủ Nhật cùng tuần
+ * - thisMonth: Ngày 01 đầu tháng -> Ngày cuối cùng của tháng
  */
 export function calculatePresetDateRange(preset) {
   const now = new Date();
 
   switch (preset) {
     case "yesterday": {
-      const y = addDays(now, -1);
-      return {
-        startDate: formatIsoDate(startOfDay(y)),
-        endDate: formatIsoDate(endOfDay(y)),
-      };
+      const y = new Date(now);
+      y.setDate(now.getDate() - 1);
+      const iso = formatIsoDate(y);
+      return { startDate: iso, endDate: iso };
     }
-    case "today":
-      return {
-        startDate: formatIsoDate(startOfDay(now)),
-        endDate: formatIsoDate(endOfDay(now)),
-      };
+    case "today": {
+      const iso = formatIsoDate(now);
+      return { startDate: iso, endDate: iso };
+    }
     case "thisWeek": {
-      const d = startOfDay(now);
-      const day = d.getDay();
-      const diff = day === 0 ? -6 : 1 - day;
-      const weekStart = addDays(d, diff);
-      const weekEnd = addDays(weekStart, 6);
+      const d = new Date(now);
+      const day = d.getDay(); // 0: CN, 1: T2, ..., 6: T7
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMonday);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
       return {
-        startDate: formatIsoDate(weekStart),
-        endDate: formatIsoDate(endOfDay(weekEnd)),
+        startDate: formatIsoDate(monday),
+        endDate: formatIsoDate(sunday),
       };
     }
     case "thisMonth": {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
       return {
-        startDate: formatIsoDate(startOfDay(monthStart)),
-        endDate: formatIsoDate(endOfDay(now)),
+        startDate: formatIsoDate(firstDay),
+        endDate: formatIsoDate(lastDay),
       };
     }
     default:
@@ -70,9 +63,6 @@ export function calculatePresetDateRange(preset) {
 
 /**
  * Hook đồng bộ 2 chiều giữa URL Search Params và Dashboard Filters.
- * Đảm bảo giữ nguyên 100% trạng thái khi F5 hoặc bấm Back/Forward trình duyệt.
- *
- * @param {string} defaultPreset - Preset mặc định ("thisMonth", "today", v.v.)
  */
 export function useDashboardFilters(defaultPreset = "thisMonth") {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -80,26 +70,43 @@ export function useDashboardFilters(defaultPreset = "thisMonth") {
 
   const filters = useMemo(() => {
     const today = new Date();
-    const currentMonth = today.getMonth() + 1;
-    const currentYear = today.getFullYear();
-
     const rawPreset = searchParams.get("preset");
     const rawMonth = searchParams.get("month");
     const rawYear = searchParams.get("year");
     const rawOwner = searchParams.get("owner");
     const rawStartDate = searchParams.get("startDate");
     const rawEndDate = searchParams.get("endDate");
-    const rawDate = searchParams.get("date"); // Dùng cho Receivable single date
+    const rawDate = searchParams.get("date");
 
     const preset = rawPreset || defaultPreset;
-    const month = rawMonth ? Number(rawMonth) : currentMonth;
-    const year = rawYear ? Number(rawYear) : currentYear;
-    const owner = rawOwner || "";
+    const isCustom = preset === "custom";
 
-    // Nếu có preset động thì tính toán lại khoảng ngày mới nhất theo giờ hiện tại
     const dynamicRange = calculatePresetDateRange(preset);
-    const startDate = rawStartDate || dynamicRange?.startDate || "";
-    const endDate = rawEndDate || dynamicRange?.endDate || "";
+
+    const startDate = isCustom
+      ? rawStartDate || dynamicRange?.startDate || formatIsoDate(today)
+      : dynamicRange?.startDate || rawStartDate || formatIsoDate(today);
+
+    const endDate = isCustom
+      ? rawEndDate || dynamicRange?.endDate || formatIsoDate(today)
+      : dynamicRange?.endDate || rawEndDate || formatIsoDate(today);
+
+    const startObj = new Date(startDate);
+    const month = rawMonth
+      ? Number(rawMonth)
+      : startObj.getMonth() + 1 || today.getMonth() + 1;
+    const year = rawYear
+      ? Number(rawYear)
+      : startObj.getFullYear() || today.getFullYear();
+
+    const owner =
+      !rawOwner ||
+      rawOwner === "all" ||
+      rawOwner === "Tất cả" ||
+      rawOwner === "Tất cả phụ trách"
+        ? "Tất cả phụ trách"
+        : rawOwner;
+
     const singleDate = rawDate || formatIsoDate(today);
 
     return {
@@ -110,14 +117,12 @@ export function useDashboardFilters(defaultPreset = "thisMonth") {
       startDate,
       endDate,
       singleDate,
-      // Helper kiểm tra có đang dùng khoảng ngày tùy chọn không
-      isCustomRange: preset === "custom",
+      isCustomRange: isCustom,
     };
   }, [searchParams, defaultPreset]);
 
   /**
    * Cập nhật các trường filter lên URL Search Params.
-   * Các giá trị rỗng/null/undefined sẽ được tự động xóa khỏi query string.
    */
   const setFilters = useCallback(
     (newFilters, { replace = true } = {}) => {
@@ -125,7 +130,36 @@ export function useDashboardFilters(defaultPreset = "thisMonth") {
         (prevParams) => {
           const next = new URLSearchParams(prevParams);
 
+          // 1. Khi chọn Preset nhanh -> tính lại khoảng ngày & month/year
+          if (newFilters.preset && newFilters.preset !== "custom") {
+            const dynamic = calculatePresetDateRange(newFilters.preset);
+            if (dynamic) {
+              next.set("preset", newFilters.preset);
+              next.set("startDate", dynamic.startDate);
+              next.set("endDate", dynamic.endDate);
+              const startObj = new Date(dynamic.startDate);
+              next.set("month", String(startObj.getMonth() + 1));
+              next.set("year", String(startObj.getFullYear()));
+            }
+          }
+
+          // 2. Cập nhật các trường khác và làm sạch URL
           Object.entries(newFilters).forEach(([key, value]) => {
+            if (key === "preset" && newFilters.preset !== "custom") return;
+
+            // Làm sạch owner
+            if (key === "owner") {
+              if (
+                !value ||
+                value === "all" ||
+                value === "Tất cả" ||
+                value === "Tất cả phụ trách"
+              ) {
+                next.delete("owner");
+                return;
+              }
+            }
+
             if (value !== undefined && value !== null && value !== "") {
               next.set(key, String(value));
             } else {
@@ -141,9 +175,6 @@ export function useDashboardFilters(defaultPreset = "thisMonth") {
     [setSearchParams]
   );
 
-  /**
-   * Đặt lại bộ lọc về mặc định ban đầu.
-   */
   const resetFilters = useCallback(
     (preset = defaultPreset) => {
       const today = new Date();
@@ -154,17 +185,13 @@ export function useDashboardFilters(defaultPreset = "thisMonth") {
         month: today.getMonth() + 1,
         year: today.getFullYear(),
         owner: "",
-        startDate: dynamic?.startDate || "",
-        endDate: dynamic?.endDate || "",
+        startDate: dynamic?.startDate || formatIsoDate(today),
+        endDate: dynamic?.endDate || formatIsoDate(today),
       });
     },
     [defaultPreset, setFilters]
   );
 
-  /**
-   * Helper tạo đường dẫn URL bảo lưu toàn bộ query params hiện tại khi chuyển tab.
-   * Ví dụ: preserveSearch("/bu/elevator") -> "/bu/elevator?preset=thisMonth&month=8..."
-   */
   const preserveSearch = useCallback(
     (targetPath) => {
       const search = location.search;

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { calculatePresetDateRange } from "../../hooks/useDashboardFilters";
 
 const PRESET_LABELS = {
   yesterday: "Hôm qua",
@@ -30,50 +31,24 @@ function formatDateDisplay(date) {
 function DateField({ label, value, onChange }) {
   const ref = useRef(null);
 
-  function handleFieldClick(e) {
-    if (e.target === ref.current) return;
-    try {
-      ref.current?.showPicker();
-    } catch {
-      ref.current?.focus();
-    }
-  }
-
-  const displayVal = value ? formatDateDisplay(value) : "";
-
   return (
-    <div className="cdp-field" onClick={handleFieldClick}>
+    <div className="cdp-field" onClick={() => ref.current?.showPicker?.()}>
       <span className="cdp-field__label">{label}</span>
       <div className="cdp-field__body">
         <svg className="cdp-field__icon" viewBox="0 0 20 20" fill="none">
-          <rect
-            x="3"
-            y="4"
-            width="14"
-            height="13"
-            rx="2"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          />
+          <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />
           <path d="M3 8h14" stroke="currentColor" strokeWidth="1.4" />
-          <path
-            d="M7 2v3M13 2v3"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-          />
+          <path d="M7 2v3M13 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
         <span className="cdp-field__text">
-          {displayVal || <span className="cdp-field__placeholder">DD/MM/YYYY</span>}
+          {value ? formatDateDisplay(value) : <span className="cdp-field__placeholder">DD/MM/YYYY</span>}
         </span>
         <input
           ref={ref}
           type="date"
           className="cdp-field__native"
           value={formatDateInput(value)}
-          onChange={(e) => {
-            onChange(e.target.value ? new Date(e.target.value) : null);
-          }}
+          onChange={(e) => onChange(e.target.value ? new Date(e.target.value) : null)}
           onClick={(e) => e.stopPropagation()}
         />
       </div>
@@ -86,7 +61,7 @@ export default function DateRangePicker({
   endDate,
   preset = "thisMonth",
   onChangeRange,
-  mode = "range", // "range" or "single"
+  mode = "range", // "range" | "single"
   singleDate,
   onChangeSingleDate,
 }) {
@@ -96,6 +71,7 @@ export default function DateRangePicker({
   const [draftFrom, setDraftFrom] = useState(startDate ? new Date(startDate) : new Date());
   const [draftTo, setDraftTo] = useState(endDate ? new Date(endDate) : new Date());
 
+  // Đồng bộ 2 ô input khi props startDate/endDate thay đổi
   useEffect(() => {
     if (startDate) setDraftFrom(new Date(startDate));
     if (endDate) setDraftTo(new Date(endDate));
@@ -117,7 +93,18 @@ export default function DateRangePicker({
       : `${formatDateDisplay(startDate)} – ${formatDateDisplay(endDate)}`;
 
   const handleQuickPreset = (p) => {
-    onChangeRange?.({ preset: p });
+    const dynamic = calculatePresetDateRange(p);
+    if (dynamic) {
+      setDraftFrom(new Date(dynamic.startDate));
+      setDraftTo(new Date(dynamic.endDate));
+      onChangeRange?.({
+        preset: p,
+        startDate: dynamic.startDate,
+        endDate: dynamic.endDate,
+      });
+    } else {
+      onChangeRange?.({ preset: p });
+    }
     setIsOpen(false);
   };
 
@@ -189,13 +176,7 @@ export default function DateRangePicker({
               <div className="date-picker-inputs">
                 <input
                   type="date"
-                  style={{
-                    width: "100%",
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #d7d3c8",
-                    fontSize: 12,
-                  }}
+                  style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid #d7d3c8", fontSize: 12 }}
                   value={formatDateInput(singleDate)}
                   onChange={(e) => {
                     if (e.target.value) {
@@ -227,7 +208,9 @@ export default function DateRangePicker({
         <span className="date-picker-range">
           {PRESET_LABELS[preset] ? (
             <span className="date-picker-preset-badge">{PRESET_LABELS[preset]}</span>
-          ) : null}
+          ) : (
+            <span className="date-picker-preset-badge">Tùy chỉnh</span>
+          )}
           <span>{rangeLabel}</span>
         </span>
         <svg className={`date-picker-caret ${isOpen ? "rotated" : ""}`} viewBox="0 0 16 16" fill="none">

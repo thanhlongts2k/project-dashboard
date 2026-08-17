@@ -5,6 +5,62 @@ Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** 
 
 ---
 
+## [0.4.3] - 2026-08-17 (Feature: Custom Executive Select Component & Native Dropdown Replacement)
+
+### Added
+- **Tạo Component `src/components/common/CustomSelect.jsx` (<140 dòng):**
+  - Dropdown tùy biến chuyên dụng chuẩn Executive Dashboard, thay thế thẻ `<select>` mặc định của HTML.
+  - Hỗ trợ đầy đủ các tính năng: Click outside tự đóng, icon chevron xoay 180°, animation hiển thị mượt mà (`fadeIn`), highlight item được chọn với dấu tích xanh (✓), và chống tràn chữ tự động (ellipsis).
+  - Tích hợp trạng thái khóa/disabled với style mờ và con trỏ `not-allowed`.
+
+### Changed & Integrated
+- **Tích hợp vào `UnifiedSubHeader.jsx`:**
+  - Thay thế Dropdown chọn BU thành CustomSelect hiện đại, tích hợp khóa BU theo quyền người dùng (`isBuLocked`).
+- **Tích hợp vào `DashboardOverviewPage.jsx`:**
+  - Thay thế Dropdown chọn Người phụ trách thành CustomSelect có bo góc 8px và hiệu ứng hover dòng tinh tế.
+
+---
+
+## [0.4.2] - 2026-08-17 (Fix: Chuẩn Hóa Logic Bộ Lọc Ngày, Đồng Bộ 2 Chiều & Làm Sạch URL)
+
+### Fixed
+- **Chuẩn hóa hàm tính khoảng ngày `calculatePresetDateRange(preset)`:**
+  - `today`: `startDate = endDate = hôm nay`.
+  - `yesterday`: `startDate = endDate = hôm qua`.
+  - `thisWeek`: Lấy Thứ Hai đầu tuần làm `startDate` và Chủ Nhật cùng tuần làm `endDate` (chuẩn xác 100%, khắc phục lỗi hiển thị cả tháng khi chọn tuần).
+  - `thisMonth`: Lấy ngày 01 đầu tháng làm `startDate` và ngày cuối cùng của tháng làm `endDate`.
+- **Khắc phục xung đột giữa Preset và Custom Range (2-Way Sync):**
+  - Khi click chọn bất kỳ Preset nhanh nào: Tự động tính toán lại ngày, cập nhật đồng bộ vào 2 ô input "Từ ngày - Đến ngày" và cập nhật URL ngay lập tức.
+  - Khi người dùng tự chọn ngày ở ô input và bấm "Áp dụng": Tự động chuyển `preset = 'custom'` và làm nổi bật badge "Tùy chỉnh".
+- **Làm sạch tham số URL (Clean Query String):**
+  - Tự động xóa tham số `owner` khỏi URL khi người dùng chọn "Tất cả phụ trách", "all" hoặc để trống (`next.delete('owner')`), tránh lưu chuỗi tiếng Việt dài vào query string.
+
+---
+
+## [0.4.1] - 2026-08-17 (UI Polish: Executive Modern Minimalist Theme & Custom Scrollbars)
+
+### Added
+- **Bộ biến Design Tokens (`src/styles/dashboard.css`):**
+  - Khai báo biến màu chuẩn `:root` cho Primary (`#185fa5`), Success (`#16a34a`), Warning (`#d97706`), Danger (`#dc2626`), Neutral (`#64748b`), Border (`#e2e8f0`) và Background (`#f8fafc`).
+  - Hệ thống đổ bóng vi mô `var(--shadow-sm)` (`0 1px 3px rgba(0,0,0,0.05)`) và `var(--shadow-md)`.
+- **Custom Sleek Scrollbars (`::-webkit-scrollbar`):**
+  - Tùy biến thanh cuộn ngang/dọc cho toàn bộ bảng biểu và vùng tràn chỉ còn **6px**, bo tròn mềm mại (`border-radius: 999px`), thay thế thanh cuộn xám 16px mặc định của Windows.
+
+### Changed & Polished
+- **Thẻ KPI (MetricCard):**
+  - Đảm bảo 100% thẻ trong cùng một hàng có chiều cao đồng đều tuyệt đối (Equal Height Flex Stretch).
+  - Nâng độ tương phản màu nhãn mục tiêu (`.metric-target`) từ `#b4b2a9` lên `#64748b` đạt chuẩn tiếp cận WCAG AA.
+  - Tinh chỉnh thanh tiến độ (`progress-track`) 6px bo tròn toàn phần với hiệu ứng chuyển màu mượt mà.
+- **Bảng Dữ Liệu (DataTable & Alerts):**
+  - Bổ sung hiệu ứng hover dòng (`.bt tbody tr:hover { background-color: #f8fafc }`) giúp người dùng dễ dàng theo dõi số liệu theo hàng ngang.
+  - Chuẩn hóa padding ô và bo góc khung bảng `border-radius: 8px`.
+- **Biểu Đồ Recharts:**
+  - Đồng bộ theme Dark Tooltip sang trọng (`#1e293b`) với chữ trắng tương phản cao cho `DailyLineChart` và `ProgressChart`.
+- **Sub-Header:**
+  - Tinh chỉnh khoảng cách lề và padding chuẩn 1.400px, loại bỏ hoàn toàn hiện tượng lệch lề khi co giãn màn hình.
+
+---
+
 ## [0.4.0] - 2026-08-17 (Phase 4: UI Guard Component, Data Scoping & Quick Role Switcher)
 
 ### Added

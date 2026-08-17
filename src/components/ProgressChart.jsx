@@ -22,25 +22,26 @@ function CustomTooltip({ active, payload, label }) {
   return (
     <div
       style={{
-        background: "#fff",
-        border: "1px solid #d9d4c7",
+        background: "#1e293b",
+        color: "#fff",
+        border: "1px solid #334155",
         borderRadius: 8,
-        padding: "10px 12px",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+        padding: "8px 12px",
+        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.2)",
         fontSize: 12,
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontWeight: 700, marginBottom: 4, color: "#f8fafc" }}>{label}</div>
 
-      <div style={{ color: "#185FA5", marginBottom: 4, fontWeight: 600 }}>
+      <div style={{ color: "#93c5fd", marginBottom: 2 }}>
         Thực hiện: {formatCompactMoney(actual)}
       </div>
 
-      <div style={{ color: "#8A7A52", marginBottom: 4, fontWeight: 600 }}>
+      <div style={{ color: "#fde68a", marginBottom: 2 }}>
         Chênh lệch: {formatCompactMoney(gap)}
       </div>
 
-      <div style={{ color: "#2f2a24", fontWeight: 600 }}>
+      <div style={{ color: "#cbd5e1" }}>
         Kế hoạch: {formatCompactMoney(target)}
       </div>
     </div>
@@ -63,9 +64,6 @@ export default function ProgressChart({ title, data = [], theme = "blue" }) {
 
   const colors = colorsMap[theme] || colorsMap.blue;
 
-  // Số "Thực hiện" trên đầu cột. Cột là stack (actual + gap):
-  // - gap > 0 → bar gap là đỉnh stack, label gắn lên đó
-  // - gap 0/null → bar gap bị recharts lọc bỏ (height 0), label gắn lên bar actual
   const labelStyle = {
     fontSize: 11,
     fontWeight: 700,
