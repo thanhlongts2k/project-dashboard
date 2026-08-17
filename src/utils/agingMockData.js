@@ -100,7 +100,7 @@ export const MOCK_GLOBAL_BUS_SUMMARY = {
     { code: "BU_IBIZ VALUE", name: "Thiết bị điện phổ thông", manager_name: "LÊ HOÀNG LONG", receivable_total: 21900000000, due_total: 18500000000, overdue_total: 3400000000, overdue_rate: 15.53, customer_count: 26 },
     { code: "BU_ECO", name: "Năng lượng tái tạo", manager_name: "VŨ ĐÌNH NAM", receivable_total: 19500000000, due_total: 13200000000, overdue_total: 6300000000, overdue_rate: 32.31, customer_count: 18 },
     { code: "BU_AGRITECH", name: "Nông nghiệp công nghệ cao", manager_name: "NGUYỄN VĂN HÙNG", receivable_total: 12120000000, due_total: 9840000000, overdue_total: 2280000000, overdue_rate: 18.81, customer_count: 16 },
-    { code: "BU_MANUFACTURE", name: "Sản xuất", manager_name: "ĐẶNG QUỐC CƯỜNG", receivable_total: 9400000000, due_total: 5600000000, overdue_total: 3800000000, overdue_rate: 40.43, customer_count: 16 },
+    { code: "BU_MANUFACTURING", name: "Sản xuất", manager_name: "ĐẶNG QUỐC CƯỜNG", receivable_total: 9400000000, due_total: 5600000000, overdue_total: 3800000000, overdue_rate: 40.43, customer_count: 16 },
   ],
 };
 
@@ -110,7 +110,7 @@ export const BU_CODE_MAP = {
   ibizValue: "BU_IBIZ VALUE",
   eco: "BU_ECO",
   agritech: "BU_AGRITECH",
-  manufacturing: "BU_MANUFACTURE",
+  manufacturing: "BU_MANUFACTURING",
 };
 
 export const FALLBACK_BU_OPTIONS = [
@@ -119,7 +119,7 @@ export const FALLBACK_BU_OPTIONS = [
   { value: "BU_IBIZ VALUE", label: "Thiết bị điện phổ thông" },
   { value: "BU_ECO", label: "Năng lượng tái tạo" },
   { value: "BU_AGRITECH", label: "Nông nghiệp công nghệ cao" },
-  { value: "BU_MANUFACTURE", label: "Sản xuất" },
+  { value: "BU_MANUFACTURING", label: "Sản xuất" },
 ];
 
 export function normalizeBuCode(code) {
