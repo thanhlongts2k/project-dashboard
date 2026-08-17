@@ -26,7 +26,8 @@ export default function DebtAgingReportPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [rawDrilldownData, setRawDrilldownData] = useState(null);
-  const [allBUsData, setAllBUsData] = useState(MOCK_GLOBAL_BUS_SUMMARY);
+  const [includeAll, setIncludeAll] = useState(false);
+  const [allBUsData, setAllBUsData] = useState({ global_summary: null, results: [] });
   const [exportingPdf, setExportingPdf] = useState(false);
   const dashRef = useRef(null);
 
@@ -39,23 +40,26 @@ export default function DebtAgingReportPage() {
     setError(null);
     try {
       const isAll = selectedBu === "ALL";
-      const requests = [fetchAllBUsDebtSummary({ period, include_all: true })];
+      const requests = [fetchAllBUsDebtSummary({ period, include_all: includeAll })];
       if (!isAll) requests.push(fetchBUDebtDrilldown(selectedBu, { period }));
       const [buSummaryRes, drilldownRes] = await Promise.allSettled(requests);
 
       if (buSummaryRes.status === "fulfilled" && buSummaryRes.value) {
         const val = buSummaryRes.value;
-        const resList = val.results || val.data || (Array.isArray(val) ? val : []);
+        const resList = val.bus || val.results || val.data || (Array.isArray(val) ? val : []);
         setAllBUsData({
-          global_summary: val.global_summary || val.summary || MOCK_GLOBAL_BUS_SUMMARY.global_summary,
-          results: resList.length > 0 ? resList.map((b) => ({
+          global_summary: val.global_summary || val.summary || {},
+          results: resList.map((b) => ({
+            id: b.id,
             code: normalizeBuCode(b.code || b.bu_code || b.id),
             name: b.name || b.bu_name || b.code,
             manager_name: b.manager_name || b.bu_head || b.head_name || "Chưa gán",
-            receivable_total: b.receivable_total ?? b.total_debt,
-            due_total: b.due_total ?? b.total_before_due,
-            overdue_total: b.overdue_total, overdue_rate: b.overdue_rate, customer_count: b.customer_count,
-          })) : MOCK_GLOBAL_BUS_SUMMARY.results,
+            receivable_total: Number(b.receivable_total ?? b.total_debt ?? 0),
+            due_total: Number(b.due_total ?? b.total_before_due ?? 0),
+            overdue_total: Number(b.overdue_total ?? 0),
+            overdue_rate: Number(b.overdue_rate ?? 0),
+            customer_count: b.customer_count,
+          })),
         });
       }
 
@@ -71,7 +75,7 @@ export default function DebtAgingReportPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, [selectedBu, period]);
+  useEffect(() => { loadData(); }, [selectedBu, period, includeAll]);
 
   const buSelectOptions = useMemo(() => {
     const rawOptions = (allBUsData.results || []).map((b) => ({ value: b.code, label: b.name }));
@@ -171,7 +175,7 @@ export default function DebtAgingReportPage() {
           <div style={{ fontSize: 13, fontWeight: 600 }}>Đang kết nối và tải dữ liệu tuổi nợ...</div>
         </div>
       ) : selectedBu === "ALL" ? (
-        <AllBUsDebtOverview globalSummary={allBUsData.global_summary} buList={allBUsData.results} onSelectBU={handleBuChange} />
+        <AllBUsDebtOverview globalSummary={allBUsData.global_summary} buList={allBUsData.results} onSelectBU={handleBuChange} includeAll={includeAll} onToggleIncludeAll={() => setIncludeAll((p) => !p)} />
       ) : (
         <>
           <AgingKpiGrid kpiCards={agingData.kpiCards} buName={currentBu?.name || agingData.buInfo?.name || selectedBu} />

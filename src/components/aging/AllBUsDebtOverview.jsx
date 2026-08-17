@@ -11,18 +11,18 @@ function formatVnd(val, isDanger = false) {
   );
 }
 
-export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], onSelectBU }) {
-  const totalDebt = Number(globalSummary.receivable_total) || buList.reduce((s, b) => s + Number(b.receivable_total || 0), 0);
-  const dueTotal = Number(globalSummary.due_total) || buList.reduce((s, b) => s + Number(b.due_total || 0), 0);
-  const overdueTotal = Number(globalSummary.overdue_total) || buList.reduce((s, b) => s + Number(b.overdue_total || 0), 0);
-  const overdueRate = totalDebt > 0 ? (overdueTotal / totalDebt) * 100 : Number(globalSummary.overdue_rate || 0);
+export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], onSelectBU, includeAll = false, onToggleIncludeAll }) {
+  const totalDebt = Number(globalSummary?.receivable_total) || buList.reduce((s, b) => s + Number(b.receivable_total || 0), 0);
+  const dueTotal = Number(globalSummary?.due_total) || buList.reduce((s, b) => s + Number(b.due_total || 0), 0);
+  const overdueTotal = Number(globalSummary?.overdue_total) || buList.reduce((s, b) => s + Number(b.overdue_total || 0), 0);
+  const overdueRate = totalDebt > 0 ? (overdueTotal / totalDebt) * 100 : Number(globalSummary?.overdue_rate || 0);
   const inDueRate = totalDebt > 0 ? (dueTotal / totalDebt) * 100 : 0;
   const riskyBuCount = buList.filter((b) => Number(b.overdue_rate || 0) > 20).length;
 
   const kpis = [
     {
       accent: "blue", label: "Tổng công nợ toàn công ty", valueText: formatCompactMoney(totalDebt),
-      targetText: `${buList.length} Khối BU · ${globalSummary.customer_count || 142} Khách hàng`,
+      targetText: `${buList.length} Khối BU · ${globalSummary?.customer_count || "Toàn công ty"}`,
       percent: 100, percentText: "100%", progressColor: "blue",
     },
     {
@@ -59,9 +59,30 @@ export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], on
               Nhấp "Xem chi tiết" trên bất kỳ BU nào để xem phân rã theo nhân sự và khách hàng
             </div>
           </div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#475569", background: "#f1f5f9", padding: "4px 10px", borderRadius: 6 }}>
-            Tổng cộng: {buList.length} Khối BU
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {onToggleIncludeAll && (
+              <button
+                type="button"
+                className="btn"
+                onClick={onToggleIncludeAll}
+                style={{
+                  fontSize: 11,
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  border: "1px solid #cbd5e1",
+                  background: includeAll ? "var(--color-primary, #185fa5)" : "#fff",
+                  color: includeAll ? "#fff" : "#475569",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {includeAll ? "✓ Đang hiện tất cả 22 BU" : "👁️ Xem tất cả 22 BU"}
+              </button>
+            )}
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#475569", background: "#f1f5f9", padding: "4px 10px", borderRadius: 6 }}>
+              {includeAll ? `Tất cả: ${buList.length} BU` : `Đang hiện: ${buList.length} BU có nợ`}
+            </span>
+          </div>
         </div>
 
         <div className="all-bus-debt-grid">

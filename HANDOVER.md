@@ -1,7 +1,7 @@
 # HANDOVER REPORT — PROJECT DASHBOARD
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
-**Phiên bản:** `v1.0.3` (Release & Pushed)  
+**Phiên bản:** `v1.0.4` (Live API Integration & Clean Release)  
 **Ngày cập nhật:** 17/08/2026  
 **Trạng thái:** 🚀 **RELEASED & PUSHED TO ORIGIN/MAIN** (`Working tree clean`, Build 100% Pass)
 
