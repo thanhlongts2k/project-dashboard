@@ -2789,6 +2789,13 @@ button.is-loading {
     grid-template-columns: 1fr;
     gap: 10px;
   }
+  .unified-sub-header-actions > * {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+  .custom-select-container {
+    width: 100% !important;
+  }
 }
 
 /* ===== ALL BUS DEBT COMPARISON GRID ===== */

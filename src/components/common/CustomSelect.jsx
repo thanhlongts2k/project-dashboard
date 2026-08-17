@@ -12,6 +12,7 @@ export default function CustomSelect({
   style = {},
   triggerStyle = {},
   className = "",
+  align = "left",
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
@@ -63,10 +64,11 @@ export default function CustomSelect({
           transition: "all 0.15s ease",
           outline: "none",
           whiteSpace: "nowrap",
+          width: "100%",
           ...triggerStyle,
         }}
       >
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", maxWidth: 180 }}>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", maxWidth: 220, textAlign: "left" }} title={displayLabel}>
           {selectedOption?.icon && <span style={{ marginRight: 6 }}>{selectedOption.icon}</span>}
           {displayLabel}
         </span>
@@ -98,18 +100,18 @@ export default function CustomSelect({
           style={{
             position: "absolute",
             top: "calc(100% + 5px)",
-            right: 0,
-            left: "auto",
+            left: align === "right" ? "auto" : 0,
+            right: align === "right" ? 0 : "auto",
             minWidth: "100%",
             width: "max-content",
-            maxWidth: "calc(100vw - 32px)",
-            maxHeight: 240,
+            maxWidth: "min(420px, calc(100vw - 32px))",
+            maxHeight: 260,
             overflowY: "auto",
             background: "#fff",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #cbd5e1",
             borderRadius: 8,
-            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
-            zIndex: 100,
+            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+            zIndex: 1000,
             padding: "4px",
             animation: "fadeIn 0.12s ease-out",
           }}
@@ -126,25 +128,26 @@ export default function CustomSelect({
                   alignItems: "center",
                   justifyContent: "space-between",
                   width: "100%",
-                  padding: "7px 10px",
+                  padding: "8px 12px",
                   borderRadius: 6,
                   border: "none",
-                  background: isSelected ? "var(--color-primary-light, #f0f7ff)" : "transparent",
-                  color: isSelected ? "var(--color-primary, #185fa5)" : "var(--text-main, #0f172a)",
+                  background: isSelected ? "var(--color-primary-light, #eff6ff)" : "transparent",
+                  color: isSelected ? "var(--color-primary, #1d4ed8)" : "var(--text-main, #0f172a)",
                   fontSize: 12,
                   fontWeight: isSelected ? 700 : 500,
                   cursor: "pointer",
                   textAlign: "left",
                   transition: "background-color 0.1s ease",
+                  gap: 8,
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSelected) e.currentTarget.style.backgroundColor = "#f8fafc";
+                  if (!isSelected) e.currentTarget.style.backgroundColor = "#f1f5f9";
                 }}
                 onMouseLeave={(e) => {
                   if (!isSelected) e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }} title={opt.label}>
                   {opt.icon && <span style={{ marginRight: 6 }}>{opt.icon}</span>}
                   {opt.label}
                 </span>
@@ -152,7 +155,7 @@ export default function CustomSelect({
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginLeft: 8 }}>
                     <path
                       d="M3.5 8.5l3 3 6-7"
-                      stroke="var(--color-primary, #185fa5)"
+                      stroke="var(--color-primary, #1d4ed8)"
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
