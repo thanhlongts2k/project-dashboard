@@ -27,11 +27,7 @@ export const AuthContext = createContext(null);
 function inferRoleAndPermissions(username = "") {
   const normalized = String(username).toLowerCase().trim();
 
-  // Pattern mock mẫu để test các Role:
-  // - Nếu username chứa "head_" (ví dụ: head_elevator, head_eco) -> BU_HEAD
-  // - Nếu username chứa "staff" (ví dụ: staff_thangmay) -> BU_STAFF
-  // - Mặc định cho tất cả tài khoản quản trị khác -> BOD
-  if (normalized.includes("head_")) {
+  if (normalized.includes("head_") || normalized.includes("bu_head")) {
     const matchedBu = ALL_BU_KEYS.find((key) =>
       normalized.includes(key.toLowerCase())
     );
@@ -44,7 +40,7 @@ function inferRoleAndPermissions(username = "") {
     };
   }
 
-  if (normalized.includes("staff")) {
+  if (normalized.includes("staff") || normalized.includes("bu_staff")) {
     return {
       role: ROLES.BU_STAFF,
       allowedBUs: ["elevator"],
@@ -109,7 +105,6 @@ export function AuthProvider({ children }) {
       ownerId: explicitOwnerId,
       rememberMe = true,
     }) => {
-      // Lưu vào storage theo flag rememberMe
       if (rememberMe) {
         localStorage.setItem("token", token);
         localStorage.setItem("token_expiry", expiry);
@@ -166,6 +161,30 @@ export function AuthProvider({ children }) {
     }));
   }, []);
 
+  // Quick Role Switcher tiện ích cho Dev / Tester
+  const switchRole = useCallback((newRole, options = {}) => {
+    let allowedBUs = ALL_BU_KEYS;
+    let displayName = "Ban Lãnh Đạo (BOD)";
+
+    if (newRole === ROLES.BU_HEAD) {
+      allowedBUs = options.allowedBUs || ["elevator"];
+      displayName = "Trưởng Khối Elevator (BU_HEAD)";
+    } else if (newRole === ROLES.BU_STAFF) {
+      allowedBUs = options.allowedBUs || ["elevator"];
+      displayName = "Nhân Viên Elevator (BU_STAFF)";
+    }
+
+    setAuth((prev) => ({
+      ...prev,
+      role: newRole,
+      allowedBUs,
+      user: {
+        username: displayName,
+        displayName,
+      },
+    }));
+  }, []);
+
   // Bộ helper kiểm tra quyền năng động
   const permissions = useMemo(() => {
     const isBOD = auth.role === ROLES.BOD;
@@ -205,9 +224,10 @@ export function AuthProvider({ children }) {
       login,
       logout,
       updateUser,
+      switchRole,
       ...permissions,
     }),
-    [auth, permissions, login, logout, updateUser]
+    [auth, permissions, login, logout, updateUser, switchRole]
   );
 
   return (

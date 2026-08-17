@@ -1,8 +1,10 @@
+import { useAuth } from "../../hooks/useAuth";
 import DateRangePicker from "./DateRangePicker";
 
 /**
  * UnifiedSubHeader - Tầng 2 chuẩn Executive Dashboard
  * Gom gọn Tiêu đề trang + Bộ lọc + Thao tác vào cùng 1 thanh ngang phẳng, hiện đại.
+ * Tích hợp Data Scoping: tự động lọc và khóa Dropdown BU theo phân quyền của user.
  */
 export default function UnifiedSubHeader({
   title,
@@ -15,6 +17,15 @@ export default function UnifiedSubHeader({
   onExportPdf,
   exportingPdf = false,
 }) {
+  const { canAccessBu, isBOD } = useAuth();
+
+  // Lọc danh sách BU tabs theo quyền truy cập của user
+  const availableBuTabs = (buSelector?.tabs || []).filter((tab) =>
+    canAccessBu(tab.id)
+  );
+
+  const isBuLocked = !isBOD && availableBuTabs.length <= 1;
+
   return (
     <div
       style={{
@@ -49,20 +60,22 @@ export default function UnifiedSubHeader({
                   className="otb-owner-select"
                   value={buSelector.activeBu}
                   onChange={(e) => buSelector.onChangeBu?.(e.target.value)}
+                  disabled={isBuLocked}
                   style={{
                     fontSize: 16,
                     fontWeight: 700,
-                    color: "#185FA5",
-                    background: "#f0f7ff",
-                    border: "1px solid #bfdbfe",
+                    color: isBuLocked ? "#475569" : "#185FA5",
+                    background: isBuLocked ? "#f1f5f9" : "#f0f7ff",
+                    border: isBuLocked ? "1px solid #cbd5e1" : "1px solid #bfdbfe",
                     borderRadius: 8,
                     padding: "4px 10px",
-                    cursor: "pointer",
+                    cursor: isBuLocked ? "not-allowed" : "pointer",
                   }}
+                  title={isBuLocked ? "Tài khoản được cố định quyền xem BU này" : "Chọn Đơn vị kinh doanh"}
                 >
-                  {(buSelector.tabs || []).map((tab) => (
+                  {availableBuTabs.map((tab) => (
                     <option key={tab.id} value={tab.id}>
-                      {tab.label}
+                      {tab.label} {isBuLocked ? "🔒" : ""}
                     </option>
                   ))}
                 </select>

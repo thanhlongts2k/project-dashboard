@@ -2,6 +2,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../context/DashboardContext";
 import { useDashboardFilters } from "../hooks/useDashboardFilters";
+import Can from "../components/auth/Can";
 import LoadingOverlay from "../components/LoadingOverlay";
 import EmailConfigModal from "../components/EmailConfigModal";
 import UserMenu from "../components/UserMenu";
@@ -9,7 +10,7 @@ import UserMenu from "../components/UserMenu";
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, role, logout, canConfigureEmail, defaultAllowedBu } = useAuth();
+  const { user, role, logout, defaultAllowedBu, canAccessBu } = useAuth();
   const {
     activeBu,
     loadingOverlay,
@@ -31,7 +32,8 @@ export default function DashboardLayout() {
     navigate(preserveSearch(targetPath));
   };
 
-  const buDetailPath = `/bu/${activeBu || defaultAllowedBu || "elevator"}`;
+  const currentAllowedBu = canAccessBu(activeBu) ? activeBu : defaultAllowedBu || "elevator";
+  const buDetailPath = `/bu/${currentAllowedBu}`;
 
   return (
     <div className="page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f4f3ef" }}>
@@ -171,7 +173,7 @@ export default function DashboardLayout() {
 
           {/* Right Compact Actions & UserMenu */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {canConfigureEmail && (
+            <Can perform="CONFIGURE_EMAIL">
               <button
                 type="button"
                 className="link-btn"
@@ -187,12 +189,12 @@ export default function DashboardLayout() {
                   borderRadius: 6,
                   border: "1px solid #d7d3c8",
                 }}
-                title="Cấu hình lịch tự động gửi email báo cáo"
+                title="Cấu hình lịch tự động gửi email báo cáo (Dành riêng cho BOD)"
               >
                 <span>✉️</span>
                 <span>Lập lịch Mail</span>
               </button>
-            )}
+            </Can>
 
             <button
               type="button"

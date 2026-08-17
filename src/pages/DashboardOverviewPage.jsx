@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../hooks/useAuth";
 import UnifiedSubHeader from "../components/common/UnifiedSubHeader";
 import OverviewKpiGrid from "../components/dashboard/OverviewKpiGrid";
 import DailyPerformanceChart from "../components/dashboard/DailyPerformanceChart";
@@ -8,16 +9,6 @@ import FinanceKpiGrid from "../components/dashboard/FinanceKpiGrid";
 import { formatCompactMoney, formatPercent } from "../utils/numberFormat";
 import { fetchDailyPerformance } from "../api/dashboardApi";
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
-
-function formatDateApi(date) {
-  if (!date) return "";
-  const d = new Date(date);
-  if (Number.isNaN(d.getTime())) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 function formatDateDisplay(date) {
   if (!date) return "—";
@@ -108,6 +99,8 @@ export default function DashboardOverviewPage({
   onApplyOverviewFilter,
   overviewFilter,
 }) {
+  const { isBOD, canAccessBu } = useAuth();
+
   const [selectedOwner, setSelectedOwner] = useState(
     localStorage.getItem("dashboard_selected_owner") || "Tất cả phụ trách"
   );
@@ -124,14 +117,33 @@ export default function DashboardOverviewPage({
     localStorage.setItem("dashboard_selected_owner", selectedOwner);
   }, [selectedOwner]);
 
+  // Data Scoping: Chỉ hiển thị các BU mà user được phép xem
+  const scopedData = useMemo(() => {
+    if (!data) return data;
+    if (isBOD) return data;
+
+    const allowedTabs = (data.buTabs || []).filter((tab) => canAccessBu(tab.id));
+    const allowedBuIds = allowedTabs.map((t) => t.id);
+
+    const scopedRows = (data.summaryRows || []).filter(
+      (row) => row.isTotal || (row.buId && allowedBuIds.includes(row.buId))
+    );
+
+    return {
+      ...data,
+      buTabs: allowedTabs,
+      summaryRows: scopedRows,
+    };
+  }, [data, isBOD, canAccessBu]);
+
   const viewData = useMemo(() => {
-    return buildOwnerFilteredView(data, selectedOwner);
-  }, [data, selectedOwner]);
+    return buildOwnerFilteredView(scopedData, selectedOwner);
+  }, [scopedData, selectedOwner]);
 
   const selectedBuTab =
     selectedOwner === "Tất cả phụ trách"
       ? null
-      : (data?.buTabs || []).find((tab) => tab?.owner === selectedOwner);
+      : (scopedData?.buTabs || []).find((tab) => tab?.owner === selectedOwner);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,7 +192,7 @@ export default function DashboardOverviewPage({
     }
   };
 
-  const ownerOptions = (data?.header?.ownerOptions || ["Tất cả phụ trách"]).map((val) => ({
+  const ownerOptions = (scopedData?.header?.ownerOptions || ["Tất cả phụ trách"]).map((val) => ({
     value: val,
     label: val,
   }));
@@ -245,7 +257,7 @@ export default function DashboardOverviewPage({
         alertRows={viewData?.alertRows || []}
       />
 
-      {/* Finance KPIs */}
+      {/* Finance KPIs (Wrapped in Can guard) */}
       <FinanceKpiGrid financeKpis={viewData?.financeKpis || []} />
     </div>
   );

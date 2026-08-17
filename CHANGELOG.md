@@ -5,6 +5,28 @@ Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** 
 
 ---
 
+## [0.4.0] - 2026-08-17 (Phase 4: UI Guard Component, Data Scoping & Quick Role Switcher)
+
+### Added
+- **Tạo UI Guard Component (`src/components/auth/Can.jsx`):**
+  - Hỗ trợ kiểm tra quyền linh hoạt qua prop `perform` (`VIEW_SENSITIVE`, `CONFIGURE_EMAIL`, `EXPORT_PDF`, `ACCESS_BU`) hoặc mảng `role` (ví dụ: `role={['BOD', 'BU_HEAD']}`).
+  - Render `fallback` tương ứng khi tài khoản không đủ quyền.
+- **Tích hợp Quick Role Switcher (`src/components/UserMenu.jsx`):**
+  - Bổ sung menu test nhanh 3 roles: `👑 BOD (Toàn quyền)`, `🏢 BU_HEAD (Quản lý Elevator)`, `👤 BU_STAFF (Nhân viên Elevator)`.
+  - Hiển thị Role Badge trực quan trên nút User Profile.
+- **Tạo `AGENT_GUIDELINES.md`:** Ban hành 5 nguyên tắc vận hành bất di bất dịch cho AI Agent.
+
+### Changed & Scoped
+- **Ẩn/Hiện phần tử theo phân quyền (Role Restrictions):**
+  - Thẻ chỉ số tài chính & dòng tiền doanh nghiệp (`FinanceKpiGrid.jsx`): Tự động ẩn hoàn toàn đối với vai trò `BU_STAFF`.
+  - Nút *Lập lịch Email* (✉️ trên `DashboardLayout.jsx`): Bọc guard `Can perform="CONFIGURE_EMAIL"`, chỉ hiển thị cho `BOD`.
+- **Khóa & Lọc phạm vi dữ liệu (Data Scoping):**
+  - **Dropdown chọn BU (`UnifiedSubHeader.jsx`):** Tự động lọc danh sách BU theo `allowedBUs`. Nếu người dùng chỉ quản lý duy nhất 1 BU (ví dụ: BU_HEAD Elevator), dropdown sẽ tự động khóa cố định (🔒) và không cho phép chọn BU khác.
+  - **Trang Tổng Quan (`DashboardOverviewPage.jsx`):** Tự động thu hẹp bảng tổng hợp BU (`summaryRows`) và danh sách người phụ trách theo quyền của từng user.
+  - **Trang Chi Tiết BU (`/bu/:buKey`):** `ProtectedRoute requireBuAccess` tự động chặn và chuyển hướng về BU được cấp phép nếu cố tình nhập URL của BU không thuộc thẩm quyền.
+
+---
+
 ## [0.3.2] - 2026-08-17 (Phase 3.2: Unified Sub-Header & Quy Hoạch Modular Component)
 
 ### Added
