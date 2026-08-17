@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -9,7 +9,7 @@ import AgingCustomerCardGrid from "../components/aging/AgingCustomerCardGrid";
 import AllBUsDebtOverview from "../components/aging/AllBUsDebtOverview";
 import { fetchAllBUsDebtSummary, fetchBUDebtDrilldown } from "../api/agingApi";
 import { mapAgingDrilldownResponse } from "../utils/agingMapper";
-import { BU_CODE_MAP, FALLBACK_BU_OPTIONS, MOCK_GLOBAL_BUS_SUMMARY, normalizeBuCode, formatDateDisplay } from "../utils/agingMockData";
+import { BU_CODE_MAP, FALLBACK_BU_OPTIONS, normalizeBuCode, formatDateDisplay } from "../utils/agingMockData";
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
 
 export default function DebtAgingReportPage() {
@@ -19,10 +19,24 @@ export default function DebtAgingReportPage() {
   const isStaff = !isBOD && !isBuHead;
   const staffFixedCode = user?.staffCode || user?.employeeCode || user?.ownerId || "2000996";
 
-  const defaultBu = isBOD ? (searchParams.get("bu") || "ALL") : normalizeBuCode(searchParams.get("bu") || (allowedBUs && allowedBUs[0]));
-  const [selectedBu, setSelectedBu] = useState(defaultBu);
-  const [selectedStaff, setSelectedStaff] = useState(() => (isStaff ? staffFixedCode : (searchParams.get("staff") || "ALL")));
-  const [reportDate, setReportDate] = useState(() => searchParams.get("date") || new Date().toISOString().slice(0, 10));
+  const urlPeriod = searchParams.get("period");
+  const urlDate = searchParams.get("date");
+  const urlBu = searchParams.get("bu");
+  const urlEmployee = searchParams.get("employee") || searchParams.get("staff");
+
+  const reportDate = useMemo(() => urlDate || (urlPeriod ? `${urlPeriod}-01` : new Date().toISOString().slice(0, 10)), [urlDate, urlPeriod]);
+  const period = useMemo(() => urlPeriod || reportDate.slice(0, 7), [urlPeriod, reportDate]);
+
+  const selectedBu = useMemo(() => {
+    if (!urlBu || urlBu === "ALL") return isBOD ? "ALL" : normalizeBuCode(allowedBUs && allowedBUs[0]);
+    return normalizeBuCode(urlBu);
+  }, [urlBu, isBOD, allowedBUs]);
+
+  const selectedStaff = useMemo(() => {
+    if (isStaff) return staffFixedCode;
+    return urlEmployee && urlEmployee !== "ALL" ? urlEmployee : "ALL";
+  }, [isStaff, staffFixedCode, urlEmployee]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [rawDrilldownData, setRawDrilldownData] = useState(null);
@@ -30,17 +44,28 @@ export default function DebtAgingReportPage() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const dashRef = useRef(null);
 
-  const period = useMemo(() => reportDate.slice(0, 7), [reportDate]);
+  const updateUrlParams = useCallback((updates = {}) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([k, v]) => {
+        if (v === undefined || v === null || v === "" || v === "ALL") {
+          next.delete(k);
+          if (k === "employee") next.delete("staff");
+        } else {
+          next.set(k, String(v));
+        }
+      });
+      return next;
+    }, { replace: false });
+  }, [setSearchParams]);
 
-  useEffect(() => { if (isStaff) setSelectedStaff(staffFixedCode); }, [isStaff, staffFixedCode]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const isAll = selectedBu === "ALL";
       const requests = [fetchAllBUsDebtSummary({ period })];
-      if (!isAll) requests.push(fetchBUDebtDrilldown(selectedBu, { period }));
+      if (!isAll) requests.push(fetchBUDebtDrilldown(selectedBu, { period, employee: selectedStaff }));
       const [buSummaryRes, drilldownRes] = await Promise.allSettled(requests);
 
       if (buSummaryRes.status === "fulfilled" && buSummaryRes.value) {
@@ -49,15 +74,11 @@ export default function DebtAgingReportPage() {
         setAllBUsData({
           global_summary: val.global_summary || val.summary || {},
           results: resList.map((b) => ({
-            id: b.id,
-            code: normalizeBuCode(b.code || b.bu_code || b.id),
-            name: b.name || b.bu_name || b.code,
+            id: b.id, code: normalizeBuCode(b.code || b.bu_code || b.id), name: b.name || b.bu_name || b.code,
             manager_name: b.manager_name || b.bu_head || b.head_name || "Chưa gán",
             receivable_total: Number(b.receivable_total ?? b.total_debt ?? 0),
             due_total: Number(b.due_total ?? b.total_before_due ?? 0),
-            overdue_total: Number(b.overdue_total ?? 0),
-            overdue_rate: Number(b.overdue_rate ?? 0),
-            customer_count: b.customer_count,
+            overdue_total: Number(b.overdue_total ?? 0), overdue_rate: Number(b.overdue_rate ?? 0), customer_count: b.customer_count,
           })),
         });
       }
@@ -69,12 +90,10 @@ export default function DebtAgingReportPage() {
     } catch (err) {
       setError(err?.message || "Không thể kết nối máy chủ để tải dữ liệu tuổi nợ.");
       setRawDrilldownData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    } finally { setLoading(false); }
+  }, [selectedBu, selectedStaff, period]);
 
-  useEffect(() => { loadData(); }, [selectedBu, period]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const buSelectOptions = useMemo(() => {
     const rawOptions = (allBUsData.results || []).map((b) => ({ value: b.code, label: b.name }));
@@ -91,34 +110,27 @@ export default function DebtAgingReportPage() {
 
   const isBuLocked = !isBOD && buSelectOptions.length <= 1;
   const currentBu = useMemo(() => (allBUsData.results || []).find((b) => b.code === selectedBu), [allBUsData.results, selectedBu]);
-  const effectiveStaffCode = isStaff ? staffFixedCode : selectedStaff;
   const fullBuData = useMemo(() => mapAgingDrilldownResponse(rawDrilldownData, "ALL"), [rawDrilldownData]);
 
   const agingData = useMemo(() => {
-    let data = mapAgingDrilldownResponse(rawDrilldownData, effectiveStaffCode);
+    let data = mapAgingDrilldownResponse(rawDrilldownData, selectedStaff);
     if (isStaff && data.staffGroups.length === 0 && fullBuData.staffGroups.length > 0) {
       const matched = fullBuData.staffGroups.find((st) => st.code === staffFixedCode || st.name.toLowerCase().includes("dương") || st.name.toLowerCase().includes(user?.displayName?.toLowerCase() || "")) || fullBuData.staffGroups[0];
       if (matched) data = mapAgingDrilldownResponse(rawDrilldownData, matched.code);
     }
     return data;
-  }, [rawDrilldownData, effectiveStaffCode, isStaff, staffFixedCode, fullBuData, user]);
+  }, [rawDrilldownData, selectedStaff, isStaff, staffFixedCode, fullBuData, user]);
 
   const staffOptions = useMemo(() => {
     if (isStaff) {
       const current = agingData.staffGroups[0];
-      return [{ value: effectiveStaffCode, label: `${current?.name || "MAI TIẾN DƯƠNG"} (${current?.title || "Nhân viên kinh doanh"}) 🔒` }];
+      return [{ value: staffFixedCode, label: `${current?.name || "MAI TIẾN DƯƠNG"} (${current?.title || "Nhân viên kinh doanh"}) 🔒` }];
     }
-    return [
-      { value: "ALL", label: "Tất cả nhân sự" },
-      ...fullBuData.staffGroups.map((st) => ({ value: st.code, label: `${st.name} (${st.title || st.role})` })),
-    ];
-  }, [isStaff, effectiveStaffCode, agingData.staffGroups, fullBuData.staffGroups]);
+    return [{ value: "ALL", label: "Tất cả nhân sự" }, ...fullBuData.staffGroups.map((st) => ({ value: st.code, label: `${st.name} (${st.title || st.role})` }))];
+  }, [isStaff, staffFixedCode, agingData.staffGroups, fullBuData.staffGroups]);
 
-  const handleBuChange = (nextBu) => {
-    setSelectedBu(nextBu);
-    setSelectedStaff(isStaff ? staffFixedCode : "ALL");
-    setSearchParams((prev) => { const next = new URLSearchParams(prev); next.set("bu", nextBu); return next; }, { replace: true });
-  };
+  const handleBuChange = (nextBu) => updateUrlParams({ bu: nextBu === "ALL" ? null : nextBu, employee: null, period });
+  const handleStaffChange = (nextStaff) => updateUrlParams({ bu: selectedBu, employee: nextStaff === "ALL" ? null : nextStaff, period });
 
   const handleExportPdf = async () => {
     if (exportingPdf) return;
@@ -137,34 +149,27 @@ export default function DebtAgingReportPage() {
   return (
     <div className="dash" ref={dashRef} style={{ padding: "0 16px" }}>
       <UnifiedSubHeader
-        title="Báo Cáo Tổng Hợp Tuổi Nợ"
-        subtitle={pageSubtitle}
+        title="Báo Cáo Tổng Hợp Tuổi Nợ" subtitle={pageSubtitle}
         datePickerProps={{
           mode: "single", singleDate: reportDate,
-          onChangeSingleDate: (newDate) => {
-            setReportDate(newDate);
-            setSearchParams((prev) => { const next = new URLSearchParams(prev); next.set("date", newDate); return next; }, { replace: true });
-          },
+          onChangeSingleDate: (newDate) => updateUrlParams({ date: newDate, period: newDate.slice(0, 7), bu: selectedBu === "ALL" ? null : selectedBu, employee: selectedStaff === "ALL" ? null : selectedStaff }),
         }}
         secondaryFilter={
           <>
             <CustomSelect value={selectedBu} onChange={handleBuChange} options={buSelectOptions} disabled={isBuLocked} placeholder="Chọn BU" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 200 }} />
             {selectedBu !== "ALL" && (
-              <CustomSelect value={effectiveStaffCode} onChange={(val) => setSelectedStaff(val)} options={staffOptions} disabled={isStaff} placeholder="Chọn nhân sự" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 220 }} />
+              <CustomSelect value={selectedStaff} onChange={handleStaffChange} options={staffOptions} disabled={isStaff} placeholder="Chọn nhân sự" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 220 }} />
             )}
           </>
         }
         onRefresh={() => { loadData(); toast.success("Đang làm mới dữ liệu từ máy chủ..."); }}
-        onExportPdf={handleExportPdf}
-        exportingPdf={exportingPdf}
+        onExportPdf={handleExportPdf} exportingPdf={exportingPdf}
       />
 
       {error && (
         <div style={{ padding: "10px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", color: "#991b1b", fontSize: 12 }}>
           <span>⚠️ {error} — Đang hiển thị chế độ dự phòng.</span>
-          <button type="button" className="btn" onClick={loadData} style={{ fontSize: 11, padding: "4px 10px", background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b", cursor: "pointer", fontWeight: 700, borderRadius: 4 }}>
-            Thử lại
-          </button>
+          <button type="button" className="btn" onClick={loadData} style={{ fontSize: 11, padding: "4px 10px", background: "#fee2e2", border: "1px solid #fca5a5", color: "#991b1b", cursor: "pointer", fontWeight: 700, borderRadius: 4 }}>Thử lại</button>
         </div>
       )}
 

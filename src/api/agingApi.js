@@ -62,11 +62,12 @@ export async function fetchAllBUsDebtSummary({ period, include_all = true } = {}
  * 2. GET /api/debt/bus/<bu_code>/drilldown/?period=YYYY-MM
  * Lấy chi tiết phân tầng 3 cấp: BU -> Đội ngũ / Nhân sự -> Khách hàng
  */
-export async function fetchBUDebtDrilldown(buCode, { period } = {}) {
+export async function fetchBUDebtDrilldown(buCode, { period, employee } = {}) {
   if (!buCode) {
     throw new Error("Mã BU (buCode) không được để trống.");
   }
   return apiGet(`/api/debt/bus/${encodeURIComponent(buCode)}/drilldown/`, {
     period,
+    employee: employee && employee !== "ALL" ? employee : undefined,
   });
 }
