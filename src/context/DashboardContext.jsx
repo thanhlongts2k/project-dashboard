@@ -377,7 +377,7 @@ export function DashboardProvider({ children }) {
         let warehouseRows = [];
         try {
           const result = await fetchWarehouses(periodParams);
-          warehouseRows = Array.isArray(result) ? result : [];
+          warehouseRows = Array.isArray(result) ? result : (result?.results || []);
         } catch {
           warehouseRows = [];
         }

@@ -58,10 +58,8 @@ export default function MobileNavDrawer({
         {/* Drawer Header */}
         <div className="mobile-drawer-header">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: "linear-gradient(135deg, #185FA5 0%, #3B82F6 100%)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
-              📊
-            </div>
-            <strong style={{ fontSize: 15, color: "#1f2937" }}>Executive Menu</strong>
+            <img src="/HPC-Icon.png" alt="HPC" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "contain" }} />
+            <strong style={{ fontSize: 15, color: "#1f2937" }}>HPC Dashboard</strong>
           </div>
           <button type="button" className="mobile-drawer-close-btn" onClick={onClose}>✕</button>
         </div>

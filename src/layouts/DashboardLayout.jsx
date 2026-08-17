@@ -58,10 +58,10 @@ export default function DashboardLayout() {
               style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
               onClick={() => handleTabClick("/dashboard")}
             >
-              <div className="topbar-logo">📊</div>
+              <img src="/HPC-Icon.png" alt="HPC" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "contain" }} />
               <div className="brand-title">
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#1f2937", lineHeight: 1.1, whiteSpace: "nowrap" }}>
-                  Executive BI
+                  HPC Dashboard
                 </div>
               </div>
             </div>
