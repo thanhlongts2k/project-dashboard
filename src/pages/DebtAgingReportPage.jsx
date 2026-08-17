@@ -26,7 +26,6 @@ export default function DebtAgingReportPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [rawDrilldownData, setRawDrilldownData] = useState(null);
-  const [includeAll, setIncludeAll] = useState(false);
   const [allBUsData, setAllBUsData] = useState({ global_summary: null, results: [] });
   const [exportingPdf, setExportingPdf] = useState(false);
   const dashRef = useRef(null);
@@ -40,7 +39,7 @@ export default function DebtAgingReportPage() {
     setError(null);
     try {
       const isAll = selectedBu === "ALL";
-      const requests = [fetchAllBUsDebtSummary({ period, include_all: includeAll })];
+      const requests = [fetchAllBUsDebtSummary({ period })];
       if (!isAll) requests.push(fetchBUDebtDrilldown(selectedBu, { period }));
       const [buSummaryRes, drilldownRes] = await Promise.allSettled(requests);
 
@@ -75,7 +74,7 @@ export default function DebtAgingReportPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, [selectedBu, period, includeAll]);
+  useEffect(() => { loadData(); }, [selectedBu, period]);
 
   const buSelectOptions = useMemo(() => {
     const rawOptions = (allBUsData.results || []).map((b) => ({ value: b.code, label: b.name }));
@@ -175,7 +174,7 @@ export default function DebtAgingReportPage() {
           <div style={{ fontSize: 13, fontWeight: 600 }}>Đang kết nối và tải dữ liệu tuổi nợ...</div>
         </div>
       ) : selectedBu === "ALL" ? (
-        <AllBUsDebtOverview globalSummary={allBUsData.global_summary} buList={allBUsData.results} onSelectBU={handleBuChange} includeAll={includeAll} onToggleIncludeAll={() => setIncludeAll((p) => !p)} />
+        <AllBUsDebtOverview globalSummary={allBUsData.global_summary} buList={allBUsData.results} onSelectBU={handleBuChange} />
       ) : (
         <>
           <AgingKpiGrid kpiCards={agingData.kpiCards} buName={currentBu?.name || agingData.buInfo?.name || selectedBu} />

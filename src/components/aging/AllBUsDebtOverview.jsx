@@ -11,7 +11,7 @@ function formatVnd(val, isDanger = false) {
   );
 }
 
-export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], onSelectBU, includeAll = false, onToggleIncludeAll }) {
+export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], onSelectBU }) {
   const totalDebt = Number(globalSummary?.receivable_total) || buList.reduce((s, b) => s + Number(b.receivable_total || 0), 0);
   const dueTotal = Number(globalSummary?.due_total) || buList.reduce((s, b) => s + Number(b.due_total || 0), 0);
   const overdueTotal = Number(globalSummary?.overdue_total) || buList.reduce((s, b) => s + Number(b.overdue_total || 0), 0);
@@ -59,30 +59,9 @@ export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], on
               Nhấp "Xem chi tiết" trên bất kỳ BU nào để xem phân rã theo nhân sự và khách hàng
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {onToggleIncludeAll && (
-              <button
-                type="button"
-                className="btn"
-                onClick={onToggleIncludeAll}
-                style={{
-                  fontSize: 11,
-                  padding: "4px 10px",
-                  borderRadius: 6,
-                  border: "1px solid #cbd5e1",
-                  background: includeAll ? "var(--color-primary, #185fa5)" : "#fff",
-                  color: includeAll ? "#fff" : "#475569",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {includeAll ? "✓ Đang hiện tất cả 22 BU" : "👁️ Xem tất cả 22 BU"}
-              </button>
-            )}
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#475569", background: "#f1f5f9", padding: "4px 10px", borderRadius: 6 }}>
-              {includeAll ? `Tất cả: ${buList.length} BU` : `Đang hiện: ${buList.length} BU có nợ`}
-            </span>
-          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#475569", background: "#f1f5f9", padding: "4px 10px", borderRadius: 6 }}>
+            Tổng cộng: {buList.length} Khối BU
+          </span>
         </div>
 
         <div className="all-bus-debt-grid">
@@ -98,16 +77,28 @@ export default function AllBUsDebtOverview({ globalSummary = {}, buList = [], on
 
             return (
               <div key={buCode} className="bu-debt-summary-card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", lineHeight: 1.3 }}>{buName}</div>
-                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>
-                      Trưởng BU: <strong>{managerName}</strong> {bu.customer_count ? `(${bu.customer_count} KH)` : ""}
-                    </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "2.5px 8px",
+                      borderRadius: 6,
+                      background: "#eff6ff",
+                      color: "#1d4ed8",
+                      border: "1px solid #bfdbfe",
+                      letterSpacing: "0.02em",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {buCode}
+                    </span>
+                    <h3 style={{ margin: 0, fontWeight: 700, fontSize: 15, color: "#0f172a", lineHeight: 1.3 }}>
+                      {buName}
+                    </h3>
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>
-                    {buCode}
-                  </span>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>
+                    Trưởng BU: <strong>{managerName}</strong> {bu.customer_count ? `(${bu.customer_count} KH)` : ""}
+                  </div>
                 </div>
 
                 <div style={{ background: "#f8fafc", padding: "8px 10px", borderRadius: 6, marginBottom: 10 }}>
