@@ -182,12 +182,24 @@ export default function DashboardLayout() {
                   height: 32,
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
-                  padding: "0 10px",
+                  gap: 5,
+                  padding: "0 11px",
                   fontSize: 11,
-                  fontWeight: 500,
+                  fontWeight: 600,
                   borderRadius: 6,
+                  background: "#fff",
+                  color: "#334155",
                   border: "1px solid #d7d3c8",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.borderColor = "#cbd5e1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#fff";
+                  e.currentTarget.style.borderColor = "#d7d3c8";
                 }}
                 title="Cấu hình lịch tự động gửi email báo cáo (Dành riêng cho BOD)"
               >
@@ -204,14 +216,22 @@ export default function DashboardLayout() {
                 height: 32,
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
-                padding: "0 10px",
+                gap: 5,
+                padding: "0 11px",
                 fontSize: 11,
                 fontWeight: 600,
                 borderRadius: 6,
                 background: "#f0fdf4",
                 color: "#166534",
                 border: "1px solid #bbf7d0",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#dcfce7";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#f0fdf4";
               }}
               title="Xuất file PDF tổng hợp toàn bộ báo cáo"
             >
@@ -223,6 +243,7 @@ export default function DashboardLayout() {
               currentUser={user?.displayName || user?.username || "User"}
               onLogout={logout}
               roleBadge={role}
+              onOpenEmailConfig={() => setShowEmailConfig(true)}
             />
           </div>
         </div>
@@ -235,7 +256,11 @@ export default function DashboardLayout() {
 
       {/* Global Modals & Loading */}
       {showEmailConfig && (
-        <EmailConfigModal onClose={() => setShowEmailConfig(false)} />
+        <EmailConfigModal
+          open={true}
+          isOpen={true}
+          onClose={() => setShowEmailConfig(false)}
+        />
       )}
 
       {loadingOverlay && <LoadingOverlay text={loadingOverlayText} />}

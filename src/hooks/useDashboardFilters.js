@@ -16,20 +16,22 @@ function formatIsoDate(date) {
  * - today: hôm nay
  * - yesterday: hôm qua
  * - thisWeek: Thứ Hai đầu tuần -> Chủ Nhật cùng tuần
- * - thisMonth: Ngày 01 đầu tháng -> Ngày cuối cùng của tháng
+ * - lastWeek: Thứ Hai tuần trước -> Chủ Nhật tuần trước
+ * - thisMonth: MTD (01 đầu tháng -> ngày hôm nay)
+ * - lastMonth: Trọn tháng trước (01 tháng trước -> ngày cuối cùng tháng trước)
  */
 export function calculatePresetDateRange(preset) {
   const now = new Date();
 
   switch (preset) {
+    case "today": {
+      const iso = formatIsoDate(now);
+      return { startDate: iso, endDate: iso };
+    }
     case "yesterday": {
       const y = new Date(now);
       y.setDate(now.getDate() - 1);
       const iso = formatIsoDate(y);
-      return { startDate: iso, endDate: iso };
-    }
-    case "today": {
-      const iso = formatIsoDate(now);
       return { startDate: iso, endDate: iso };
     }
     case "thisWeek": {
@@ -47,13 +49,39 @@ export function calculatePresetDateRange(preset) {
         endDate: formatIsoDate(sunday),
       };
     }
-    case "thisMonth": {
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    case "lastWeek": {
+      const d = new Date(now);
+      const day = d.getDay();
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const thisMonday = new Date(d);
+      thisMonday.setDate(d.getDate() + diffToMonday);
+
+      const lastMonday = new Date(thisMonday);
+      lastMonday.setDate(thisMonday.getDate() - 7);
+
+      const lastSunday = new Date(lastMonday);
+      lastSunday.setDate(lastMonday.getDate() + 6);
 
       return {
+        startDate: formatIsoDate(lastMonday),
+        endDate: formatIsoDate(lastSunday),
+      };
+    }
+    case "thisMonth": {
+      // MTD: 01 của tháng hiện tại -> ngày hiện tại (hôm nay)
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      return {
         startDate: formatIsoDate(firstDay),
-        endDate: formatIsoDate(lastDay),
+        endDate: formatIsoDate(now),
+      };
+    }
+    case "lastMonth": {
+      // Trọn tháng trước: 01 của tháng trước -> ngày cuối cùng của tháng trước
+      const prevMonthFirstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const prevMonthLastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      return {
+        startDate: formatIsoDate(prevMonthFirstDay),
+        endDate: formatIsoDate(prevMonthLastDay),
       };
     }
     default:

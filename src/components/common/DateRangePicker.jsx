@@ -2,11 +2,22 @@ import { useState, useRef, useEffect } from "react";
 import { calculatePresetDateRange } from "../../hooks/useDashboardFilters";
 
 const PRESET_LABELS = {
-  yesterday: "Hôm qua",
   today: "Hôm nay",
+  yesterday: "Hôm qua",
   thisWeek: "Tuần này",
+  lastWeek: "Tuần trước",
   thisMonth: "Tháng này",
+  lastMonth: "Tháng trước",
 };
+
+const PRESET_KEYS = [
+  "today",
+  "yesterday",
+  "thisWeek",
+  "lastWeek",
+  "thisMonth",
+  "lastMonth",
+];
 
 function formatDateInput(date) {
   if (!date) return "";
@@ -141,7 +152,7 @@ export default function DateRangePicker({
         </button>
 
         {isOpen && (
-          <div className="date-picker-dropdown">
+          <div className="date-picker-dropdown" style={{ right: 0, left: "auto" }}>
             <div className="date-picker-presets">
               <div className="date-picker-presets-label">Nhanh</div>
               {[
@@ -171,16 +182,15 @@ export default function DateRangePicker({
 
             <div className="date-picker-divider" />
 
-            <div className="date-picker-custom">
+            <div className="date-picker-custom" style={{ minWidth: 180 }}>
               <div className="date-picker-custom-label">Chọn ngày</div>
               <div className="date-picker-inputs">
-                <input
-                  type="date"
-                  style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid #d7d3c8", fontSize: 12 }}
-                  value={formatDateInput(singleDate)}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      onChangeSingleDate?.(e.target.value);
+                <DateField
+                  label="Ngày báo cáo"
+                  value={singleDate ? new Date(singleDate) : new Date()}
+                  onChange={(d) => {
+                    if (d) {
+                      onChangeSingleDate?.(formatDateInput(d));
                       setIsOpen(false);
                     }
                   }}
@@ -219,10 +229,10 @@ export default function DateRangePicker({
       </button>
 
       {isOpen && (
-        <div className="date-picker-dropdown">
+        <div className="date-picker-dropdown" style={{ right: 0, left: "auto" }}>
           <div className="date-picker-presets">
             <div className="date-picker-presets-label">Nhanh</div>
-            {["yesterday", "today", "thisWeek", "thisMonth"].map((p) => (
+            {PRESET_KEYS.map((p) => (
               <button
                 key={p}
                 type="button"

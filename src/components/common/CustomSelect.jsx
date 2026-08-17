@@ -2,15 +2,6 @@ import { useState, useRef, useEffect } from "react";
 
 /**
  * CustomSelect - Dropdown tùy biến chuẩn Executive Dashboard.
- *
- * @param {string|number} value - Giá trị hiện tại được chọn
- * @param {function} onChange - Hàm callback khi chọn option mới (nhận vào value)
- * @param {Array<{value: string|number, label: string, icon?: string}>} options - Danh sách các lựa chọn
- * @param {string} [placeholder="Chọn..."] - Nhãn placeholder khi chưa chọn
- * @param {boolean} [disabled=false] - Trạng thái khóa dropdown
- * @param {object} [style] - Inline style cho container
- * @param {object} [triggerStyle] - Inline style tùy biến nút trigger
- * @param {string} [className=""] - ClassName mở rộng
  */
 export default function CustomSelect({
   value,
@@ -107,10 +98,11 @@ export default function CustomSelect({
           style={{
             position: "absolute",
             top: "calc(100% + 5px)",
-            left: 0,
+            right: 0,
+            left: "auto",
             minWidth: "100%",
             width: "max-content",
-            maxWidth: 260,
+            maxWidth: "calc(100vw - 32px)",
             maxHeight: 240,
             overflowY: "auto",
             background: "#fff",

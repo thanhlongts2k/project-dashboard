@@ -7,7 +7,7 @@ import OverviewKpiGrid from "../components/dashboard/OverviewKpiGrid";
 import DailyPerformanceChart from "../components/dashboard/DailyPerformanceChart";
 import BuPerformanceTable from "../components/dashboard/BuPerformanceTable";
 import FinanceKpiGrid from "../components/dashboard/FinanceKpiGrid";
-import { formatCompactMoney, formatPercent } from "../utils/numberFormat";
+import { formatCompactMoney, formatPercent, toNullableNumber } from "../utils/numberFormat";
 import { fetchDailyPerformance } from "../api/dashboardApi";
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
 
@@ -21,9 +21,11 @@ function formatDateDisplay(date) {
   return `${day}/${month}/${year}`;
 }
 
-function buildOwnerFilteredView(data, selectedOwner) {
+function buildOwnerFilteredView(data, selectedOwner, ownerDailySeries = []) {
   if (!data) return data;
-  if (!selectedOwner || selectedOwner === "Tất cả phụ trách" || selectedOwner === "all" || selectedOwner === "Tất cả") return data;
+  if (!selectedOwner || selectedOwner === "Tất cả phụ trách" || selectedOwner === "all" || selectedOwner === "Tất cả") {
+    return data;
+  }
 
   const filteredRows = (data.summaryRows || []).filter(
     (row) => row?.isTotal || row?.owner === selectedOwner
@@ -38,40 +40,82 @@ function buildOwnerFilteredView(data, selectedOwner) {
   let cashChart = data.charts?.cash || [];
 
   if (mainRow) {
+    let actualRevenue = mainRow.revenueActualRaw ?? toNullableNumber(mainRow.revenueActual);
+    let actualCash = mainRow.cashActualRaw ?? toNullableNumber(mainRow.cashActual);
+    const planRevenue = mainRow.revenueTargetRaw ?? toNullableNumber(mainRow.revenueTarget);
+    const planCash = mainRow.cashTargetRaw ?? toNullableNumber(mainRow.cashTarget);
+
+    // Nếu có mảng daily performance tải về từ API, ưu tiên tính tổng theo kỳ lọc
+    if (Array.isArray(ownerDailySeries) && ownerDailySeries.length > 0) {
+      const sumRev = ownerDailySeries.reduce(
+        (sum, item) => sum + (Number(item?.revenue ?? item?.daily_revenue ?? item?.dailyRevenue ?? 0) || 0),
+        0
+      );
+      const sumCol = ownerDailySeries.reduce(
+        (sum, item) => sum + (Number(item?.collection ?? item?.daily_collection ?? item?.dailyCollection ?? item?.cash ?? 0) || 0),
+        0
+      );
+      if (sumRev > 0 || sumCol > 0) {
+        actualRevenue = sumRev;
+        actualCash = sumCol;
+      }
+    }
+
+    const revenuePercent =
+      planRevenue && planRevenue > 0
+        ? (actualRevenue / planRevenue) * 100
+        : (mainRow.revenuePercentValue ?? null);
+
+    const cashPercent =
+      planCash && planCash > 0
+        ? (actualCash / planCash) * 100
+        : (mainRow.cashPercentValue ?? null);
+
     topKpis = [
       {
         accent: "blue",
         label: "Doanh thu",
-        valueText: formatCompactMoney(mainRow.revenueActual),
-        targetText: `KH ${formatCompactMoney(mainRow.revenuePlan)}`,
-        percent: mainRow.revenuePercent,
-        percentText: formatPercent(mainRow.revenuePercent),
+        value: actualRevenue ?? 0,
+        valueText: formatCompactMoney(actualRevenue),
+        targetText: planRevenue ? `/ ${formatCompactMoney(planRevenue)}` : "—",
+        percent: revenuePercent,
+        percentText: formatPercent(revenuePercent),
+        progressColor: "blue",
       },
       {
         accent: "teal",
         label: "Thu tiền",
-        valueText: formatCompactMoney(mainRow.collectionActual),
-        targetText: `KH ${formatCompactMoney(mainRow.collectionPlan)}`,
-        percent: mainRow.collectionPercent,
-        percentText: formatPercent(mainRow.collectionPercent),
+        value: actualCash ?? 0,
+        valueText: formatCompactMoney(actualCash),
+        targetText: planCash ? `/ ${formatCompactMoney(planCash)}` : "—",
+        percent: cashPercent,
+        percentText: formatPercent(cashPercent),
+        progressColor: "teal",
       },
+      ...(data.topKpis || []).slice(2),
     ];
 
     revenueChart = [
       {
+        name: mainRow.bu,
         bu: mainRow.bu,
-        plan: mainRow.revenuePlan,
-        actual: mainRow.revenueActual,
-        percent: mainRow.revenuePercent,
+        target: planRevenue,
+        plan: planRevenue,
+        actual: actualRevenue,
+        percent: revenuePercent,
+        gap: planRevenue !== null && actualRevenue !== null ? Math.max(planRevenue - actualRevenue, 0) : null,
       },
     ];
 
     cashChart = [
       {
+        name: mainRow.bu,
         bu: mainRow.bu,
-        plan: mainRow.collectionPlan,
-        actual: mainRow.collectionActual,
-        percent: mainRow.collectionPercent,
+        target: planCash,
+        plan: planCash,
+        actual: actualCash,
+        percent: cashPercent,
+        gap: planCash !== null && actualCash !== null ? Math.max(planCash - actualCash, 0) : null,
       },
     ];
   }
@@ -140,8 +184,8 @@ export default function DashboardOverviewPage({
   }, [data, isBOD, canAccessBu]);
 
   const viewData = useMemo(() => {
-    return buildOwnerFilteredView(scopedData, selectedOwner);
-  }, [scopedData, selectedOwner]);
+    return buildOwnerFilteredView(scopedData, selectedOwner, ownerDailySeries);
+  }, [scopedData, selectedOwner, ownerDailySeries]);
 
   const selectedBuTab =
     selectedOwner === "Tất cả phụ trách"
@@ -166,7 +210,30 @@ export default function DashboardOverviewPage({
         setLoadingOwnerDaily(true);
         const periodParams = startDate && endDate ? { startDate, endDate } : { month: selectedMonth, year: selectedYear };
         const result = await fetchDailyPerformance({ ...periodParams, buId: selectedBuTab.mainId });
-        if (!cancelled) setOwnerDailySeries(Array.isArray(result) ? result : []);
+
+        if (!cancelled) {
+          const formatted = (Array.isArray(result) ? result : []).map((item) => {
+            const rev = Number(item?.revenue ?? item?.daily_revenue ?? item?.dailyRevenue ?? 0) || 0;
+            const col = Number(item?.collection ?? item?.daily_collection ?? item?.dailyCollection ?? item?.cash ?? 0) || 0;
+            const rawDate = String(item?.date || "");
+            const formattedDate =
+              item?.formattedDate ||
+              (rawDate.length >= 10 ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}` : rawDate);
+
+            return {
+              date: rawDate,
+              formattedDate,
+              label: formattedDate,
+              name: formattedDate,
+              revenue: rev,
+              collection: col,
+              dailyRevenue: rev,
+              dailyCollection: col,
+            };
+          });
+
+          setOwnerDailySeries(formatted);
+        }
       } catch {
         if (!cancelled) setOwnerDailySeries([]);
       } finally {

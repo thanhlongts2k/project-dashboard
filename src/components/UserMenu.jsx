@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { ROLES } from "../context/AuthContext";
-import EmailConfigModal from "./EmailConfigModal";
+import Can from "./auth/Can";
 
-export default function UserMenu({ currentUser, onLogout, roleBadge }) {
+export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmailConfig }) {
   const [open, setOpen] = useState(false);
-  const [emailConfigOpen, setEmailConfigOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const { role, switchRole, canConfigureEmail } = useAuth();
+  const { role, switchRole } = useAuth();
 
   const currentRole = roleBadge || role || "BOD";
   const displayName = currentUser || "User";
@@ -166,19 +165,33 @@ export default function UserMenu({ currentUser, onLogout, roleBadge }) {
             </div>
           </div>
 
-          {canConfigureEmail && (
+          <Can perform="CONFIGURE_EMAIL">
             <button
               type="button"
               className="user-menu-item"
               onClick={() => {
                 setOpen(false);
-                setEmailConfigOpen(true);
+                onOpenEmailConfig?.();
               }}
-              style={{ padding: "8px 14px", width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: 12 }}
+              style={{
+                padding: "8px 14px",
+                width: "100%",
+                textAlign: "left",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 12,
+                color: "#1e293b",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
             >
-              ✉️ Cấu hình gửi báo cáo email
+              <span>✉️</span>
+              <span>Cấu hình gửi báo cáo email</span>
             </button>
-          )}
+          </Can>
 
           <div style={{ height: 1, background: "#f1f5f9", margin: "4px 0" }} />
 
@@ -189,17 +202,26 @@ export default function UserMenu({ currentUser, onLogout, roleBadge }) {
               setOpen(false);
               onLogout?.();
             }}
-            style={{ padding: "8px 14px", width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#dc2626", fontWeight: 600 }}
+            style={{
+              padding: "8px 14px",
+              width: "100%",
+              textAlign: "left",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 12,
+              color: "#dc2626",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
-            🚪 Đăng xuất
+            <span>🚪</span>
+            <span>Đăng xuất</span>
           </button>
         </div>
       )}
-
-      <EmailConfigModal
-        open={emailConfigOpen}
-        onClose={() => setEmailConfigOpen(false)}
-      />
     </div>
   );
 }

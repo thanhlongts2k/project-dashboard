@@ -59,16 +59,17 @@ const inputStyle = {
 
 const fieldStyle = { marginBottom: 14 };
 
-export default function EmailConfigModal({ open, onClose }) {
+export default function EmailConfigModal({ open, isOpen, onClose }) {
+  const isVisible = open !== undefined ? open : isOpen !== undefined ? isOpen : true;
   const [form, setForm] = useState(getEmailConfig);
 
   useEffect(() => {
-    if (open) {
+    if (isVisible) {
       setForm(getEmailConfig());
     }
-  }, [open]);
+  }, [isVisible]);
 
-  if (!open) return null;
+  if (!isVisible) return null;
 
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 

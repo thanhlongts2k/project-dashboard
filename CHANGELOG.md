@@ -5,6 +5,66 @@ Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** 
 
 ---
 
+## [0.4.7] - 2026-08-17 (Fix: Centralized Email Config Modal & TopBar Trigger Sync)
+
+### Fixed
+- **Quản lý Modal Cấu hình Email tập trung (`DashboardLayout.jsx` & `EmailConfigModal.jsx`):**
+  - Khắc phục lỗi Modal không mở do thiếu prop `open` và loại bỏ hoàn toàn việc lưu state `emailConfigOpen` cục bộ bên trong `UserMenu.jsx`.
+  - Đặt duy nhất 1 component `<EmailConfigModal open={showEmailConfig} onClose={...} />` tại gốc `DashboardLayout.jsx`.
+- **Đồng bộ hóa 2 Trigger kích hoạt Modal trên UI:**
+  - Nút **"Lập lịch Mail" (✉️)** trên TopBar Header: Gắn `onClick={() => setShowEmailConfig(true)}`, bổ sung hiệu ứng hover đổi màu nền mềm mại (`#f1f5f9`) và con trỏ `cursor: pointer`.
+  - Mục **"Cấu hình gửi báo cáo email"** trong dropdown của `UserMenu.jsx`: Kết nối trực tiếp qua prop `onOpenEmailConfig`.
+- **Bảo vệ Phân Quyền (RBAC Guard):**
+  - Cả 2 nút kích hoạt đều được bọc bảo vệ bởi `<Can perform="CONFIGURE_EMAIL">` (chỉ hiển thị và cho phép thao tác đối với vai trò `BOD`).
+
+---
+
+## [0.4.6] - 2026-08-17 (Fix: 5-Column KPI Grid, Horizontal Overflow Prevention & DD/MM/YYYY Date Formatting)
+
+### Fixed
+- **Lưới Thẻ KPI 5 cột co giãn linh hoạt (`ReceivableKpiGrid.jsx` & `dashboard.css`):**
+  - Thêm class `.kpi-grid-5` (`repeat(5, minmax(0, 1fr))`) co giãn đều 5 thẻ vừa vặn 100% chiều ngang trang Công nợ, tự động chuyển thành 3 cột dưới 1280px và 1-2 cột trên thiết bị nhỏ.
+- **Triệt tiêu hoàn toàn thanh cuộn ngang (Zero Horizontal Overflow):**
+  - Cấu hình `overflow-x: hidden; width: 100%; box-sizing: border-box;` cho `html`, `body`, `#root`, `.dashboard-container`, `.dash`.
+  - Căn phải (`right: 0; left: auto; max-width: calc(100vw - 32px)`) cho menu popover của `DateRangePicker` và `CustomSelect`, loại bỏ tình trạng popover tràn mép phải màn hình.
+- **Đồng bộ hiển thị ngày chuẩn Việt Nam (`DD/MM/YYYY`):**
+  - Khắc phục ô input ngày đơn (`singleDate`) bị định dạng chuẩn Mỹ `MM/DD/YYYY` bằng cách bọc component `DateField` với hiển thị cố định `DD/MM/YYYY`.
+
+---
+
+## [0.4.5] - 2026-08-17 (Fix: Data Mapping & Type Coercion for Daily Performance & KPI Aggregation)
+
+### Fixed
+- **Ép kiểu dữ liệu (Type Coercion):**
+  - Chuyển đổi an toàn chuỗi số từ API (`daily_revenue`, `daily_collection`, `revenue`, `collection`, `cash`) sang kiểu `Number`.
+- **Chuẩn hóa dữ liệu Biểu đồ Recharts (`DailyLineChart.jsx`):**
+  - Khởi tạo trường `formattedDate: 'DD/MM'` chuẩn hóa cho trục X `<XAxis dataKey="formattedDate" />` và `CustomTooltip`, giúp biểu đồ hiển thị mượt mà các điểm dữ liệu và nhãn ngày tháng.
+- **Tổng hợp số liệu Thẻ KPI Top khi lọc theo Owner / Custom Range (`DashboardOverviewPage.jsx`):**
+  - Khắc phục lỗi hiển thị dấu gạch ngang `—` bằng cách đọc đúng `revenueActualRaw` / `cashActualRaw` hoặc tự động cộng dồn `sumRevenue` & `sumCollection` từ chuỗi `ownerDailySeries`.
+  - Tự động tính toán lại tỷ lệ `% KH DT` và `% KH TT` chính xác theo dải ngày đang chọn.
+
+---
+
+## [0.4.4] - 2026-08-17 (Feature: MTD Default Date Range & Quick Presets "Tuần trước" / "Tháng trước")
+
+### Added
+- **Bổ sung 2 Preset Nhanh Mới:**
+  - `lastWeek` ("Tuần trước"): Tính từ Thứ Hai tuần trước đến Chủ Nhật tuần trước (Ví dụ: `10/08/2026 – 16/08/2026`).
+  - `lastMonth` ("Tháng trước"): Trọn vẹn từ ngày 01 tháng trước đến ngày cuối cùng của tháng trước (Ví dụ: `01/07/2026 – 31/07/2026`).
+- **Tái cấu trúc thứ tự danh sách Preset Nhanh:**
+  1. Hôm nay (`today`)
+  2. Hôm qua (`yesterday`)
+  3. Tuần này (`thisWeek`)
+  4. Tuần trước (`lastWeek`)
+  5. Tháng này (`thisMonth` - MTD)
+  6. Tháng trước (`lastMonth`)
+
+### Changed & Refined
+- **Chuẩn hóa dải ngày mặc định MTD cho `thisMonth`:**
+  - Mặc định khi tải trang hoặc chọn "Tháng này", dải ngày sẽ tính từ **ngày 01 đầu tháng đến ngày hiện tại (hôm nay)** (Ví dụ: `01/08/2026 – 17/08/2026`), giúp báo cáo MTD hiển thị chính xác tiến độ thực tế lũy kế đến hiện tại.
+
+---
+
 ## [0.4.3] - 2026-08-17 (Feature: Custom Executive Select Component & Native Dropdown Replacement)
 
 ### Added

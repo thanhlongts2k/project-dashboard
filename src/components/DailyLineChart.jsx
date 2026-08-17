@@ -125,11 +125,25 @@ export default function DailyLineChart({ title, data = [] }) {
   const chartData = Array.isArray(data)
     ? data
         .filter((item) => !isSunday(item))
-        .map((item) => ({
-          label: item?.label || item?.dateLabel || item?.name || "",
-          revenue: Number(item?.revenue) || 0,
-          collection: Number(item?.collection) || 0,
-        }))
+        .map((item) => {
+          const rev = Number(item?.revenue ?? item?.daily_revenue ?? item?.dailyRevenue ?? 0) || 0;
+          const col = Number(item?.collection ?? item?.daily_collection ?? item?.dailyCollection ?? item?.cash ?? 0) || 0;
+          const rawDate = String(item?.date || "");
+          const formattedDate =
+            item?.formattedDate ||
+            item?.label ||
+            item?.dateLabel ||
+            item?.name ||
+            (rawDate.length >= 10 ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}` : rawDate);
+
+          return {
+            date: rawDate,
+            label: formattedDate,
+            formattedDate,
+            revenue: rev,
+            collection: col,
+          };
+        })
     : [];
 
   return (
@@ -144,7 +158,7 @@ export default function DailyLineChart({ title, data = [] }) {
           <LineChart data={chartData} margin={{ top: 18, right: 18, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#f0ede5" vertical={false} />
             <XAxis
-              dataKey="label"
+              dataKey="formattedDate"
               tick={{ fontSize: 11, fill: "#7f7b72" }}
               axisLine={{ stroke: "#bdb7aa" }}
               tickLine={{ stroke: "#bdb7aa" }}
