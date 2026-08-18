@@ -111,6 +111,10 @@ export const BU_CODE_MAP = {
   eco: "BU_ECO",
   agritech: "BU_AGRITECH",
   manufacturing: "BU_MANUFACTURING",
+  ĐTCT: "ĐTCT",
+  dtct: "ĐTCT",
+  Oversea: "Oversea",
+  oversea: "Oversea",
 };
 
 export const FALLBACK_BU_OPTIONS = [
@@ -120,12 +124,15 @@ export const FALLBACK_BU_OPTIONS = [
   { value: "BU_ECO", label: "Năng lượng tái tạo" },
   { value: "BU_AGRITECH", label: "Nông nghiệp công nghệ cao" },
   { value: "BU_MANUFACTURING", label: "Sản xuất" },
+  { value: "ĐTCT", label: "Đầu tư cho thuê" },
 ];
 
 export function normalizeBuCode(code) {
   if (!code) return "BU_ELEVATOR";
+  if (code === "ALL") return "ALL";
   if (code.startsWith("BU_")) return code;
-  return BU_CODE_MAP[code] || `BU_${code.toUpperCase()}`;
+  if (BU_CODE_MAP[code]) return BU_CODE_MAP[code];
+  return code;
 }
 
 export function formatDateDisplay(dateStr) {

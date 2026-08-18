@@ -5,6 +5,16 @@ Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** 
 
 ---
 
+## [1.0.4] - 2026-08-18 (Fix: BU Code Normalization for Non-prefixed Business Units & Support ĐTCT / Oversea)
+
+### Fixed & Enhanced
+- **Chuẩn Hóa Mã BU Linh Hoạt (`src/utils/agingMockData.js`):**
+  - Cập nhật hàm `normalizeBuCode` để không tự động nối tiền tố `BU_` với các mã BU độc lập như `ĐTCT` hay `Oversea`.
+  - Cập nhật `BU_CODE_MAP` và `FALLBACK_BU_OPTIONS` nhận diện chính xác Khối *Đầu tư cho thuê (`ĐTCT`)*.
+  - Khắc phục lỗi `404 Không tìm thấy Business Unit có mã: 'BU_ĐTCT'` khi chọn xem chi tiết BU Đầu tư cho thuê trên Dashboard.
+
+---
+
 ## [1.0.3] - 2026-08-17 (Enhancement: Dynamic Top KPI Synchronization & Strict BU_STAFF Data Scoping)
 
 ### Fixed & Enhanced
