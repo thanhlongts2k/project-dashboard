@@ -91,11 +91,15 @@ export function deriveSafePercent({ rawPercent, actual, plan }) {
   return Math.round(computed);
 }
 
-export function formatPercent(value) {
+export function formatPercent(value, decimals = 2) {
   const num = toNullableNumber(value);
   if (num === null) return BLANK;
 
-  return `${new Intl.NumberFormat("vi-VN").format(num)}%`;
+  const maxDigits = typeof decimals === "number" ? decimals : 2;
+  return `${new Intl.NumberFormat("vi-VN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDigits,
+  }).format(num)}%`;
 }
 
 export const formatPercentDisplay = formatPercent;

@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import UnifiedSubHeader from "../components/common/UnifiedSubHeader";
 import CustomSelect from "../components/common/CustomSelect";
 import AgingKpiGrid from "../components/aging/AgingKpiGrid";
+import AgingDistributionBar from "../components/aging/AgingDistributionBar";
 import AgingCustomerCardGrid from "../components/aging/AgingCustomerCardGrid";
 import AllBUsDebtOverview from "../components/aging/AllBUsDebtOverview";
 import { fetchAllBUsDebtSummary, fetchBUDebtDrilldown } from "../api/agingApi";
@@ -183,13 +184,21 @@ export default function DebtAgingReportPage() {
       ) : (
         <>
           <AgingKpiGrid kpiCards={agingData.kpiCards} buName={currentBu?.name || agingData.buInfo?.name || selectedBu} />
+          <AgingDistributionBar
+            staffGroups={agingData.staffGroups}
+            grandTotals={agingData.grandTotals}
+            buName={currentBu?.name || agingData.buInfo?.name || selectedBu}
+          />
           {agingData.staffGroups.length === 0 ? (
             <div className="card" style={{ padding: 32, textAlign: "center", color: "#64748b" }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>📭</div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>Không có phát sinh công nợ trong kỳ này</div>
             </div>
           ) : (
-            <AgingCustomerCardGrid staffGroups={agingData.staffGroups} />
+            <AgingCustomerCardGrid
+              staffGroups={agingData.staffGroups}
+              buName={currentBu?.name || agingData.buInfo?.name || selectedBu}
+            />
           )}
         </>
       )}

@@ -2836,6 +2836,161 @@ button.is-loading {
   }
 }
 
+/* ===== AGING DISTRIBUTION STACKED BAR & LEGEND ===== */
+.aging-distribution-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
 
+@media (max-width: 768px) {
+  .aging-distribution-legend {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+}
 
+@media (max-width: 480px) {
+  .aging-distribution-legend {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* ===== AGING RESPONSIVE TOOLBAR & FILTER CHIPS ===== */
+.aging-toolbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aging-filter-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 100%;
+  padding-bottom: 2px;
+}
+
+.aging-filter-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.aging-filter-chips-row .filter-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .aging-toolbar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .aging-search-box {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+  .aging-filter-chips-row {
+    padding-bottom: 4px;
+  }
+}
+
+/* ===== AGING TABLE VIEW & STICKY COLUMNS ===== */
+.aging-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.aging-table-wrapper th.sticky-col-1,
+.aging-table-wrapper td.sticky-col-1 {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.aging-table-wrapper th.sticky-col-2,
+.aging-table-wrapper td.sticky-col-2 {
+  position: sticky;
+  left: 110px;
+  z-index: 2;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.aging-table-wrapper thead th.sticky-col-1,
+.aging-table-wrapper thead th.sticky-col-2 {
+  z-index: 3;
+}
+
+.aging-table-wrapper tbody tr:hover td {
+  background-color: #f1f5f9 !important;
+}
+
+.aging-table-wrapper tbody tr:hover td.sticky-col-1,
+.aging-table-wrapper tbody tr:hover td.sticky-col-2 {
+  background-color: #f1f5f9 !important;
+}
+
+/* ===== AGING CUSTOMER DEBT DETAIL MODAL (RESPONSIVE BOTTOM-SHEET) ===== */
+@media (max-width: 640px) {
+  .aging-modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .aging-modal-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 88vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-bottom: none !important;
+  }
+}
+
+/* ===== AGING TABLE: SWIPE HINT (Mobile only) ===== */
+.aging-swipe-hint {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .aging-swipe-hint {
+    display: flex;
+  }
+}
+
+/* ===== AGING KPI HEADER (COLLAPSIBLE ACCORDION) ===== */
+.aging-kpi-header:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Mini-badge only shows when collapsed on mobile */
+.aging-kpi-mini-badge {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .aging-kpi-mini-badge {
+    display: inline-flex;
+  }
+  /* Slightly compact the KPI grid on mobile */
+  .kpi-grid.kpi-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .kpi-grid.kpi-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
 

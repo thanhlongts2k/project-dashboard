@@ -1,8 +1,8 @@
 # HANDOVER REPORT — PROJECT DASHBOARD
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
-**Phiên bản:** `v1.0.8` (HPC Branding & Favicon Update)  
-**Ngày cập nhật:** 17/08/2026  
+**Phiên bản:** `v1.0.9` (Aging Page: Mobile Responsive, URL State Sync, Customer Detail Modal)  
+**Ngày cập nhật:** 18/08/2026  
 **Trạng thái:** 🚀 **RELEASE READY** (`Build 100% Pass`, Sẵn sàng Commit & Push)
 
 ---
@@ -10,35 +10,35 @@
 ## 1. 🏗️ Tổng Quan Phân Hệ Báo Cáo Tuổi Nợ (Executive Aging Matrix & Drilldown)
 
 - **2 Chế Độ Điều Hành Đỉnh Cao:**
-  * **Macro View (Toàn Cảnh 6 BU Kinh Doanh):** 4 KPI Toàn Công Ty (55.71 tỷ) + Lưới 6 Thẻ BU Kinh Doanh Cốt Lõi với tiến trình đo % quá hạn và cảnh báo rủi ro động. Badge mã BU nổi bật tông Xanh Dương (`#1d4ed8`) đặt ngay trước tên BU.
-  * **Micro View (Chi Tiết Khối BU):** 4 KPI Khối BU + Lưới Thẻ Khách Hàng (Executive Card Grid) đồng bộ trên cả Desktop & Mobile.
-- **Deep Linking & Đồng Bộ Trạng Thái URL (2-Way URL State Sync):**
-  * Đồng bộ tự động các query params: `?period=YYYY-MM&bu=<BU_CODE>&employee=<EMPLOYEE_CODE>`.
-  * Hỗ trợ F5 reload, back/forward trình duyệt, và chia sẻ link trực tiếp đến đúng BU và nhân viên đang xem.
-- **Nhận Diện Thương Hiệu HPC Dashboard & Favicon Mới:**
-  * Đổi tab title sang `HPC Dashboard` và favicon tab trình duyệt sang `HPC-Icon.png`.
-  * Đổi nút thương hiệu TopBar và Drawer Header sang `HPC-Icon.png` + `HPC Dashboard`.
+  * **Macro View (Toàn Cảnh BU Kinh Doanh):** 4 KPI Toàn Công Ty + Lưới Thẻ BU với tiến trình đo % quá hạn và cảnh báo rủi ro động.
+  * **Micro View (Chi Tiết Khối BU):** 4 KPI Khối BU (Collapsible trên Mobile) + Filter Chips + Lưới Thẻ / Bảng Dữ Liệu đồng bộ cả Desktop & Mobile.
+- **Deep Linking & Đồng Bộ Trạng Thái URL (4-Way URL State Sync):**
+  * Đồng bộ tự động: `?period=YYYY-MM&bu=<BU_CODE>&employee=<CODE>&view=<grid|table>&filter=<all|due|overdue|large>&sort=<key>&search=<term>`.
+  * Hỗ trợ F5 reload, back/forward trình duyệt, và chia sẻ link trực tiếp đến đúng chế độ xem/bộ lọc.
+- **Customer Debt Detail Modal:**
+  * Bấm `[🔍 Xem chi tiết nấc hạn (N)]` từ Dạng Thẻ hoặc Dạng Bảng để xem popup chi tiết: 4 Mini KPI + Bảng nấc hạn phát sinh (chỉ hiện nấc > 0).
+  * Desktop: Dialog căn giữa (680px). Mobile: Bottom Sheet full-width bo góc, đóng bằng Esc hoặc click nền mờ.
 
 ---
 
-## 2. 📁 Bảng Tổng Hợp Kiểm Toán Mã Nguồn (< 200 dòng/file)
+## 2. 📁 Bảng Tổng Hợp File Đã Tạo Mới & Chỉnh Sửa (Phiên 18/08/2026)
 
-| STT | Đường Dẫn File | Số Dòng Mã | Trạng Thái | Vai Trò & Chức Năng |
-| :---: | :--- | :---: | :---: | :--- |
-| 1 | [`src/api/agingApi.js`](file:///d:/Sources/project-dashboard/src/api/agingApi.js) | **74 dòng** | ✅ Đạt (< 90) | Service gọi 2 REST API Backend + param employee |
-| 2 | [`src/utils/agingMapper.js`](file:///d:/Sources/project-dashboard/src/utils/agingMapper.js) | **125 dòng** | ✅ Đạt (< 150) | Tầng ánh xạ, ép kiểu & đồng bộ KPI động |
-| 3 | [`src/utils/agingMockData.js`](file:///d:/Sources/project-dashboard/src/utils/agingMockData.js) | **135 dòng** | ✅ Đạt (< 200) | Bộ dữ liệu mẫu mở rộng & chuẩn hóa mã BU |
-| 4 | [`src/components/common/CustomSelect.jsx`](file:///d:/Sources/project-dashboard/src/components/common/CustomSelect.jsx) | **171 dòng** | ✅ Đạt (< 200) | Dropdown tùy biến chuẩn Executive, z-index 1000, align left/right |
-| 5 | [`src/components/aging/AgingKpiGrid.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingKpiGrid.jsx) | **15 dòng** | ✅ Đạt (< 50) | Lưới 4 thẻ KPI Top của BU |
-| 6 | [`src/components/aging/AgingCustomerCardGrid.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingCustomerCardGrid.jsx) | **189 dòng** | ✅ Đạt (< 200) | Lưới thẻ khách hàng Executive Card Grid |
-| 7 | [`src/components/aging/AllBUsDebtOverview.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AllBUsDebtOverview.jsx) | **143 dòng** | ✅ Đạt (< 150) | Màn hình toàn cảnh 6 BU + Badge xanh trước tên |
-| 8 | [`src/components/navigation/MobileNavDrawer.jsx`](file:///d:/Sources/project-dashboard/src/components/navigation/MobileNavDrawer.jsx) | **190 dòng** | ✅ Đạt (< 200) | Menu trượt điều hướng Mobile hợp nhất + HPC-Icon |
-| 9 | [`src/pages/DebtAgingReportPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DebtAgingReportPage.jsx) | **199 dòng** | ✅ Đạt (< 200) | Page Controller điều phối lifecycle, RBAC & Deep Linking |
-| 10 | [`src/layouts/DashboardLayout.jsx`](file:///d:/Sources/project-dashboard/src/layouts/DashboardLayout.jsx) | **150 dòng** | ✅ Đạt (< 200) | TopBar 56px, HPC Dashboard Brand Logo + Tabs |
+| STT | Đường Dẫn File | Thao Tác | Vai Trò & Chức Năng |
+| :---: | :--- | :---: | :--- |
+| 1 | [`src/components/aging/AgingKpiGrid.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingKpiGrid.jsx) | MODIFY | Collapsible accordion: Mobile mặc định thu gọn + mini-badge tóm tắt. |
+| 2 | [`src/components/aging/AgingCustomerCardGrid.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingCustomerCardGrid.jsx) | MODIFY | URL state sync 4 chiều, mặc định thu gọn accordion nhân sự, badge số nấc hạn trên nút. |
+| 3 | [`src/components/aging/AgingCustomerTableView.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingCustomerTableView.jsx) | MODIFY | Sửa lỗi `expandedRows`, fix mobile bóp bảng: `minWidth: 900`, xóa `sticky-col`, swipe hint. |
+| 4 | [`src/components/aging/AgingDistributionBar.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingDistributionBar.jsx) | NEW | Stacked Bar 5 dải tuổi nợ với tooltip & legend responsive. |
+| 5 | [`src/components/aging/CustomerDebtDetailModal.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/CustomerDebtDetailModal.jsx) | NEW | Popup / Bottom-Sheet chi tiết công nợ khách hàng: 4 KPI mini + bảng nấc hạn phát sinh. |
+| 6 | [`src/pages/DebtAgingReportPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DebtAgingReportPage.jsx) | MODIFY | Tích hợp `AgingDistributionBar`, truyền `buName` sang `AgingCustomerCardGrid`. |
+| 7 | [`src/styles/dashboard.css`](file:///d:/Sources/project-dashboard/src/styles/dashboard.css) | MODIFY | Bổ sung CSS: Aging toolbar, filter chips, swipe hint, modal bottom-sheet, KPI accordion. |
+| 8 | [`src/utils/numberFormat.js`](file:///d:/Sources/project-dashboard/src/utils/numberFormat.js) | MODIFY | `formatPercent(val, 2)` chuẩn hóa 1-2 chữ số thập phân. |
+| 9 | [`CHANGELOG.md`](file:///d:/Sources/project-dashboard/CHANGELOG.md) | MODIFY | Ghi nhận đầy đủ từ `[1.0.5]` đến `[1.0.9]`. |
 
 ---
 
-## 3. 🛡️ Trạng Thái Git Release
-- **Commit:** `chore(branding): update app title, favicon and topbar brand logo to HPC Dashboard`
-- **Branch:** `main` $\rightarrow$ `origin/main`.
-- **Working Tree:** `clean` sau khi commit & push.
+## 3. 🛡️ Trạng Thái Kiểm Thử & Git Release
+
+- **Production Build:** `npm run build` → **✅ Built in ~580ms, 0 Errors**
+- **Commit cần thực hiện:** `feat(aging): v1.0.9 — mobile responsive table, URL state sync, KPI accordion, customer detail modal`
+- **Branch:** `main` → `origin/main`
