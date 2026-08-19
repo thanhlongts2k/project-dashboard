@@ -39,8 +39,8 @@ export default function ReceivableCommitmentTable({
             </tr>
           </thead>
           <tbody>
-            {commitmentRows.map((row) => (
-              <tr key={row.bu}>
+            {commitmentRows.map((row, index) => (
+              <tr key={row.buKey || row.id || row.key || `${row.bu}-${index}`}>
                 <td>{row.bu}</td>
                 <td>{row.commitToday}</td>
                 <td style={{ color: "#1D9E75", fontWeight: 500 }}>

@@ -155,7 +155,7 @@ export default function DailyLineChart({ title, data = [] }) {
         onMouseDown={(e) => e.preventDefault()}
         style={{ minWidth: 0 }}
       >
-        <ResponsiveContainer width="100%" height="100%" debounce={50}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} debounce={50}>
           <LineChart data={chartData} margin={{ top: 18, right: 10, left: -15, bottom: 0 }}>
             <CartesianGrid stroke="#f0ede5" vertical={false} />
             <XAxis

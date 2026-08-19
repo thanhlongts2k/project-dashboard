@@ -1,7 +1,7 @@
 # HANDOVER REPORT — PROJECT DASHBOARD
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
-**Phiên bản:** `v1.0.23` (UX: Body Scroll Lock cho Modal & Nâng cấp Nút Google Login)  
+**Phiên bản:** `v1.0.26` (Bugfix: Canonical BU Deduplication on /receivables & Unique React Keys)  
 **Ngày cập nhật:** 19/08/2026  
 **Trạng thái:** 🚀 **PRODUCTION READY** (`Build 100% Pass`, 0 Errors)
 

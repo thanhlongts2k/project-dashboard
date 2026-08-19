@@ -32,7 +32,7 @@ export default function DetailMetricCompareChart({
       <div className="card-title">{title}</div>
 
       <div className="chart-wrap" style={{ minWidth: 0 }}>
-        <ResponsiveContainer width="100%" height="100%" debounce={50}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} debounce={50}>
           <BarChart data={data} margin={{ top: 22, right: 10, left: -15, bottom: 14 }}>
             <CartesianGrid stroke="#f1efe8" vertical={false} />
             <XAxis

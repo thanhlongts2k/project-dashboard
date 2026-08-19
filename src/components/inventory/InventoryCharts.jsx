@@ -78,7 +78,7 @@ export default function InventoryCharts({
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "center", overflow: "hidden" }}>
             <div style={{ height: 200, minWidth: 0, overflow: "hidden" }}>
-              <ResponsiveContainer width="100%" height="100%" debounce={50}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180} debounce={50}>
                 <PieChart>
                   <Pie
                     data={compositionData}
@@ -140,7 +140,7 @@ export default function InventoryCharts({
 
         <div className="inventory-chart-wrap">
           {movementData.length ? (
-            <ResponsiveContainer width="100%" height="100%" debounce={50}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240} debounce={50}>
               <BarChart
                 data={movementData}
                 margin={{ top: 20, right: 18, left: 8, bottom: 6 }}

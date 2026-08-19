@@ -69,8 +69,8 @@ export default function ReceivableDetailTable({
               </tr>
             </thead>
             <tbody>
-              {detailRows.map((row) => (
-                <tr key={row.bu}>
+              {detailRows.map((row, index) => (
+                <tr key={row.buKey || row.id || row.key || `${row.bu}-${index}`}>
                   <td>{row.bu}</td>
                   <td style={{ color: "#185FA5" }}>{row.receivableTotal}</td>
                   <td>{row.commitmentOverdue}</td>

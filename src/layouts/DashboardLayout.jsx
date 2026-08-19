@@ -49,18 +49,23 @@ export default function DashboardLayout() {
 
   return (
     <div className="page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f4f3ef" }}>
-      {/* TẦNG 1: Global TopBar Header (56px sticky on Mobile & Desktop) */}
+      {/* TẦNG 1: Global TopBar Header (56px fixed on Mobile & Desktop) */}
       <header
         className="topbar-header"
         style={{
-          position: "sticky",
+          position: "fixed",
           top: 0,
-          zIndex: 50,
+          left: 0,
+          right: 0,
+          width: "100%",
+          height: 56,
+          zIndex: 100,
           background: "rgba(255, 255, 255, 0.98)",
           borderBottom: "1px solid #e2e8f0",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
+          boxSizing: "border-box",
         }}
       >
         <div className="topbar-container">
@@ -141,7 +146,7 @@ export default function DashboardLayout() {
       </header>
 
       {/* Main Content View (Sub-route) */}
-      <main style={{ flex: 1, paddingBottom: 24 }}>
+      <main className="main-content" style={{ flex: 1, paddingTop: 56, paddingBottom: 24, minWidth: 0, maxWidth: "100%", boxSizing: "border-box" }}>
         <Outlet />
       </main>
 

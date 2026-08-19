@@ -134,7 +134,7 @@ export default function ReceivableCharts({
         </div>
 
         <div style={{ position: "relative", width: "100%", minWidth: 0, height: 320, flex: 1, overflow: "hidden" }}>
-          <ResponsiveContainer width="100%" height="100%" debounce={50}>
+          <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={260} debounce={50}>
             <BarChart
               data={collectionChartData}
               margin={{ top: 20, right: 8, left: -12, bottom: 20 }}
@@ -208,9 +208,9 @@ export default function ReceivableCharts({
         </div>
 
         <div style={{ marginBottom: 16, flex: 1 }}>
-          {receivableRateRows.map((row) => (
+          {receivableRateRows.map((row, index) => (
             <div
-              key={row.name}
+              key={row.buKey || row.id || row.key || `${row.name}-${index}`}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -270,7 +270,7 @@ export default function ReceivableCharts({
 
         <div style={{ position: "relative", width: "100%", height: 160, minWidth: 0, overflow: "hidden" }}>
           {hasReceivableDonutData ? (
-            <ResponsiveContainer width="100%" height="100%" debounce={50}>
+            <ResponsiveContainer width="100%" height={160} minWidth={0} minHeight={140} debounce={50}>
               <PieChart>
                 <Pie
                   data={receivableDonutData}
@@ -283,8 +283,8 @@ export default function ReceivableCharts({
                   strokeWidth={2}
                   isAnimationActive={false}
                 >
-                  {receivableDonutData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
+                  {receivableDonutData.map((entry, index) => (
+                    <Cell key={entry.buKey || entry.id || entry.key || `${entry.name}-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<ReceivableDonutTooltip />} />

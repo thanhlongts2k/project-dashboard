@@ -2,7 +2,7 @@ import { formatCompactMoney, formatGap, formatPercent } from "./numberFormat";
 
 const BLANK = "—";
 
-const BU_ORDER = [
+const CANONICAL_BU_KEYS = [
   "BU_ELEVATOR",
   "BU_IBIZ_PREMIUM",
   "BU_IBIZ_VALUE",
@@ -13,18 +13,25 @@ const BU_ORDER = [
   "BU_OVERSEA",
 ];
 
+const BU_ORDER = CANONICAL_BU_KEYS;
+
+const CANONICAL_BU_CONFIG = {
+  BU_ELEVATOR: { key: "BU_ELEVATOR", buId: "elevator", label: "Elevator", shortLabel: "Elevator", color: "#185FA5" },
+  BU_IBIZ_PREMIUM: { key: "BU_IBIZ_PREMIUM", buId: "premium", label: "IBIZ Premium", shortLabel: "Premium", color: "#1D9E75" },
+  BU_IBIZ_VALUE: { key: "BU_IBIZ_VALUE", buId: "value", label: "IBIZ Value", shortLabel: "Value", color: "#D85A30" },
+  BU_ECO: { key: "BU_ECO", buId: "eco", label: "ECO", shortLabel: "Eco", color: "#BA7517" },
+  BU_AGRITECH: { key: "BU_AGRITECH", buId: "agritech", label: "Agritech", shortLabel: "Agritech", color: "#534AB7" },
+  BU_MANUFACTURING: { key: "BU_MANUFACTURING", buId: "manufacturing", label: "Sản xuất", shortLabel: "SX", color: "#888780" },
+  BU_DTCT: { key: "BU_DTCT", buId: "dtct", label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
+  BU_OVERSEA: { key: "BU_OVERSEA", buId: "oversea", label: "Oversea", shortLabel: "Oversea", color: "#7c3aed" },
+};
+
 const BU_META = {
-  BU_ELEVATOR: { label: "Elevator", shortLabel: "Elevator", color: "#185FA5" },
-  BU_IBIZ_PREMIUM: { label: "IBIZ Premium", shortLabel: "Premium", color: "#1D9E75" },
-  BU_IBIZ_VALUE: { label: "IBIZ Value", shortLabel: "Value", color: "#D85A30" },
-  BU_ECO: { label: "ECO", shortLabel: "Eco", color: "#BA7517" },
-  BU_AGRITECH: { label: "Agritech", shortLabel: "Agritech", color: "#534AB7" },
-  BU_MANUFACTURING: { label: "Sản xuất", shortLabel: "SX", color: "#888780" },
-  BU_DTCT: { label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
-  BU_OVERSEA: { label: "Oversea", shortLabel: "Oversea", color: "#7c3aed" },
-  ĐTCT: { label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
-  DTCT: { label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
-  OVERSEA: { label: "Oversea", shortLabel: "Oversea", color: "#7c3aed" },
+  ...CANONICAL_BU_CONFIG,
+  ĐTCT: CANONICAL_BU_CONFIG.BU_DTCT,
+  DTCT: CANONICAL_BU_CONFIG.BU_DTCT,
+  BU_ĐTCT: CANONICAL_BU_CONFIG.BU_DTCT,
+  OVERSEA: CANONICAL_BU_CONFIG.BU_OVERSEA,
 };
 
 function normalizeBuCode(code = "") {
@@ -76,71 +83,149 @@ function buildEmptyKpi(label, accent, targetText = BLANK, deltaText = BLANK) {
   };
 }
 
-function sortRowsByBuOrder(rows = []) {
-  const orderMap = new Map(
-    BU_ORDER.map((item, index) => [normalizeBuCode(item), index])
-  );
+function getCanonicalBuKey(code = "", fallbackName = "") {
+  const normalized = normalizeBuCode(code);
+  const raw = String(code).trim().toLowerCase();
+  const nameNorm = String(fallbackName || "").toLowerCase();
 
-  return [...rows].sort((a, b) => {
-    const aIndex = orderMap.has(normalizeBuCode(a?.bu_code))
-      ? orderMap.get(normalizeBuCode(a?.bu_code))
-      : 999;
-    const bIndex = orderMap.has(normalizeBuCode(b?.bu_code))
-      ? orderMap.get(normalizeBuCode(b?.bu_code))
-      : 999;
-    return aIndex - bIndex;
-  });
+  if (
+    normalized === "BU_ELEVATOR" ||
+    normalized === "ELEVATOR" ||
+    raw.includes("elevator") ||
+    nameNorm.includes("elevator") ||
+    nameNorm.includes("thang máy")
+  ) {
+    return "BU_ELEVATOR";
+  }
+  if (
+    normalized === "BU_IBIZ_PREMIUM" ||
+    normalized === "IBIZ_PREMIUM" ||
+    normalized === "PREMIUM" ||
+    normalized === "BU_PREMIUM" ||
+    raw.includes("premium") ||
+    nameNorm.includes("premium")
+  ) {
+    return "BU_IBIZ_PREMIUM";
+  }
+  if (
+    normalized === "BU_IBIZ_VALUE" ||
+    normalized === "IBIZ_VALUE" ||
+    normalized === "VALUE" ||
+    normalized === "BU_VALUE" ||
+    raw.includes("value") ||
+    nameNorm.includes("value")
+  ) {
+    return "BU_IBIZ_VALUE";
+  }
+  if (
+    normalized === "BU_ECO" ||
+    normalized === "ECO" ||
+    raw === "eco" ||
+    nameNorm.includes("eco")
+  ) {
+    return "BU_ECO";
+  }
+  if (
+    normalized === "BU_AGRITECH" ||
+    normalized === "AGRITECH" ||
+    raw.includes("agritech") ||
+    nameNorm.includes("agritech")
+  ) {
+    return "BU_AGRITECH";
+  }
+  if (
+    normalized === "BU_MANUFACTURING" ||
+    normalized === "MANUFACTURING" ||
+    normalized === "SAN_XUAT" ||
+    normalized === "BU_SAN_XUAT" ||
+    raw.includes("manufacturing") ||
+    nameNorm.includes("sản xuất") ||
+    nameNorm.includes("nhà máy")
+  ) {
+    return "BU_MANUFACTURING";
+  }
+  if (
+    normalized === "BU_DTCT" ||
+    normalized === "DTCT" ||
+    normalized === "ĐTCT" ||
+    normalized === "BU_ĐTCT" ||
+    raw.includes("dtct") ||
+    nameNorm.includes("cho thuê") ||
+    nameNorm.includes("đầu tư cho thuê") ||
+    nameNorm.includes("thuê")
+  ) {
+    return "BU_DTCT";
+  }
+  if (
+    normalized === "BU_OVERSEA" ||
+    normalized === "OVERSEA" ||
+    raw.includes("oversea") ||
+    nameNorm.includes("oversea") ||
+    nameNorm.includes("nước ngoài")
+  ) {
+    return "BU_OVERSEA";
+  }
+
+  return CANONICAL_BU_CONFIG[normalized] ? normalized : "UNKNOWN";
 }
 
 function getBuMeta(code = "", fallbackName = "") {
-  const normalized = normalizeBuCode(code);
-  const rawCode = String(code).trim().toUpperCase();
-  const directMatch = BU_META[normalized] || BU_META[rawCode];
-  if (directMatch) return directMatch;
-
-  if (
-    normalized.includes("DTCT") ||
-    normalized.includes("CHO_THUE") ||
-    String(fallbackName).toLowerCase().includes("thuê")
-  ) {
-    return BU_META.BU_DTCT;
-  }
-  if (
-    normalized.includes("OVERSEA") ||
-    String(fallbackName).toLowerCase().includes("oversea")
-  ) {
-    return BU_META.BU_OVERSEA;
-  }
-
-  return {
-    label: fallbackName || normalized || BLANK,
-    shortLabel: fallbackName || normalized || BLANK,
-    color: "#888780",
-  };
+  const canKey = getCanonicalBuKey(code, fallbackName);
+  return (
+    CANONICAL_BU_CONFIG[canKey] || {
+      key: canKey,
+      buId: canKey.toLowerCase(),
+      label: fallbackName || canKey || BLANK,
+      shortLabel: fallbackName || canKey || BLANK,
+      color: "#888780",
+    }
+  );
 }
 
-function buildRowMap(rows = []) {
+function aggregateRowsByCanonicalBu(rowsRaw = []) {
   const map = new Map();
-  rows.forEach((item) => {
-    map.set(normalizeBuCode(item.bu_code), item);
+  CANONICAL_BU_KEYS.forEach((canKey) => {
+    const config = CANONICAL_BU_CONFIG[canKey];
+    map.set(canKey, {
+      bu_code: canKey,
+      bu_name: config.label,
+      canonical_key: canKey,
+      bu_id: config.buId,
+      receivable_total: 0,
+      commitment_overdue: 0,
+      collected_due: 0,
+      collected_in_term_cod: 0,
+      total_collected: 0,
+    });
   });
-  return map;
-}
 
-function buildAllBuCodes(todayRows = [], tomorrowRows = [], yesterdayRows = []) {
-  const codes = new Set(BU_ORDER.map((item) => normalizeBuCode(item)));
+  (rowsRaw || []).forEach((raw) => {
+    const canKey = getCanonicalBuKey(raw?.bu_code, raw?.bu_name);
+    let target = map.get(canKey);
+    if (!target) {
+      target = {
+        bu_code: canKey,
+        bu_name: raw?.bu_name || canKey,
+        canonical_key: canKey,
+        bu_id: canKey.toLowerCase(),
+        receivable_total: 0,
+        commitment_overdue: 0,
+        collected_due: 0,
+        collected_in_term_cod: 0,
+        total_collected: 0,
+      };
+      map.set(canKey, target);
+    }
 
-  todayRows.forEach((item) => codes.add(normalizeBuCode(item.bu_code)));
-  tomorrowRows.forEach((item) => codes.add(normalizeBuCode(item.bu_code)));
-  yesterdayRows.forEach((item) => codes.add(normalizeBuCode(item.bu_code)));
+    const norm = normalizeApiRow(raw);
+    target.receivable_total += norm.receivable_total;
+    target.commitment_overdue += norm.commitment_overdue;
+    target.collected_due += norm.collected_due;
+    target.collected_in_term_cod += norm.collected_in_term_cod;
+    target.total_collected += norm.total_collected;
+  });
 
-  return Array.from(codes);
-}
-
-function getComputedTotalCollected(row = {}) {
-  const due = toNumber(row?.collected_due);
-  const inTermCod = toNumber(row?.collected_in_term_cod);
-  return due + inTermCod;
+  return CANONICAL_BU_KEYS.map((canKey) => map.get(canKey)).filter(Boolean);
 }
 
 function normalizeApiRow(raw = {}) {
@@ -546,9 +631,9 @@ export function mapReceivableReportFromApi(
     ? yesterdayPayload.rows
     : [];
 
-  const todayRows = sortRowsByBuOrder(todayRowsRaw).map(normalizeApiRow);
-  const tomorrowRows = sortRowsByBuOrder(tomorrowRowsRaw).map(normalizeApiRow);
-  const yesterdayRows = sortRowsByBuOrder(yesterdayRowsRaw).map(normalizeApiRow);
+  const todayRows = aggregateRowsByCanonicalBu(todayRowsRaw);
+  const tomorrowRows = aggregateRowsByCanonicalBu(tomorrowRowsRaw);
+  const yesterdayRows = aggregateRowsByCanonicalBu(yesterdayRowsRaw);
 
   const todayTotals = sumTotalsFromRows(todayRows);
   const tomorrowTotals = sumTotalsFromRows(tomorrowRows);
@@ -560,17 +645,26 @@ export function mapReceivableReportFromApi(
   const yesterdayDate =
     yesterdayPayload?.date || options?.queryDates?.yesterday || "";
 
-  const todayMap = buildRowMap(todayRows);
-  const tomorrowMap = buildRowMap(tomorrowRows);
-  const yesterdayMap = buildRowMap(yesterdayRows);
+  const todayMap = new Map(todayRows.map((item) => [item.canonical_key, item]));
+  const tomorrowMap = new Map(tomorrowRows.map((item) => [item.canonical_key, item]));
+  const yesterdayMap = new Map(yesterdayRows.map((item) => [item.canonical_key, item]));
 
-  const allCodes = buildAllBuCodes(todayRows, tomorrowRows, yesterdayRows);
+  const allCodes = CANONICAL_BU_KEYS;
 
   const detailRows = allCodes.map((code) => {
-    const todayRow = getSafeRow(todayMap, code);
-    const meta = getBuMeta(code, todayRow.bu_name);
+    const todayRow = todayMap.get(code) || {
+      receivable_total: 0,
+      commitment_overdue: 0,
+      collected_due: 0,
+      collected_in_term_cod: 0,
+      total_collected: 0,
+    };
+    const meta = CANONICAL_BU_CONFIG[code] || getBuMeta(code);
 
     return {
+      key: code,
+      buKey: code,
+      id: meta.buId || code,
       bu: meta.label,
       receivableTotal: formatCompactMoney(todayRow.receivable_total),
       receivableTotalValue: todayRow.receivable_total,
@@ -586,6 +680,9 @@ export function mapReceivableReportFromApi(
   });
 
   const detailTotalRow = {
+    key: "TOTAL",
+    buKey: "TOTAL",
+    id: "total",
     bu: "TỔNG",
     receivableTotal: formatCompactMoney(todayTotals.receivable_total),
     receivableTotalValue: todayTotals.receivable_total,
@@ -600,10 +697,17 @@ export function mapReceivableReportFromApi(
   };
 
   const collectionChartData = allCodes.map((code) => {
-    const todayRow = getSafeRow(todayMap, code);
-    const meta = getBuMeta(code, todayRow.bu_name);
+    const todayRow = todayMap.get(code) || {
+      collected_due: 0,
+      collected_in_term_cod: 0,
+      total_collected: 0,
+    };
+    const meta = CANONICAL_BU_CONFIG[code] || getBuMeta(code);
 
     return {
+      key: code,
+      buKey: code,
+      id: meta.buId || code,
       name: meta.shortLabel || meta.label,
       fullName: meta.label,
       collectedDue: todayRow.collected_due,
@@ -619,10 +723,13 @@ export function mapReceivableReportFromApi(
 
   const receivableRateRows = allCodes
     .map((code) => {
-      const tomorrowRow = getSafeRow(tomorrowMap, code);
-      const meta = getBuMeta(code, tomorrowRow.bu_name);
+      const tomorrowRow = tomorrowMap.get(code) || { receivable_total: 0 };
+      const meta = CANONICAL_BU_CONFIG[code] || getBuMeta(code);
 
       return {
+        key: code,
+        buKey: code,
+        id: meta.buId || code,
         name: meta.label,
         value: tomorrowRow.receivable_total,
         valueText: formatCompactMoney(tomorrowRow.receivable_total),
@@ -636,6 +743,9 @@ export function mapReceivableReportFromApi(
     .sort((a, b) => b.value - a.value);
 
   const receivableDonutData = receivableRateRows.map((item) => ({
+    key: item.buKey || item.id || item.name,
+    buKey: item.buKey,
+    id: item.id,
     name: item.name,
     value: item.value,
     valueText: item.valueText,
@@ -643,10 +753,10 @@ export function mapReceivableReportFromApi(
   }));
 
   const commitmentRows = allCodes.map((code) => {
-    const todayRow = getSafeRow(todayMap, code);
-    const tomorrowRow = getSafeRow(tomorrowMap, code);
-    const yesterdayRow = getSafeRow(yesterdayMap, code);
-    const meta = getBuMeta(code, tomorrowRow.bu_name || todayRow.bu_name);
+    const todayRow = todayMap.get(code) || { total_collected: 0, commitment_overdue: 0 };
+    const tomorrowRow = tomorrowMap.get(code) || { receivable_total: 0, commitment_overdue: 0 };
+    const yesterdayRow = yesterdayMap.get(code) || { total_collected: 0 };
+    const meta = CANONICAL_BU_CONFIG[code] || getBuMeta(code);
 
     const commitmentRate =
       tomorrowRow.receivable_total > 0
@@ -658,11 +768,19 @@ export function mapReceivableReportFromApi(
     const vsPrevDelta = todayCollected - yesterdayCollected;
 
     return {
+      key: code,
+      buKey: code,
+      id: meta.buId || code,
       bu: meta.label,
       receivableTotal: formatCompactMoney(tomorrowRow.receivable_total),
       receivableTotalValue: tomorrowRow.receivable_total,
       commitmentOverdue: formatCompactMoney(tomorrowRow.commitment_overdue),
       commitmentOverdueValue: tomorrowRow.commitment_overdue,
+      commitToday: formatCompactMoney(todayRow.commitment_overdue),
+      collectedToday: formatCompactMoney(todayRow.total_collected),
+      rate: formatPercent(commitmentRate),
+      rateTone: commitmentRate >= 100 ? "good" : commitmentRate >= 70 ? "normal" : "bad",
+      commitTomorrow: formatCompactMoney(tomorrowRow.commitment_overdue),
       commitmentRate: formatPercent(commitmentRate),
       commitmentRateRaw: commitmentRate,
       vsPrev:
@@ -686,11 +804,19 @@ export function mapReceivableReportFromApi(
   const totalVsPrev = todayTotals.total_collected - yesterdayTotals.total_collected;
 
   const commitmentTotalRow = {
+    key: "TOTAL",
+    buKey: "TOTAL",
+    id: "total",
     bu: "TỔNG",
     receivableTotal: formatCompactMoney(tomorrowTotals.receivable_total),
     receivableTotalValue: tomorrowTotals.receivable_total,
     commitmentOverdue: formatCompactMoney(tomorrowTotals.commitment_overdue),
     commitmentOverdueValue: tomorrowTotals.commitment_overdue,
+    commitToday: formatCompactMoney(todayTotals.commitment_overdue),
+    collectedToday: formatCompactMoney(todayTotals.total_collected),
+    rate: formatPercent(commitmentTotalRate),
+    rateTone: commitmentTotalRate >= 100 ? "good" : commitmentTotalRate >= 70 ? "normal" : "bad",
+    commitTomorrow: formatCompactMoney(tomorrowTotals.commitment_overdue),
     commitmentRate: formatPercent(commitmentTotalRate),
     commitmentRateRaw: commitmentTotalRate,
     vsPrev:

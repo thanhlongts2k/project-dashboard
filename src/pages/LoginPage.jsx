@@ -275,7 +275,12 @@ export default function LoginPage({ onLoginSuccess }) {
       <div className="login-shell single">
         <div className="login-left compact">
           <div className="login-brand compact-brand">
-            <div className="login-logo">HP</div>
+            <img
+              src="/HPC-Icon.png"
+              alt="HPC Logo"
+              className="login-header-icon"
+              style={{ width: 44, height: 44, objectFit: "contain", borderRadius: 10 }}
+            />
             <div>
               <div className="login-brand-sub">Internal Workspace</div>
               <h1 className="login-title small">Đăng nhập hệ thống</h1>

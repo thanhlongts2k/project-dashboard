@@ -3,6 +3,38 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.26] - 2026-08-19 (Bugfix: Canonical BU Deduplication on /receivables & Unique React Keys)
+
+### Fixed
+- **[Deduplication & Data Integrity] Khắc Phục Triệt Để Trùng Lặp BU & Duplicate Key Tại Trang Thu Nợ (`/receivables`):**
+  - **Root Cause:** Khi API trả về các mã BU alias (như `ĐTCT` / `DTCT` / `BU_DTCT`, `OVERSEA` / `BU_OVERSEA`), mảng gộp `buildAllBuCodes` gom cả hai mã vào danh sách dẫn đến 10 BU thay vì đúng 8 BU thương mại và sinh lỗi React Duplicate Key.
+  - **Chuẩn hóa Canonical BU Aggregation (`src/utils/receivableMapper.js`):**
+    - Thiết lập chuẩn `CANONICAL_BU_KEYS` cho 8 BU thương mại: `BU_ELEVATOR`, `BU_IBIZ_PREMIUM`, `BU_IBIZ_VALUE`, `BU_ECO`, `BU_AGRITECH`, `BU_MANUFACTURING`, `BU_DTCT`, `BU_OVERSEA`.
+    - Thêm hàm `aggregateRowsByCanonicalBu()` gom nhóm và cộng dồn dữ liệu theo canonical key / buId, đảm bảo mảng kết quả luôn có đúng chuẩn 8 BU thương mại và không bị sót số tiền.
+    - Cung cấp `key`, `buKey`, `id` duy nhất và an toàn cho tất cả các đối tượng dữ liệu (`detailRows`, `collectionChartData`, `receivableRateRows`, `receivableDonutData`, `commitmentRows`).
+  - **Chuẩn hóa thuộc tính `key` trong Composable Components:**
+    - Cập nhật `ReceivableDetailTable.jsx`, `ReceivableCharts.jsx`, `ReceivableCommitmentTable.jsx` sử dụng `key={row.buKey || row.id || row.key || `${row.bu}-${index}`}`.
+    - Khôi phục hàm khởi tạo `buildEmptyKpi()` ngăn chặn lỗi Runtime ReferenceError lúc khởi động DashboardProvider.
+    - Triệt tiêu 100% các cảnh báo đỏ và lỗi trắng màn hình trên DevTools Console.
+- **[Recharts Optimization] Loại Bỏ Toàn Bộ Cảnh Báo "width(-1)/height(-1)" Của Recharts:**
+  - Bổ sung trực tiếp `minWidth={0}` và `minHeight={...}` cho tất cả `ResponsiveContainer` trong toàn bộ project (`ReceivableCharts.jsx`, `DailyLineChart.jsx`, `DetailMetricCompareChart.jsx`, `ProgressChart.jsx`, `InventoryCharts.jsx`).
+  - Đảm bảo thẻ container bọc ngoài luôn có kích thước khởi tạo an toàn, loại bỏ 100% cảnh báo vàng trên DevTools Console.
+- **Files đã sửa:** `src/utils/receivableMapper.js`, `src/components/receivable/ReceivableDetailTable.jsx`, `src/components/receivable/ReceivableCharts.jsx`, `src/components/receivable/ReceivableCommitmentTable.jsx`, `src/components/DailyLineChart.jsx`, `src/components/DetailMetricCompareChart.jsx`, `src/components/ProgressChart.jsx`, `src/components/inventory/InventoryCharts.jsx`.
+
+## [1.0.25] - 2026-08-19 (Architectural Fix: Fixed Topbar Header, Safe Overflow-x Clip Standard & HPC Login Logo)
+
+### Fixed & Enhanced
+- **[UI/UX] Khắc Phục Triệt Để Lỗi Topbar Bị Trôi Khi Cuộn Trên Mobile (Sticky Broken by Overflow Root Cause):**
+  - **Root Cause:** Thuộc tính `position: sticky` phụ thuộc vào ancestor overflow. Khi thêm `overflow-x: hidden` lên `html, body, #root`, browser vô hiệu hóa sticky positioning.
+  - **Giải pháp chuyển sang `position: fixed`:**
+    - Cấu hình `.topbar-header`: `position: fixed !important; top: 0; left: 0; right: 0; width: 100%; height: 56px; z-index: 100 !important; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(8px); border-bottom: 1px solid #e2e8f0;`.
+    - Bù chiều cao cho nội dung phía dưới bằng `padding-top: 56px` trên container `<main className="main-content">` cho cả Mobile và Desktop.
+  - **Nâng cấp `overflow-x: clip`:**
+    - Thay thế `overflow-x: hidden` bằng `overflow-x: clip` trên `html, body, #root` và `.dash` — chặn toác màn hình (horizontal blowout) an toàn mà không phá vỡ formatting / scroll context.
+- **[Branding] Thay Thế Badge "HP" Đen Bằng Icon Logo Chính Thức `/HPC-Icon.png`:**
+  - Thay thế khối div chữ "HP" nền đen cũ bằng thẻ `<img>` `/HPC-Icon.png` sắc nét, bo góc 10px, hiển thị đồng bộ với layout Header nội bộ.
+- **Files đã sửa:** `src/layouts/DashboardLayout.jsx`, `src/styles/dashboard.css`, `src/pages/LoginPage.jsx`, `src/styles/login.css`.
+
 ## [1.0.24] - 2026-08-19 (Hotfix: Xóa Nút Google Login Bị Nhân Đôi — Duplicate Button Bug)
 
 ### Fixed
