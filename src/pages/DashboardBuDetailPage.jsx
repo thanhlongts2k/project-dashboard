@@ -74,7 +74,7 @@ export default function DashboardBuDetailPage({
   const subtitle = `Ngày báo cáo: ${data?.header?.reportDate || "-"} | ${rangeLabel} | Phụ trách: ${safeDetail.owner || "-"}${safeDetail.subInfo ? ` (${safeDetail.subInfo})` : ""}`;
 
   return (
-    <div className="dash" ref={dashRef} style={{ padding: "0 16px" }}>
+    <div className="dash" ref={dashRef}>
       {/* TẦNG 2: Unified Sub-Header with Inline BU Selector */}
       <UnifiedSubHeader
         buSelector={{

@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+// useEffect removed — scroll lock handled by useBodyScrollLock hook
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../context/AuthContext";
 import Can from "../auth/Can";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 export default function MobileNavDrawer({
   isOpen,
@@ -15,21 +16,17 @@ export default function MobileNavDrawer({
 }) {
   const { user, role, switchRole, logout, canAccessTab } = useAuth();
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+  // Khoá cuộn nền trang khi drawer mở (iOS Safari safe với position:fixed)
+  useBodyScrollLock(isOpen);
+
 
   if (!isOpen) return null;
 
   const displayName = user?.displayName || user?.full_name || user?.username || "User";
   const avatar = displayName.trim().charAt(0).toUpperCase() || "U";
+  const userEmail = user?.email || (user?.username && user?.username.includes("@") ? user?.username : "") || "";
+  const employeeCode = user?.employee_code || "";
+  const buName = user?.bu_name || user?.bu_code || "";
 
   const getRoleBadgeStyle = (r) => {
     const norm = String(r || "").toUpperCase();
@@ -72,8 +69,8 @@ export default function MobileNavDrawer({
         <div className="mobile-drawer-body">
           {/* KHU VỰC 1: User Profile & RBAC Card */}
           <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#185fa5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#185fa5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
                 {avatar}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -85,6 +82,42 @@ export default function MobileNavDrawer({
                 </div>
               </div>
             </div>
+
+            {/* Highlighted Email Badge on Mobile */}
+            {userEmail && (
+              <div
+                style={{
+                  background: "#ffffff",
+                  color: "#0f172a",
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 11,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  margin: "6px 0 8px 0",
+                  border: "1px solid #cbd5e1",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={userEmail}
+              >
+                <span style={{ fontSize: 12 }}>✉️</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {userEmail}
+                </span>
+              </div>
+            )}
+
+            {(employeeCode || buName) && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 8px", fontSize: 11, color: "#64748b", marginBottom: 8 }}>
+                {employeeCode && <span>Mã NV: <strong style={{ color: "#334155" }}>{employeeCode}</strong></span>}
+                {buName && <span>Đơn vị: <strong style={{ color: "#334155" }}>{buName}</strong></span>}
+              </div>
+            )}
 
             {/* Quick Role Switcher - Chỉ hiển thị trong môi trường Development */}
             {import.meta.env.DEV && (

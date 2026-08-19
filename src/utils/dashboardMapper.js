@@ -18,9 +18,9 @@ function displayNameFromCode(code = "", fallbackName = "") {
     BU_ECO: "ECO",
     BU_AGRITECH: "AgriTech",
     BU_MANUFACTURING: "Sản xuất - Nhà máy",
-    BU_DTCT: "Đối tác chiến lược / ĐTCT",
-    ĐTCT: "Đối tác chiến lược / ĐTCT",
-    DTCT: "Đối tác chiến lược / ĐTCT",
+    BU_DTCT: "Đầu tư cho thuê / ĐTCT",
+    ĐTCT: "Đầu tư cho thuê / ĐTCT",
+    DTCT: "Đầu tư cho thuê / ĐTCT",
     OVERSEA: "Oversea",
   };
 
@@ -61,7 +61,7 @@ function buIdFromCode(code = "") {
   if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
   if (raw.includes("eco") || raw.includes("agritech")) return "eco";
   if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";
-  if (raw.includes("dtct") || raw.includes("đtct") || raw.includes("cho thuê") || raw.includes("đối tác")) return "dtct";
+  if (raw.includes("dtct") || raw.includes("đtct") || raw.includes("cho thuê") || raw.includes("đầu tư")) return "dtct";
   if (raw.includes("oversea") || raw.includes("campuchia")) return "oversea";
   return null;
 }

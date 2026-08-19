@@ -63,7 +63,7 @@ export default function ReceivableReportPage({
   const subtitle = `Ngày báo cáo: ${header.todayLabel || BLANK} | ${header.scopeLabel || "Bao gồm HISA"} | ${header.buLabel || "Tất cả BU"}`;
 
   return (
-    <div className="dash" ref={dashRef} style={{ padding: "0 16px" }}>
+    <div className="dash" ref={dashRef}>
       {/* TẦNG 2: Unified Sub-Header */}
       <UnifiedSubHeader
         title={header.title || "Thu Nợ Khách Hàng Trọng Yếu"}
@@ -86,7 +86,9 @@ export default function ReceivableReportPage({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "10px 16px",
+            flexWrap: "wrap",
+            gap: "10px",
+            padding: "10px 14px",
             marginBottom: "12px",
             borderRadius: "8px",
             background: "#eff6ff",
@@ -96,7 +98,7 @@ export default function ReceivableReportPage({
             boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: "1 1 260px" }}>
             <span style={{ fontSize: "16px" }}>ℹ️</span>
             <span>
               Ngày <strong>{formatDisplayDate(selectedDate)}</strong> chưa có phát sinh giao dịch thu tiền mới trong sổ kế toán (Dữ liệu chốt gần nhất: <strong>{formatDisplayDate(data.latestAvailableDate)}</strong>).
@@ -106,7 +108,7 @@ export default function ReceivableReportPage({
             type="button"
             onClick={() => onChangeDate(data.latestAvailableDate)}
             style={{
-              padding: "5px 12px",
+              padding: "6px 12px",
               background: "#2563eb",
               color: "#fff",
               border: "none",
@@ -117,6 +119,7 @@ export default function ReceivableReportPage({
               display: "flex",
               alignItems: "center",
               gap: "4px",
+              whiteSpace: "nowrap",
             }}
           >
             <span>👉 Xem ngày {formatDisplayDate(data.latestAvailableDate)}</span>

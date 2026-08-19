@@ -3,6 +3,114 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.24] - 2026-08-19 (Hotfix: Xóa Nút Google Login Bị Nhân Đôi — Duplicate Button Bug)
+
+### Fixed
+- **[HOTFIX] Sửa Lỗi Nhân Đôi Nút Google Sign-In (`LoginPage.jsx`, `login.css`):**
+  - **Root Cause 1 (CSS):** `.google-btn-wrapper` có `border: 1px solid #e2e8f0` và `box-shadow` tạo ra một khung viền hiển thị như "nút thứ 2" giả mạo đè lên iframe Google → Đã XÓA hoàn toàn class `.google-btn-wrapper` khỏi CSS.
+  - **Root Cause 2 (JSX):** Cả `google-btn-container` wrapper (luôn hiện) lẫn `google-custom-btn` fallback (hiện khi `!gsiReady`) đang cùng tồn tại trong DOM → Đã đổi sang logic `{gsiReady ? <container/> : <fallback/>}` mutually exclusive.
+  - **Root Cause 3 (Timing):** `renderButton` gọi ngay trước `setGsiReady(true)` nên container chưa hiện trong DOM → Đổi sang: `setGsiReady(true)` trước, sau đó `setTimeout(0)` để DOM flush rồi mới `renderButton`.
+  - **Kết quả:** Màn hình Login chỉ còn đúng 1 nút Google Sign-In duy nhất, tròn trịa (shape pill), căn giữa, full-width đồng bộ với form.
+
+## [1.0.23] - 2026-08-19 (UX: Body Scroll Lock cho tất cả Modal & Nâng cấp Nút Google Login)
+
+### Fixed & Changed
+- **[UX] Khoá Cuộn Nền Trang Khi Modal Mở (`useBodyScrollLock`, `CustomerDebtDetailModal`, `EmailConfigModal`, `MobileNavDrawer`):**
+  - Tạo custom hook `src/hooks/useBodyScrollLock.js` dùng kỹ thuật `position: fixed + top: -scrollY` — tương thích iOS Safari hoàn hảo, khôi phục vị trí cuộn khi đóng modal.
+  - Áp dụng đồng nhất cho 3 modal: `CustomerDebtDetailModal`, `EmailConfigModal`, `MobileNavDrawer`.
+  - Overlay tất cả modal: `overflowY: auto; overscrollBehavior: contain` — nội dung dài cuộn bên trong modal, nền web đứng im tuyệt đối.
+- **[UI] Nâng Cấp Nút Google Login (`LoginPage.jsx`, `login.css`):**
+  - `renderButton shape: "pill"` — Google tự bo góc tròn sang trọng đồng bộ với card form.
+  - Thêm `.google-btn-wrapper`: `border-radius: 999px; overflow: hidden` — clip iframe GSI sandboxed để tạo viền bo góc nhất quán.
+  - `.google-custom-btn` (fallback): `height: 46px; border-radius: 999px; color: #334155; font-weight: 600` — đồng bộ 100% với thiết kế input và nút đăng nhập.
+  - Hover effect nhẹ nhàng: `background: #f8fafc; border-color: #cbd5e1; box-shadow nhẹ`.
+- **Files đã sửa:** `useBodyScrollLock.js` (NEW), `CustomerDebtDetailModal.jsx`, `EmailConfigModal.jsx`, `MobileNavDrawer.jsx`, `LoginPage.jsx`, `login.css`.
+
+## [1.0.22] - 2026-08-19 (Critical Fix: Horizontal Overflow Blowout on iPhone — Multi-Layer DOM Viewport Guard)
+
+### Fixed
+- **[CRITICAL] Triệt Tiêu Lỗi Toác Màn Hình (Horizontal Overflow Blowout) Trên iPhone 390–430px:**
+  - **Root Cause 1 — Recharts SVG không bị chặn:** Thêm `min-width: 0; overflow: hidden; box-sizing: border-box` vào `.chart-wrap`, `.inventory-chart-wrap`, `.receivable-chart-wrap`. Thêm `debounce={50}` vào 100% `ResponsiveContainer` trong `DailyLineChart`, `DetailMetricCompareChart`, `ProgressChart`, `InventoryCharts`, `ReceivableCharts`.
+  - **Root Cause 2 — Grid children không có min-width: 0:** Thêm `.chart-grid > *` và `.detail-split-grid > *` với `min-width: 0; overflow: hidden` — đây là rule CSS tối quan trọng cho CSS Grid tránh blowout.
+  - **Root Cause 3 — `.card` không có max-width:** Thêm `min-width: 0; max-width: 100%; box-sizing: border-box` vào class `.card` toàn cục.
+  - **Root Cause 4 — Thiếu Global Viewport Guard:** Thêm `max-width: 100vw; overflow-x: hidden` vào `html, body, #root` — đây là lớp bảo vệ cuối cùng ngăn thanh cuộn ngang trang xuất hiện trên iPhone SE/12/13/14/15/16 Pro Max.
+  - **Recharts XAxis cải thiện:** `interval="preserveStartEnd"` + `YAxis width={48}` + `margin right: 10, left: -15` để tick text không chạy ra ngoài biên trên màn hình hẹp.
+  - **Mobile 768px media query bổ sung:** Collapse toàn bộ `.chart-grid`, `.table-grid`, `.detail-split-grid`, `.detail-grid` về `grid-template-columns: 1fr`; giảm `.chart-wrap height: 220px`.
+  - **`detail-mini-table`:** Wrap `overflow-x: auto; -webkit-overflow-scrolling: touch` cho phép vuốt ngang nội bộ mà không đẩy layout trang.
+- **Files đã sửa:** `dashboard.css`, `DailyLineChart.jsx`, `DetailMetricCompareChart.jsx`, `ProgressChart.jsx`, `InventoryCharts.jsx`, `ReceivableCharts.jsx`.
+
+## [1.0.21] - 2026-08-19 (Lead Frontend Architect: Zero-Sledgehammer Responsive Design System & 42px Touch-Target Standard)
+
+### Fixed & Enhanced
+- **Loại Bỏ Hoàn Toàn CSS Sledgehammer Overrides (`dashboard.css`, `CustomSelect.jsx`, `DateRangePicker.jsx`):**
+  - Xóa bỏ triệt để các selector phá hoại `.parent > *` có chứa `!important` ép `height`/`padding`, trả toàn bộ quyền kiểm soát kích thước Box-Model về cho chính component nội bộ.
+  - Xóa file demo `src/App.css` và ngắt import thừa trong `App.jsx`.
+- **Chuẩn Hóa Design System Vùng Chạm Mobile (Apple HIG & Material 42px Standard):**
+  - Nút bấm (`.btn`, `.otb-icon-btn`, `.otb-nav-btn`, `.link-btn`): Desktop `min-height: 38px`, Mobile `min-height: 42px`, `padding: 10px 16px`, `border-radius: 8px`, chống co ép trên mọi kích thước màn hình (360px, 375px, 390px, 412px).
+  - Dropdown & DatePicker (`.custom-select-trigger`, `.date-picker-trigger`, `select.filter-sel`): Desktop `min-height: 38px`, Mobile `min-height: 42px`, `padding: 10px 14px`, `border-radius: 8px`.
+  - Ô nhập liệu (`input[type="text"]`, `input[type="password"]`, `input[type="email"]`): Mobile `min-height: 42px`, `font-size: 14px` chống iOS auto-zoom khi focus.
+- **Đồng Bộ Hoàn Chỉnh Trên Cả 5 Phân Hệ:**
+  - Chuẩn hóa layout Sub-Header, bộ lọc Dropdown, DatePicker và nút bấm hiển thị đầy đặn, tròn trịa, không bị bóp méo hay xẹp trên toàn bộ các trang (`/dashboard`, `/bu/:buKey`, `/inventory`, `/receivables`, `/aging`, `/login`).
+
+## [1.0.20] - 2026-08-19 (Terminology Audit: Standardize ĐTCT to "Đầu tư cho thuê")
+
+### Fixed & Enhanced
+- **Chuẩn Hóa Tận Gốc Tên Gọi Khối ĐTCT (`dashboardMapper.js`, `detailMapper.js`, `AuthContext.jsx`):**
+  - Thay thế triệt để cụm từ cũ *"Đối tác chiến lược"* thành **"Đầu tư cho thuê"** / **"Đầu tư cho thuê / ĐTCT"** trên toàn bộ hệ thống mappers và UI context.
+  - Tối ưu bộ từ khóa nhận diện BU `dtct`: tập trung chính xác vào `['đtct', 'dtct', 'cho thuê', 'đầu tư']`.
+
+## [1.0.19] - 2026-08-19 (Fix: Eliminate SubHeader Ghost Whitespace & Centralize Mobile Flexbox)
+
+### Fixed & Enhanced
+- **Triệt Tiêu Khoảng Trắng Lớn (Ghost Whitespace) Trên Mobile (`dashboard.css`, `UnifiedSubHeader.jsx`):**
+  - Xóa bỏ toàn bộ các khai báo CSS ghi đè phân mảnh/xung đột cũ trong media queries aging (`@media (max-width: 1023px)`).
+  - Tái cấu trúc chuẩn hóa flexbox trung tâm cho `.unified-sub-header`, `.unified-sub-header-left` và `.unified-sub-header-actions` với `height: auto; min-height: unset;`.
+  - Trên mobile (< 768px): Tự động xếp chồng dọc liền mạch (`flex-direction: column; gap: 10px; padding: 0 0 10px 0; margin-bottom: 14px;`), bộ lọc ngày và các nút chức năng áp sát ngay bên dưới tiêu đề trang, loại bỏ 100% khoảng trống thừa.
+
+## [1.0.18] - 2026-08-19 (Lead Frontend Architect: DOM Scroll Context Fix, Comprehensive Mobile /receivables & Cross-Page Audit)
+
+### Fixed & Enhanced
+- **Xử Lý Triệt Để Sticky Topbar Scroll Context (`dashboard.css`, `DashboardLayout.jsx`):**
+  - Loại bỏ hoàn toàn `overflow-x: hidden` trên `html`, `body`, `#root` — khôi phục ngữ cảnh cuộn viewport tự nhiên của trình duyệt, giúp `position: sticky; top: 0; z-index: 50;` dính cố định 100% trên iOS Safari & Android Chrome.
+- **Tái Cấu Trúc Toàn Diện Responsive Trang Thu Nợ (`/receivables`):**
+  - `ReceivableKpiGrid.jsx`: Chuyển sang Grid auto-fit linh hoạt `repeat(auto-fit, minmax(220px, 1fr))` chống vỡ thẻ KPI trên màn hình nhỏ.
+  - `ReceivableCharts.jsx`: Bọc container biểu đồ Recharts bằng `min-w-0 w-full` và cấu hình responsive grid `repeat(auto-fit, minmax(min(100%, 420px), 1fr))` tự động xếp chồng dọc an toàn trên mobile.
+  - `ReceivableDetailTable.jsx` & `ReceivableCommitmentTable.jsx`: Bọc toàn bộ bảng bằng `<div className="table-wrap">` (`overflow-x: auto; -webkit-overflow-scrolling: touch;`) với `min-width: 650px` cho thẻ table, cho phép vuốt ngang mượt mà mà không tràn lề trang.
+- **Đồng Bộ Tính Nhất Quán & Responsive SubHeader Toàn Bộ Các Trang:**
+  - `UnifiedSubHeader.jsx` & `dashboard.css`: Bố cục flex-wrap thông minh, tự động xếp chồng controls trên mobile mà không làm vỡ giao diện.
+  - Loại bỏ các inline padding cứng ở thẻ bọc `.dash` trên toàn bộ các trang (`/dashboard`, `/bu/:buKey`, `/aging`, `/inventory`, `/receivables`), đồng bộ thống nhất theo hệ thống CSS trung tâm.
+
+## [1.0.17] - 2026-08-19 (Mobile & UI/UX Polish: Sticky Topbar, Mobile Login Responsiveness & Highlighted Email Badge)
+
+### Fixed & Enhanced
+- **Cố Định Topbar Trên Mobile (`DashboardLayout.jsx`):**
+  - Cấu hình Topbar sticky trên cùng màn hình (`position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px)`) giữ cố định Logo và nút Hamburger khi cuộn nội dung.
+- **Tối Ưu Giao Diện Màn Hình Đăng Nhập Trên Mobile (`LoginPage.jsx`, `login.css`):**
+  - Giới hạn card login `max-width: 420px; width: 100%`, thêm media query `< 480px` co giãn mượt mà, chống tràn ngang (overflow-x).
+  - Tự động tính toán độ rộng nút Google Sign-In theo kích thước màn hình thực tế.
+- **Làm Nổi Bật Email Tài Khoản Dạng Pill Badge (`UserMenu.jsx`, `MobileNavDrawer.jsx`):**
+  - Desktop: Hiển thị email trong chip/badge nền `#f1f5f9` với icon ✉️ dưới họ tên.
+  - Mobile: Thêm email badge nổi bật trong User Profile card của Mobile Drawer, hiển thị đầy đủ thông tin Mã NV và Đơn vị.
+
+## [1.0.16] - 2026-08-19 (UI/UX Polish: Google Button Styling, User Menu Email & Chart Layout Optimization)
+
+### Fixed & Enhanced
+- **Tối Ưu Nút Đăng Nhập Google (`LoginPage.jsx`, `login.css`):**
+  - Căn giữa container `#google-signin-btn-container`, đồng bộ kích thước và khoảng cách chuyên nghiệp với form đăng nhập.
+- **Bổ Sung Email Trong Dropdown UserMenu (`UserMenu.jsx`):**
+  - Hiển thị email tài khoản (`userEmail`) ngay dưới họ tên người dùng, xử lý `truncate` chống tràn dòng.
+- **Khắc Phục Vỡ Layout & Chồng Chữ Biểu Đồ Thu Nợ (`ReceivableCharts.jsx`, `receivableMapper.js`):**
+  - Chuyển sang Grid layout thông thoáng `repeat(auto-fit, minmax(440px, 1fr))` với `min-height: 380px`.
+  - Rút gọn nhãn trục X biểu đồ cột (`Elevator`, `Premium`, `Value`, `Eco`, `Agritech`, `SX`, `ĐTCT`, `Oversea`) và hiển thị đầy đủ tên BU trong Tooltip.
+
+## [1.0.15] - 2026-08-19 (Fix: Google Identity FedCM Bypass & Standard Popup Button Render)
+
+### Fixed & Enhanced
+- **Tối Ưu Cơ Chế Đăng Nhập Google Identity (`LoginPage.jsx`):**
+  - Cấu hình `use_fedcm_for_prompt: false`, `ux_mode: 'popup'`, `auto_select: false` ngăn chặn hoàn toàn lỗi FedCM NetworkError trên trình duyệt Chrome/Edge mới.
+  - Sử dụng `google.accounts.id.renderButton` hiển thị nút đăng nhập Google popup tiêu chuẩn trực tiếp trên giao diện.
+  - Bọc try/catch xử lý lỗi One Tap và hiển thị thông báo hướng dẫn thân thiện khi Google script bị chặn.
+
 ## [1.0.14] - 2026-08-19 (Feature: Key Accounts Debt Collection Pipeline Optimization & Smart Date Navigation)
 
 ### Fixed & Enhanced

@@ -15,6 +15,7 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
   const avatar = displayName.trim().charAt(0).toUpperCase() || "U";
   const employeeCode = user?.employee_code || "";
   const buName = user?.bu_name || user?.bu_code || "";
+  const userEmail = user?.email || (user?.username && user?.username.includes("@") ? user?.username : "") || "";
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -104,15 +105,44 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
             padding: "8px 0",
           }}
         >
-          <div style={{ padding: "8px 14px", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{displayName}</div>
-            {employeeCode && (
-              <div style={{ fontSize: 11, color: "#64748b" }}>Mã NV: <strong>{employeeCode}</strong></div>
+          <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", lineHeight: 1.3 }}>{displayName}</div>
+            {userEmail && (
+              <div
+                style={{
+                  background: "#f1f5f9",
+                  color: "#0f172a",
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 11,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  margin: "5px 0 8px 0",
+                  border: "1px solid #e2e8f0",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
+                }}
+                title={userEmail}
+              >
+                <span style={{ fontSize: 12 }}>✉️</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {userEmail}
+                </span>
+              </div>
             )}
-            {buName && (
-              <div style={{ fontSize: 11, color: "#64748b" }}>Đơn vị: <strong>{buName}</strong></div>
-            )}
-            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Vai trò: <strong>{badgeStyle.text}</strong></div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 8px" }}>
+              {employeeCode && (
+                <span style={{ fontSize: 11, color: "#64748b" }}>Mã NV: <strong style={{ color: "#334155" }}>{employeeCode}</strong></span>
+              )}
+              {buName && (
+                <span style={{ fontSize: 11, color: "#64748b" }}>Đơn vị: <strong style={{ color: "#334155" }}>{buName}</strong></span>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+              Vai trò: <strong style={{ color: badgeStyle.color }}>{badgeStyle.text}</strong>
+            </div>
           </div>
 
           {/* Quick Role Switcher for Dev / Testing - CHỈ HIỂN THỊ TRONG MÔI TRƯỜNG DEV */}

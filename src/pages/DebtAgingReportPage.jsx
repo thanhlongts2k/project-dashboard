@@ -174,7 +174,7 @@ export default function DebtAgingReportPage() {
     : `Ngày báo cáo: ${formatDateDisplay(reportDate)} (Kỳ ${period}) | ${currentBu?.name || agingData.buInfo?.name || selectedBu} | Trưởng BU: ${currentBu?.manager_name || "Chưa gán"}`;
 
   return (
-    <div className="dash" ref={dashRef} style={{ padding: "0 16px" }}>
+    <div className="dash" ref={dashRef}>
       <UnifiedSubHeader
         title="Báo Cáo Tổng Hợp Tuổi Nợ" subtitle={pageSubtitle}
         datePickerProps={{
@@ -183,9 +183,9 @@ export default function DebtAgingReportPage() {
         }}
         secondaryFilter={
           <>
-            <CustomSelect value={selectedBu} onChange={handleBuChange} options={buSelectOptions} disabled={isBuLocked} placeholder="Chọn BU" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 200 }} />
+            <CustomSelect value={selectedBu} onChange={handleBuChange} options={buSelectOptions} disabled={isBuLocked} placeholder="Chọn BU" triggerStyle={{ fontSize: 13, minWidth: 180 }} />
             {selectedBu !== "ALL" && (
-              <CustomSelect value={selectedStaff} onChange={handleStaffChange} options={staffOptions} disabled={isStaffInCurrentBu} placeholder="Chọn nhân sự" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 220 }} />
+              <CustomSelect value={selectedStaff} onChange={handleStaffChange} options={staffOptions} disabled={isStaffInCurrentBu} placeholder="Chọn nhân sự" triggerStyle={{ fontSize: 13, minWidth: 200 }} />
             )}
           </>
         }

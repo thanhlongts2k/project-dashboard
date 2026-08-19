@@ -65,7 +65,7 @@ export default function InventoryReportPage({
   const subtitle = `Ngày báo cáo: ${header.reportDate || BLANK} | ${header.monthLabel || rangeLabel} | ${header.warehouseCountLabel || "Tất cả kho"}`;
 
   return (
-    <div className="dash" ref={dashRef} style={{ padding: "0 16px" }}>
+    <div className="dash" ref={dashRef}>
       {/* TẦNG 2: Unified Sub-Header */}
       <UnifiedSubHeader
         title={header.title || "Báo Cáo Tồn Kho"}

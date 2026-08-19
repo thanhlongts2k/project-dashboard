@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import {
   getEmailConfig,
   saveEmailConfig,
@@ -22,9 +23,12 @@ const overlayStyle = {
   background: "rgba(15, 23, 42, 0.45)",
   zIndex: 1200,
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   justifyContent: "center",
   padding: 16,
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  WebkitOverflowScrolling: "touch",
 };
 
 const cardStyle = {
@@ -62,6 +66,9 @@ const fieldStyle = { marginBottom: 14 };
 export default function EmailConfigModal({ open, isOpen, onClose }) {
   const isVisible = open !== undefined ? open : isOpen !== undefined ? isOpen : true;
   const [form, setForm] = useState(getEmailConfig);
+
+  // Khoá cuộn nền trang khi modal đang mở
+  useBodyScrollLock(isVisible);
 
   useEffect(() => {
     if (isVisible) {

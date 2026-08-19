@@ -33,21 +33,9 @@ export default function UnifiedSubHeader({
   }));
 
   return (
-    <div
-      className="unified-sub-header"
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 12,
-        padding: "12px 0 16px 0",
-        marginBottom: 12,
-        borderBottom: "1px solid var(--border-card, #e2e8f0)",
-      }}
-    >
+    <div className="unified-sub-header">
       {/* LEFT: Title & Subtitle or Inline BU Selector */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 260 }}>
+      <div className="unified-sub-header-left">
         {buSelector ? (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h1
@@ -68,14 +56,12 @@ export default function UnifiedSubHeader({
                 options={buOptions}
                 disabled={isBuLocked}
                 triggerStyle={{
-                  height: 34,
                   fontSize: 14,
                   fontWeight: 700,
                   color: isBuLocked ? "#475569" : "var(--color-primary, #185fa5)",
                   background: isBuLocked ? "#f1f5f9" : "var(--color-primary-light, #f0f7ff)",
                   border: isBuLocked ? "1px solid #cbd5e1" : "1px solid var(--color-primary-border, #bfdbfe)",
                   borderRadius: 8,
-                  padding: "0 12px",
                 }}
               />
             </h1>
@@ -114,15 +100,7 @@ export default function UnifiedSubHeader({
       </div>
 
       {/* RIGHT: Compact Filter & Action Controls on the same row */}
-      <div
-        className="unified-sub-header-actions"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="unified-sub-header-actions">
         {/* Date Picker */}
         {datePickerProps && <DateRangePicker {...datePickerProps} />}
 

@@ -43,19 +43,21 @@ export default function ReceivableDetailTable({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "3fr 2fr",
-        gap: 10,
-        marginBottom: 10,
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 460px), 1fr))",
+        gap: 14,
+        marginBottom: 14,
+        width: "100%",
+        minWidth: 0,
       }}
     >
       {/* BU Detail Collection Table */}
-      <div className="card">
+      <div className="card" style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
         <div className="card-title">
           Chi tiết thu theo BU — {todayLabel || BLANK}
         </div>
 
-        <div className="table-wrap">
-          <table className="bt">
+        <div className="table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <table className="bt" style={{ minWidth: "650px", width: "100%" }}>
             <thead>
               <tr>
                 <th style={{ textAlign: "left" }}>BU</th>
@@ -117,10 +119,11 @@ export default function ReceivableDetailTable({
       </div>
 
       {/* Alerts Table */}
-      <div className="card">
+      <div className="card" style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
         <div className="card-title">Cảnh báo điều hành</div>
 
-        <table className="bt">
+        <div className="table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <table className="bt" style={{ minWidth: "320px", width: "100%" }}>
           <thead>
             <tr>
               <th style={{ textAlign: "left" }}>BU / Chỉ tiêu</th>
@@ -185,6 +188,7 @@ export default function ReceivableDetailTable({
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

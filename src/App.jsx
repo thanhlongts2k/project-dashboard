@@ -3,7 +3,6 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { DashboardProvider } from "./context/DashboardContext";
 import AppRoutes from "./routes/AppRoutes";
-import "./App.css";
 
 export default function App() {
   return (

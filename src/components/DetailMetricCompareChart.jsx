@@ -28,12 +28,12 @@ export default function DetailMetricCompareChart({
   data = [],
 }) {
   return (
-    <div className="card">
+    <div className="card" style={{ minWidth: 0, maxWidth: "100%", overflow: "hidden" }}>
       <div className="card-title">{title}</div>
 
-      <div className="chart-wrap">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 22, right: 20, left: 0, bottom: 14 }}>
+      <div className="chart-wrap" style={{ minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
+          <BarChart data={data} margin={{ top: 22, right: 10, left: -15, bottom: 14 }}>
             <CartesianGrid stroke="#f1efe8" vertical={false} />
             <XAxis
               dataKey="name"

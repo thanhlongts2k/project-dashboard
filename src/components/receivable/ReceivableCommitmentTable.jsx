@@ -21,13 +21,13 @@ export default function ReceivableCommitmentTable({
   commitmentTotalRow = null,
 }) {
   return (
-    <div className="card">
+    <div className="card" style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       <div className="card-title">
         Cam kết thu nợ: {todayLabel} vs {tomorrowLabel}
       </div>
 
-      <div className="table-wrap">
-        <table className="bt">
+      <div className="table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <table className="bt" style={{ minWidth: "650px", width: "100%" }}>
           <thead>
             <tr>
               <th style={{ textAlign: "left" }}>BU</th>

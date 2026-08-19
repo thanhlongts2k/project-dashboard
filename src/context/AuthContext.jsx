@@ -47,7 +47,7 @@ export function mapBuCodeToFrontendKey(code = "") {
   if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
   if (raw.includes("eco") || raw.includes("agritech")) return "eco";
   if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";
-  if (raw.includes("dtct") || raw.includes("đtct") || raw.includes("cho thuê") || raw.includes("đối tác")) return "dtct";
+  if (raw.includes("dtct") || raw.includes("đtct") || raw.includes("cho thuê") || raw.includes("đầu tư")) return "dtct";
   if (raw.includes("oversea") || raw.includes("campuchia")) return "oversea";
   return raw;
 }

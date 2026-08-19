@@ -609,7 +609,7 @@ export default function AgingCustomerCardGrid({ staffGroups = [], buName = "" })
               onChange={handleSetSortBy}
               options={SORT_OPTIONS}
               align="right"
-              triggerStyle={{ height: 34, fontSize: 11.5, borderRadius: 6 }}
+              triggerStyle={{ minHeight: 34, fontSize: 12, borderRadius: 6 }}
             />
           </div>
         </div>

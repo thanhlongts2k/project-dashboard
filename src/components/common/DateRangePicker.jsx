@@ -135,7 +135,6 @@ export default function DateRangePicker({
           type="button"
           className={`date-picker-trigger ${isOpen ? "is-open" : ""}`}
           onClick={() => setIsOpen((v) => !v)}
-          style={{ minWidth: 170 }}
         >
           <svg className="date-picker-icon" viewBox="0 0 20 20" fill="none">
             <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />

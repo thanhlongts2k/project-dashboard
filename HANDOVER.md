@@ -1,18 +1,23 @@
 # HANDOVER REPORT — PROJECT DASHBOARD
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
-**Phiên bản:** `v1.0.14` (Key Accounts Debt Collection Pipeline Optimization & Smart Date Navigation)  
+**Phiên bản:** `v1.0.23` (UX: Body Scroll Lock cho Modal & Nâng cấp Nút Google Login)  
 **Ngày cập nhật:** 19/08/2026  
 **Trạng thái:** 🚀 **PRODUCTION READY** (`Build 100% Pass`, 0 Errors)
 
 ---
 
-## 1. 🏗️ Tính Năng Mới & Nâng Cấp (v1.0.14)
+## 1. 🏗️ Tính Năng Mới & Nâng Cấp (v1.0.21)
 
-- **Tối Ưu & Khắc Phục Lỗi Hiển Thị Thu Nợ Khách Hàng Trọng Yếu (`ReceivableReportPage.jsx`):**
-  * Tích hợp Smart Info Banner khi ngày được chọn chưa có phát sinh giao dịch thu tiền mới trong sổ kế toán (`AccountDetail`).
-  * Nút điều hướng 1-click chuyển nhanh về ngày chốt số liệu gần nhất có dữ liệu (`18/08/2026`).
-  * Backend API `DashboardCollectionByBUAPIView` bổ sung `latest_available_date`, `has_data`, lọc kỳ `reporting_period`, mở rộng ánh xạ `customer__business_unit` và bảo vệ phân quyền RBAC.
+- **Loại Bỏ Hoàn Toàn CSS Sledgehammer Overrides (`dashboard.css`, `CustomSelect.jsx`, `DateRangePicker.jsx`):**
+  * Xóa bỏ triệt để các selector phá hoại `.parent > *` có chứa `!important` ép `height`/`padding`, trả toàn bộ quyền kiểm soát kích thước Box-Model về cho chính component nội bộ.
+  * Xóa file demo `src/App.css` và ngắt import thừa trong `App.jsx`.
+- **Chuẩn Hóa Design System Vùng Chạm Mobile (Apple HIG & Material 42px Standard):**
+  * Nút bấm (`.btn`, `.otb-icon-btn`, `.otb-nav-btn`, `.link-btn`): Desktop `min-height: 38px`, Mobile `min-height: 42px`, `padding: 10px 16px`, `border-radius: 8px`, chống co ép trên mọi kích thước màn hình (360px, 375px, 390px, 412px).
+  * Dropdown & DatePicker (`.custom-select-trigger`, `.date-picker-trigger`, `select.filter-sel`): Desktop `min-height: 38px`, Mobile `min-height: 42px`, `padding: 10px 14px`, `border-radius: 8px`.
+  * Ô nhập liệu (`input[type="text"]`, `input[type="password"]`, `input[type="email"]`): Mobile `min-height: 42px`, `font-size: 14px` chống iOS auto-zoom khi focus.
+- **Đồng Bộ Hoàn Chỉnh Trên Cả 5 Phân Hệ:**
+  * Chuẩn hóa layout Sub-Header, bộ lọc Dropdown, DatePicker và nút bấm hiển thị đầy đặn, tròn trịa, không bị bóp méo hay xẹp trên toàn bộ các trang (`/dashboard`, `/bu/:buKey`, `/inventory`, `/receivables`, `/aging`, `/login`).
 
 ---
 
@@ -20,19 +25,18 @@
 
 | STT | Đường Dẫn File | Thao Tác | Vai Trò & Chức Năng |
 | :---: | :--- | :---: | :--- |
-| 1 | [`src/pages/ReceivableReportPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/ReceivableReportPage.jsx) | MODIFY | Thêm Smart Notification Banner & 1-click date switch về ngày có dữ liệu gần nhất. |
-| 2 | [`src/utils/receivableMapper.js`](file:///d:/Sources/project-dashboard/src/utils/receivableMapper.js) | MODIFY | Nhận diện `latestAvailableDate` và `hasData`. |
-| 3 | [`src/pages/DebtAgingReportPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DebtAgingReportPage.jsx) | MODIFY | Khởi tạo `userFixedBu` & `selectedBu` theo BU thương mại, ẩn HPC trong dropdown. |
-| 4 | [`src/context/AuthContext.jsx`](file:///d:/Sources/project-dashboard/src/context/AuthContext.jsx) | MODIFY | Quản lý profile, quyền hạn, `DEFAULT_ROLE_TABS.SALES = ['aging']`. |
-| 5 | [`src/layouts/DashboardLayout.jsx`](file:///d:/Sources/project-dashboard/src/layouts/DashboardLayout.jsx) | MODIFY | Lọc hiển thị tabs Topbar theo `canAccessTab`. |
-| 6 | [`src/components/navigation/MobileNavDrawer.jsx`](file:///d:/Sources/project-dashboard/src/components/navigation/MobileNavDrawer.jsx) | MODIFY | Lọc menu mobile drawer, bọc Dev Role Switcher bằng `import.meta.env.DEV`. |
-| 7 | [`src/components/UserMenu.jsx`](file:///d:/Sources/project-dashboard/src/components/UserMenu.jsx) | MODIFY | Hiển thị Mã NV, Đơn vị BU, bọc Dev Role Switcher bằng `import.meta.env.DEV`. |
-| 8 | [`src/components/auth/ProtectedRoute.jsx`](file:///d:/Sources/project-dashboard/src/components/auth/ProtectedRoute.jsx) | MODIFY | Route Guard hỗ trợ `requiredTab`, redirect về `firstAllowedPath`. |
-| 9 | [`src/routes/AppRoutes.jsx`](file:///d:/Sources/project-dashboard/src/routes/AppRoutes.jsx) | MODIFY | Gán `requiredTab` cho từng phân hệ, `IndexRedirect` động. |
-| 10 | [`CHANGELOG.md`](file:///d:/Sources/project-dashboard/CHANGELOG.md) | MODIFY | Ghi nhận phiên bản `[1.0.14]`. |
+| 1 | [`src/styles/dashboard.css`](file:///d:/Sources/project-dashboard/src/styles/dashboard.css) | MODIFY | Chuẩn hóa Design System tokens, loại bỏ sledgehammers, áp dụng chuẩn 42px touch-targets. |
+| 2 | [`src/components/common/CustomSelect.jsx`](file:///d:/Sources/project-dashboard/src/components/common/CustomSelect.jsx) | MODIFY | Áp dụng class `custom-select-trigger`, xóa inline heights. |
+| 3 | [`src/components/common/DateRangePicker.jsx`](file:///d:/Sources/project-dashboard/src/components/common/DateRangePicker.jsx) | MODIFY | Xóa inline minWidth để CSS responsive quản lý. |
+| 4 | [`src/components/common/UnifiedSubHeader.jsx`](file:///d:/Sources/project-dashboard/src/components/common/UnifiedSubHeader.jsx) | MODIFY | Xóa hardcoded `height: 34` ở triggerStyle. |
+| 5 | [`src/pages/DashboardOverviewPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DashboardOverviewPage.jsx) | MODIFY | Xóa hardcoded `height: 36` ở secondaryFilter triggerStyle. |
+| 6 | [`src/pages/DebtAgingReportPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DebtAgingReportPage.jsx) | MODIFY | Xóa hardcoded `height: 36` ở secondaryFilter triggerStyle. |
+| 7 | [`src/components/aging/AgingCustomerCardGrid.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingCustomerCardGrid.jsx) | MODIFY | Đổi `height: 34` thành `minHeight: 34`. |
+| 8 | [`src/App.jsx`](file:///d:/Sources/project-dashboard/src/App.jsx) | MODIFY | Xóa import `App.css` thừa. |
+| 9 | [`CHANGELOG.md`](file:///d:/Sources/project-dashboard/CHANGELOG.md) | MODIFY | Ghi nhận phiên bản `[1.0.21]`. |
 
 ---
 
 ## 3. 🛡️ Trạng Thái Kiểm Thử & Build
 
-- **Production Build:** `npm run build` → **✅ Built in 659ms, 0 Errors**
+- **Production Build:** `npm run build` → **✅ Built in 666ms, 0 Errors**

@@ -278,12 +278,12 @@ export default function DashboardOverviewPage({
       onChange={handleOwnerChange}
       options={ownerOptions}
       placeholder="Chọn người phụ trách"
-      triggerStyle={{ height: 36, fontSize: 12, padding: "0 12px", minWidth: 150 }}
+      triggerStyle={{ fontSize: 13, minWidth: 150 }}
     />
   );
 
   return (
-    <div className="dash" ref={dashRef} style={{ padding: "0 16px" }}>
+    <div className="dash" ref={dashRef}>
       {/* TẦNG 2: Unified Sub-Header */}
       <UnifiedSubHeader
         title={viewData?.header?.title || "Dashboard Tổng Quan"}

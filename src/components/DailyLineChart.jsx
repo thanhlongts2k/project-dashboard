@@ -147,27 +147,30 @@ export default function DailyLineChart({ title, data = [] }) {
     : [];
 
   return (
-    <div className="card">
+    <div className="card" style={{ minWidth: 0, maxWidth: "100%", overflow: "hidden" }}>
       <div className="card-title">{title}</div>
 
       <div
         className="chart-wrap chart-no-focus"
         onMouseDown={(e) => e.preventDefault()}
+        style={{ minWidth: 0 }}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 18, right: 18, left: 0, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
+          <LineChart data={chartData} margin={{ top: 18, right: 10, left: -15, bottom: 0 }}>
             <CartesianGrid stroke="#f0ede5" vertical={false} />
             <XAxis
               dataKey="formattedDate"
               tick={{ fontSize: 11, fill: "#7f7b72" }}
               axisLine={{ stroke: "#bdb7aa" }}
               tickLine={{ stroke: "#bdb7aa" }}
+              interval="preserveStartEnd"
             />
             <YAxis
               tickFormatter={formatAxisTick}
               tick={{ fontSize: 11, fill: "#7f7b72" }}
               axisLine={{ stroke: "#bdb7aa" }}
               tickLine={{ stroke: "#bdb7aa" }}
+              width={48}
               padding={{ top: PLOT_PADDING_TOP, bottom: PLOT_PADDING_BOTTOM }}
             />
             <Tooltip content={<CustomTooltip />} />

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { formatPercent } from "../../utils/numberFormat";
 
 function formatFullVnd(val, isDanger = false) {
@@ -27,6 +28,9 @@ function RoleBadge({ role }) {
 }
 
 export default function CustomerDebtDetailModal({ isOpen, customer, buName = "", onClose }) {
+  // Khoá cuộn nền trang khi modal đang mở (iOS Safari safe)
+  useBodyScrollLock(isOpen);
+
   // Đóng modal khi bấm phím Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -78,10 +82,14 @@ export default function CustomerDebtDetailModal({ isOpen, customer, buName = "",
         backdropFilter: "blur(4px)",
         zIndex: 9999,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
         padding: "16px",
         boxSizing: "border-box",
+        // SCROLL CONTAINMENT: Modal content cuộn bên trong, nền web đứng im
+        overflowY: "auto",
+        overscrollBehavior: "contain",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       <div

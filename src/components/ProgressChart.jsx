@@ -79,7 +79,7 @@ export default function ProgressChart({ title, data = [], theme = "blue" }) {
     hasGap(entry?.payload) ? formatCompactShort(entry?.payload?.actual) : "";
 
   return (
-    <div className="card">
+    <div className="card" style={{ minWidth: 0, maxWidth: "100%", overflow: "hidden" }}>
       <div className="card-title">{title}</div>
 
       <div className="chart-legend">
@@ -111,11 +111,12 @@ export default function ProgressChart({ title, data = [], theme = "blue" }) {
       <div
         className="chart-wrap chart-no-focus"
         onMouseDown={(e) => e.preventDefault()}
+        style={{ minWidth: 0 }}
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
           <ComposedChart
             data={data}
-            margin={{ top: 22, right: 20, left: 0, bottom: 14 }}
+            margin={{ top: 22, right: 10, left: -15, bottom: 14 }}
           >
             <CartesianGrid stroke="#f1efe8" vertical={false} />
             <XAxis

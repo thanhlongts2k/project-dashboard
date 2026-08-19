@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "../styles/login.css";
 
 const GOOGLE_CLIENT_ID =
@@ -15,6 +15,8 @@ export default function LoginPage({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [gsiReady, setGsiReady] = useState(false);
+  const googleBtnContainerRef = useRef(null);
 
   // --- Google login handler ---
   const handleGoogleCredentialResponse = useCallback(
@@ -102,43 +104,95 @@ export default function LoginPage({ onLoginSuccess }) {
     [onLoginSuccess, rememberMe]
   );
 
-  // --- Initialize Google GSI (chỉ initialize, không renderButton) ---
+  // --- Initialize Google GSI & Render Standard Popup Button ---
   useEffect(() => {
     const initGsi = () => {
       if (!window.google?.accounts?.id) return false;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredentialResponse,
-        auto_select: false,
-      });
-      return true;
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          use_fedcm_for_prompt: false,
+          ux_mode: "popup",
+          context: "signin",
+        });
+
+        // Trước tiên gọi setGsiReady để React render container hiện lên
+        // Sau đó dùng setTimeout 0 để đợi DOM cập nhật rồi mới renderButton
+        setGsiReady(true);
+        setTimeout(() => {
+          const container = document.getElementById("google-signin-btn-container");
+          if (!container) return;
+          // Dọn sạch trước khi render để tránh nhân đôi (hot reload / StrictMode)
+          container.innerHTML = "";
+          // Đo chiều rộng thực tế của form card để nút khớp 100%
+          const formCard = container.closest(".login-left") || container;
+          const cardWidth = formCard.offsetWidth || Math.min(window.innerWidth - 48, 420);
+          // Trừ padding 2 bên (28px * 2) để nút khớp với ô input bên dưới
+          const btnWidth = Math.max(cardWidth - 56, 240);
+          try {
+            window.google.accounts.id.renderButton(container, {
+              type: "standard",
+              theme: "outline",
+              size: "large",
+              text: "signin_with",
+              shape: "pill",
+              logo_alignment: "left",
+              width: btnWidth,
+            });
+          } catch (renderErr) {
+            console.warn("GSI renderButton error:", renderErr);
+          }
+        }, 0);
+
+        return true;
+      } catch (err) {
+        console.warn("GSI init error:", err);
+        return false;
+      }
     };
 
     if (initGsi()) return;
     const interval = setInterval(() => {
       if (initGsi()) clearInterval(interval);
     }, 200);
-    return () => clearInterval(interval);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 4000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, [handleGoogleCredentialResponse]);
 
-  // --- Trigger Google popup khi bấm nút custom ---
+  // --- Trigger Google popup fallback khi bấm nút custom ---
   const handleGoogleBtnClick = useCallback(() => {
     if (!window.google?.accounts?.id) {
-      setErrorMessage("Google Sign-In chưa sẵn sàng, thử lại sau.");
+      setErrorMessage(
+        "Google Sign-In chưa sẵn sàng. Vui lòng kiểm tra kết nối mạng hoặc Authorized JavaScript Origins trên Google Console."
+      );
       return;
     }
     setGoogleLoading(true);
     setErrorMessage("");
-    window.google.accounts.id.prompt((notification) => {
-      // Nếu One Tap bị dismiss/skip thì tắt loading
-      if (
-        notification.isNotDisplayed() ||
-        notification.isSkippedMoment() ||
-        notification.isDismissedMoment()
-      ) {
-        setGoogleLoading(false);
-      }
-    });
+    try {
+      window.google.accounts.id.prompt((notification) => {
+        if (
+          notification.isNotDisplayed() ||
+          notification.isSkippedMoment() ||
+          notification.isDismissedMoment()
+        ) {
+          setGoogleLoading(false);
+        }
+      });
+    } catch (err) {
+      console.warn("Google prompt error:", err);
+      setGoogleLoading(false);
+      setErrorMessage("Không thể kích hoạt cửa sổ Google tự động. Vui lòng nhấp vào nút đăng nhập Google.");
+    }
   }, []);
 
   // --- Username/password login handler ---
@@ -230,20 +284,50 @@ export default function LoginPage({ onLoginSuccess }) {
 
           {/* --- Google Sign-In --- */}
           <div className="google-login-section">
-            <button
-              type="button"
-              className="google-custom-btn"
-              onClick={handleGoogleBtnClick}
-              disabled={loading || googleLoading}
-            >
-              <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              <span>{googleLoading ? "Đang xử lý..." : "Đăng nhập bằng Google"}</span>
-            </button>
+            {/*
+              QUAN TRỌNG: Chỉ render DUY NHẤT 1 nút tại một thời điểm.
+              - Nếu GSI đã sẵn sàng (gsiReady): Chỉ hiện iframe Google qua renderButton.
+              - Nếu GSI chưa tải: Hiện nút fallback tùy chỉnh.
+              Container google-btn-wrapper đã bị XÓA vì viền CSS của nó
+              tạo ra "nút thứ 2" giả mạo đè lên iframe Google.
+            */}
+            {gsiReady ? (
+              /* Iframe Google chính hãng — không cần wrapper thêm viền */
+              <div
+                id="google-signin-btn-container"
+                ref={googleBtnContainerRef}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  minHeight: "44px",
+                }}
+              />
+            ) : (
+              /* Nút fallback — chỉ hiện khi Google SDK chưa tải xong */
+              <>
+                {/* Container ẩn để renderButton có thể mount sau này */}
+                <div
+                  id="google-signin-btn-container"
+                  ref={googleBtnContainerRef}
+                  style={{ display: "none" }}
+                />
+                <button
+                  type="button"
+                  className="google-custom-btn"
+                  onClick={handleGoogleBtnClick}
+                  disabled={loading || googleLoading}
+                >
+                  <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  <span>{googleLoading ? "Đang xử lý..." : "Đăng nhập bằng Google"}</span>
+                </button>
+              </>
+            )}
           </div>
 
           <div className="login-divider">

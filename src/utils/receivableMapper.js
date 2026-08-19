@@ -9,15 +9,22 @@ const BU_ORDER = [
   "BU_ECO",
   "BU_AGRITECH",
   "BU_MANUFACTURING",
+  "BU_DTCT",
+  "BU_OVERSEA",
 ];
 
 const BU_META = {
-  BU_ELEVATOR: { label: "ELEVATOR", color: "#185FA5" },
-  BU_IBIZ_PREMIUM: { label: "IBIZ PREMIUM", color: "#1D9E75" },
-  BU_IBIZ_VALUE: { label: "IBIZ VALUE", color: "#D85A30" },
-  BU_ECO: { label: "ECO", color: "#BA7517" },
-  BU_AGRITECH: { label: "AGRITECH", color: "#534AB7" },
-  BU_MANUFACTURING: { label: "MANUFACTURE", color: "#888780" },
+  BU_ELEVATOR: { label: "Elevator", shortLabel: "Elevator", color: "#185FA5" },
+  BU_IBIZ_PREMIUM: { label: "IBIZ Premium", shortLabel: "Premium", color: "#1D9E75" },
+  BU_IBIZ_VALUE: { label: "IBIZ Value", shortLabel: "Value", color: "#D85A30" },
+  BU_ECO: { label: "ECO", shortLabel: "Eco", color: "#BA7517" },
+  BU_AGRITECH: { label: "Agritech", shortLabel: "Agritech", color: "#534AB7" },
+  BU_MANUFACTURING: { label: "Sản xuất", shortLabel: "SX", color: "#888780" },
+  BU_DTCT: { label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
+  BU_OVERSEA: { label: "Oversea", shortLabel: "Oversea", color: "#7c3aed" },
+  ĐTCT: { label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
+  DTCT: { label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
+  OVERSEA: { label: "Oversea", shortLabel: "Oversea", color: "#7c3aed" },
 };
 
 function normalizeBuCode(code = "") {
@@ -87,12 +94,29 @@ function sortRowsByBuOrder(rows = []) {
 
 function getBuMeta(code = "", fallbackName = "") {
   const normalized = normalizeBuCode(code);
-  return (
-    BU_META[normalized] || {
-      label: fallbackName || normalized || BLANK,
-      color: "#888780",
-    }
-  );
+  const rawCode = String(code).trim().toUpperCase();
+  const directMatch = BU_META[normalized] || BU_META[rawCode];
+  if (directMatch) return directMatch;
+
+  if (
+    normalized.includes("DTCT") ||
+    normalized.includes("CHO_THUE") ||
+    String(fallbackName).toLowerCase().includes("thuê")
+  ) {
+    return BU_META.BU_DTCT;
+  }
+  if (
+    normalized.includes("OVERSEA") ||
+    String(fallbackName).toLowerCase().includes("oversea")
+  ) {
+    return BU_META.BU_OVERSEA;
+  }
+
+  return {
+    label: fallbackName || normalized || BLANK,
+    shortLabel: fallbackName || normalized || BLANK,
+    color: "#888780",
+  };
 }
 
 function buildRowMap(rows = []) {
@@ -580,7 +604,8 @@ export function mapReceivableReportFromApi(
     const meta = getBuMeta(code, todayRow.bu_name);
 
     return {
-      name: meta.label,
+      name: meta.shortLabel || meta.label,
+      fullName: meta.label,
       collectedDue: todayRow.collected_due,
       collectedDueText: formatCompactMoney(todayRow.collected_due),
       inTermCod: todayRow.collected_in_term_cod,

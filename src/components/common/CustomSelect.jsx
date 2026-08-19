@@ -44,31 +44,14 @@ export default function CustomSelect({
     >
       <button
         type="button"
+        className="custom-select-trigger"
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          height: 36,
-          padding: "0 12px",
-          background: disabled ? "#f8fafc" : "#fff",
-          border: disabled ? "1px solid #cbd5e1" : "1px solid var(--border-card, #e2e8f0)",
-          borderRadius: 8,
-          color: disabled ? "#94a3b8" : "var(--text-main, #0f172a)",
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: disabled ? "not-allowed" : "pointer",
-          boxShadow: "var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05))",
-          transition: "all 0.15s ease",
-          outline: "none",
-          whiteSpace: "nowrap",
-          width: "100%",
           ...triggerStyle,
         }}
       >
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", maxWidth: 220, textAlign: "left" }} title={displayLabel}>
+        <span className="custom-select-label" title={displayLabel}>
           {selectedOption?.icon && <span style={{ marginRight: 6 }}>{selectedOption.icon}</span>}
           {displayLabel}
         </span>
