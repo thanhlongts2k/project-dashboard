@@ -8,11 +8,13 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const { role, switchRole } = useAuth();
+  const { user, role, switchRole } = useAuth();
 
-  const currentRole = roleBadge || role || "BOD";
-  const displayName = currentUser || "User";
+  const currentRole = roleBadge || role || "BOD_ADMIN";
+  const displayName = user?.displayName || user?.full_name || currentUser || "User";
   const avatar = displayName.trim().charAt(0).toUpperCase() || "U";
+  const employeeCode = user?.employee_code || "";
+  const buName = user?.bu_name || user?.bu_code || "";
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -32,9 +34,11 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
   };
 
   const getRoleBadgeStyle = (r) => {
-    if (r === ROLES.BOD) return { bg: "#fef3c7", color: "#92400e", border: "#fde68a", text: "👑 BOD" };
-    if (r === ROLES.BU_HEAD) return { bg: "#e0f2fe", color: "#0369a1", border: "#bae6fd", text: "🏢 BU_HEAD" };
-    return { bg: "#f1f5f9", color: "#475569", border: "#e2e8f0", text: "👤 BU_STAFF" };
+    const norm = String(r || "").toUpperCase();
+    if (norm === "BOD" || norm === "BOD_ADMIN") return { bg: "#fef3c7", color: "#92400e", border: "#fde68a", text: "👑 BOD" };
+    if (norm === "BU_HEAD") return { bg: "#e0f2fe", color: "#0369a1", border: "#bae6fd", text: "🏢 BU_HEAD" };
+    if (norm === "SALES" || norm === "BU_STAFF") return { bg: "#dcfce7", color: "#166534", border: "#bbf7d0", text: "💼 SALES" };
+    return { bg: "#f1f5f9", color: "#475569", border: "#e2e8f0", text: "👤 VIEWER" };
   };
 
   const badgeStyle = getRoleBadgeStyle(currentRole);
@@ -91,7 +95,7 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
             position: "absolute",
             right: 0,
             top: "calc(100% + 6px)",
-            width: 240,
+            width: 250,
             background: "#fff",
             border: "1px solid #e2e8f0",
             borderRadius: 10,
@@ -102,68 +106,76 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
         >
           <div style={{ padding: "8px 14px", borderBottom: "1px solid #f1f5f9" }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{displayName}</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>Vai trò hiện tại: <strong>{currentRole}</strong></div>
+            {employeeCode && (
+              <div style={{ fontSize: 11, color: "#64748b" }}>Mã NV: <strong>{employeeCode}</strong></div>
+            )}
+            {buName && (
+              <div style={{ fontSize: 11, color: "#64748b" }}>Đơn vị: <strong>{buName}</strong></div>
+            )}
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Vai trò: <strong>{badgeStyle.text}</strong></div>
           </div>
 
-          {/* Quick Role Switcher for Dev / Testing */}
-          <div style={{ padding: "8px 14px", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 6 }}>
-              Chuyển vai trò (Test nhanh):
+          {/* Quick Role Switcher for Dev / Testing - CHỈ HIỂN THỊ TRONG MÔI TRƯỜNG DEV */}
+          {import.meta.env.DEV && (
+            <div style={{ padding: "8px 14px", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 6 }}>
+                Chuyển vai trò (Dev only):
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => handleSwitch(ROLES.BOD_ADMIN)}
+                  style={{
+                    textAlign: "left",
+                    fontSize: 11,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    background: currentRole === "BOD_ADMIN" ? "#fef3c7" : "#fff",
+                    border: "1px solid #e2e8f0",
+                    cursor: "pointer",
+                    fontWeight: currentRole === "BOD_ADMIN" ? 700 : 500,
+                  }}
+                >
+                  👑 BOD (Toàn quyền + Dòng tiền)
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => handleSwitch(ROLES.BU_HEAD)}
+                  style={{
+                    textAlign: "left",
+                    fontSize: 11,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    background: currentRole === "BU_HEAD" ? "#e0f2fe" : "#fff",
+                    border: "1px solid #e2e8f0",
+                    cursor: "pointer",
+                    fontWeight: currentRole === "BU_HEAD" ? 700 : 500,
+                  }}
+                >
+                  🏢 BU_HEAD (Quản lý Elevator)
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => handleSwitch(ROLES.SALES)}
+                  style={{
+                    textAlign: "left",
+                    fontSize: 11,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    background: currentRole === "SALES" ? "#dcfce7" : "#fff",
+                    border: "1px solid #e2e8f0",
+                    cursor: "pointer",
+                    fontWeight: currentRole === "SALES" ? 700 : 500,
+                  }}
+                >
+                  💼 SALES (Kinh doanh Elevator)
+                </button>
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => handleSwitch(ROLES.BOD)}
-                style={{
-                  textAlign: "left",
-                  fontSize: 11,
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  background: currentRole === ROLES.BOD ? "#fef3c7" : "#fff",
-                  border: "1px solid #e2e8f0",
-                  cursor: "pointer",
-                  fontWeight: currentRole === ROLES.BOD ? 700 : 500,
-                }}
-              >
-                👑 BOD (Toàn quyền + Dòng tiền)
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => handleSwitch(ROLES.BU_HEAD)}
-                style={{
-                  textAlign: "left",
-                  fontSize: 11,
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  background: currentRole === ROLES.BU_HEAD ? "#e0f2fe" : "#fff",
-                  border: "1px solid #e2e8f0",
-                  cursor: "pointer",
-                  fontWeight: currentRole === ROLES.BU_HEAD ? 700 : 500,
-                }}
-              >
-                🏢 BU_HEAD (Quản lý Elevator)
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => handleSwitch(ROLES.BU_STAFF)}
-                style={{
-                  textAlign: "left",
-                  fontSize: 11,
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  background: currentRole === ROLES.BU_STAFF ? "#f1f5f9" : "#fff",
-                  border: "1px solid #e2e8f0",
-                  cursor: "pointer",
-                  fontWeight: currentRole === ROLES.BU_STAFF ? 700 : 500,
-                }}
-              >
-                👤 BU_STAFF (Nhân viên Elevator)
-              </button>
-            </div>
-          </div>
+          )}
 
           <Can perform="CONFIGURE_EMAIL">
             <button

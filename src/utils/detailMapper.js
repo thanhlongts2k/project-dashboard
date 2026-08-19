@@ -169,16 +169,42 @@ function normalizeCode(code = "") {
 }
 
 export function buIdFromCode(code = "") {
+  if (!code) return null;
+  const raw = String(code).trim().toLowerCase();
+  const normalized = normalizeCode(code);
+
   const map = {
     BU_ELEVATOR: "elevator",
     BU_IBIZ_PREMIUM: "ibizPremium",
     BU_IBIZ_VALUE: "ibizValue",
     BU_ECO: "eco",
     BU_AGRITECH: "agritech",
+    BU_AGRITECH___ECO: "eco",
+    BU_AGRITECH_ECO: "eco",
     BU_MANUFACTURING: "manufacturing",
+    BU_DTCT: "dtct",
+    BU_ĐTCT: "dtct",
+    ĐTCT: "dtct",
+    DTCT: "dtct",
+    OVERSEA: "oversea",
+    ELEVATOR: "elevator",
+    IBIZPREMIUM: "ibizPremium",
+    IBIZVALUE: "ibizValue",
+    ECO: "eco",
+    AGRITECH: "agritech",
+    MANUFACTURING: "manufacturing",
   };
 
-  return map[normalizeCode(code)] || null;
+  if (map[normalized]) return map[normalized];
+  if (raw.includes("elevator") || raw.includes("thang máy")) return "elevator";
+  if (raw.includes("premium")) return "ibizPremium";
+  if (raw.includes("value")) return "ibizValue";
+  if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
+  if (raw.includes("eco") || raw.includes("agritech")) return "eco";
+  if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";
+  if (raw.includes("dtct") || raw.includes("đtct") || raw.includes("cho thuê") || raw.includes("đối tác")) return "dtct";
+  if (raw.includes("oversea") || raw.includes("campuchia")) return "oversea";
+  return null;
 }
 
 function displayNameFromCode(code = "", fallbackName = "") {
@@ -189,6 +215,10 @@ function displayNameFromCode(code = "", fallbackName = "") {
     BU_ECO: "ECO",
     BU_AGRITECH: "AgriTech",
     BU_MANUFACTURING: "Sản xuất - Nhà máy",
+    BU_DTCT: "Đầu tư cho thuê / ĐTCT",
+    ĐTCT: "Đầu tư cho thuê / ĐTCT",
+    DTCT: "Đầu tư cho thuê / ĐTCT",
+    OVERSEA: "Oversea",
   };
 
   return map[normalizeCode(code)] || fallbackName || normalizeCode(code);
@@ -260,8 +290,8 @@ function buildKpi(label, actual, plan, percent, accent, isDaily = false) {
           ? "/ — (ngày)"
           : "/ —"
         : isDaily
-        ? `/ ${formatCompactMoney(plan)} (ngày)`
-        : `/ ${formatCompactMoney(plan)}`,
+          ? `/ ${formatCompactMoney(plan)} (ngày)`
+          : `/ ${formatCompactMoney(plan)}`,
     percent,
     percentText: formatPercent(percent),
     accent,
@@ -554,13 +584,13 @@ export function mapBuDetailFromApi({
 
   const childRows = isElevatorLayout
     ? buildElevatorChildRows(
-        childUnits,
-        perfRows,
-        perfMap,
-        prevPerfRows,
-        prevPerfMap,
-        dailyByBu
-      )
+      childUnits,
+      perfRows,
+      perfMap,
+      prevPerfRows,
+      prevPerfMap,
+      dailyByBu
+    )
     : [];
 
   // Ưu tiên suy ra tháng hiển thị từ khoảng ngày đang lọc (startDate),
@@ -577,49 +607,49 @@ export function mapBuDetailFromApi({
   const revenueChartData = isElevatorLayout
     ? childRows.length > 0
       ? childRows.map((item) => ({
-          name: item.shortName || item.name,
-          target: item.revenuePlan,
-          actual: item.revenueActual,
-          gap:
-            item.revenuePlan !== null && item.revenueActual !== null
-              ? Math.max(item.revenuePlan - item.revenueActual, 0)
-              : null,
-        }))
+        name: item.shortName || item.name,
+        target: item.revenuePlan,
+        actual: item.revenueActual,
+        gap:
+          item.revenuePlan !== null && item.revenueActual !== null
+            ? Math.max(item.revenuePlan - item.revenueActual, 0)
+            : null,
+      }))
       : [
-          {
-            name: "Tổng",
-            target: rootRevenuePlan,
-            actual: rootRevenueActual,
-            gap:
-              rootRevenuePlan !== null && rootRevenueActual !== null
-                ? Math.max(rootRevenuePlan - rootRevenueActual, 0)
-                : null,
-          },
-        ]
+        {
+          name: "Tổng",
+          target: rootRevenuePlan,
+          actual: rootRevenueActual,
+          gap:
+            rootRevenuePlan !== null && rootRevenueActual !== null
+              ? Math.max(rootRevenuePlan - rootRevenueActual, 0)
+              : null,
+        },
+      ]
     : [];
 
   const cashChartData = isElevatorLayout
     ? childRows.length > 0
       ? childRows.map((item) => ({
-          name: item.shortName || item.name,
-          target: item.cashPlan,
-          actual: item.cashActual,
-          gap:
-            item.cashPlan !== null && item.cashActual !== null
-              ? Math.max(item.cashPlan - item.cashActual, 0)
-              : null,
-        }))
+        name: item.shortName || item.name,
+        target: item.cashPlan,
+        actual: item.cashActual,
+        gap:
+          item.cashPlan !== null && item.cashActual !== null
+            ? Math.max(item.cashPlan - item.cashActual, 0)
+            : null,
+      }))
       : [
-          {
-            name: "Tổng",
-            target: rootCashPlan,
-            actual: rootCashActual,
-            gap:
-              rootCashPlan !== null && rootCashActual !== null
-                ? Math.max(rootCashPlan - rootCashActual, 0)
-                : null,
-          },
-        ]
+        {
+          name: "Tổng",
+          target: rootCashPlan,
+          actual: rootCashActual,
+          gap:
+            rootCashPlan !== null && rootCashActual !== null
+              ? Math.max(rootCashPlan - rootCashActual, 0)
+              : null,
+        },
+      ]
     : [];
 
   const isFullMonth = !startDate || !endDate || isFullMonthRange(startDate, endDate);
@@ -628,14 +658,14 @@ export function mapBuDetailFromApi({
   const revenueLabel = isFullMonth
     ? "DT tháng"
     : isSingleDay
-    ? "DT ngày"
-    : "DT theo kỳ";
+      ? "DT ngày"
+      : "DT theo kỳ";
 
   const cashLabel = isFullMonth
     ? "Thu tiền tháng"
     : isSingleDay
-    ? "Thu tiền ngày"
-    : "Thu tiền theo kỳ";
+      ? "Thu tiền ngày"
+      : "Thu tiền theo kỳ";
 
   const periodRangeLabel =
     startDate && endDate
@@ -655,8 +685,8 @@ export function mapBuDetailFromApi({
     subInfo:
       isElevatorLayout && childRows.length
         ? `${childRows.length} sub-mảng: ${childRows
-            .map((item) => item.name)
-            .join(" · ")}`
+          .map((item) => item.name)
+          .join(" · ")}`
         : "",
 
     statusTone: "neutral",

@@ -5,16 +5,25 @@ import { useAuth } from "../../hooks/useAuth";
  * Component bảo vệ các Route yêu cầu xác thực và phân quyền.
  *
  * @param {React.ReactNode} children - Component con được render khi thỏa mãn điều kiện
- * @param {string} [requiredRole] - Role bắt buộc (ví dụ: "BOD", "BU_HEAD")
+ * @param {string} [requiredRole] - Role bắt buộc (ví dụ: "BOD_ADMIN", "BU_HEAD")
+ * @param {string} [requiredTab] - Mã tab bắt buộc (ví dụ: "dashboard", "bu_detail", "inventory", "debt_collection", "aging")
  * @param {boolean} [requireBuAccess=false] - Nếu true, kiểm tra quyền truy cập params.buKey của người dùng
  */
 export default function ProtectedRoute({
   children,
   requiredRole,
+  requiredTab,
   requireBuAccess = false,
 }) {
-  const { isAuthenticated, role, canAccessBu, defaultAllowedBu, isBOD } =
-    useAuth();
+  const {
+    isAuthenticated,
+    role,
+    canAccessBu,
+    canAccessTab,
+    firstAllowedPath,
+    defaultAllowedBu,
+    isBOD,
+  } = useAuth();
   const location = useLocation();
   const params = useParams();
 
@@ -23,12 +32,17 @@ export default function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // 2. Nếu route yêu cầu Role cụ thể mà người dùng không đủ quyền (BOD luôn có toàn quyền)
-  if (requiredRole && role !== requiredRole && !isBOD) {
-    return <Navigate to="/dashboard" replace />;
+  // 2. Nếu route yêu cầu Tab cụ thể mà người dùng không có quyền truy cập
+  if (requiredTab && canAccessTab && !canAccessTab(requiredTab)) {
+    return <Navigate to={firstAllowedPath || "/aging"} replace />;
   }
 
-  // 3. Nếu route yêu cầu quyền truy cập BU (/bu/:buKey)
+  // 3. Nếu route yêu cầu Role cụ thể mà người dùng không đủ quyền (BOD luôn có toàn quyền)
+  if (requiredRole && role !== requiredRole && !isBOD) {
+    return <Navigate to={firstAllowedPath || "/aging"} replace />;
+  }
+
+  // 4. Nếu route yêu cầu quyền truy cập BU (/bu/:buKey)
   if (requireBuAccess && params.buKey) {
     if (!canAccessBu(params.buKey)) {
       const fallbackBu = defaultAllowedBu || "elevator";

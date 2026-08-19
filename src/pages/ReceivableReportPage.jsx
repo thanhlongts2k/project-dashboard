@@ -79,6 +79,51 @@ export default function ReceivableReportPage({
         exportingPdf={exportingPdf}
       />
 
+      {/* Smart Notification Banner: Hiển thị khi ngày đang chọn chưa có số liệu thu tiền */}
+      {data?.latestAvailableDate && data.latestAvailableDate !== selectedDate && Number(data?.detailTotalRow?.totalCollectedValue || 0) === 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "10px 16px",
+            marginBottom: "12px",
+            borderRadius: "8px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            color: "#1e40af",
+            fontSize: "13px",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "16px" }}>ℹ️</span>
+            <span>
+              Ngày <strong>{formatDisplayDate(selectedDate)}</strong> chưa có phát sinh giao dịch thu tiền mới trong sổ kế toán (Dữ liệu chốt gần nhất: <strong>{formatDisplayDate(data.latestAvailableDate)}</strong>).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChangeDate(data.latestAvailableDate)}
+            style={{
+              padding: "5px 12px",
+              background: "#2563eb",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 500,
+              fontSize: "12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <span>👉 Xem ngày {formatDisplayDate(data.latestAvailableDate)}</span>
+          </button>
+        </div>
+      )}
+
       {/* Top Overview Metric Cards */}
       <ReceivableKpiGrid
         label={`Tổng quan ngày ${header.todayLabel || BLANK}`}

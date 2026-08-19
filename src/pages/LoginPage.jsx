@@ -82,10 +82,14 @@ export default function LoginPage({ onLoginSuccess }) {
           sessionStorage.setItem("username", displayName);
         }
 
+        const finalDisplayName = result?.user?.full_name || displayName;
+
         onLoginSuccess?.({
           token: result.token,
           expiry: result.expiry || "",
-          username: displayName,
+          username: finalDisplayName,
+          user: result.user,
+          rememberMe,
         });
       } catch (error) {
         console.error("Google login error:", error);
@@ -191,10 +195,14 @@ export default function LoginPage({ onLoginSuccess }) {
         sessionStorage.setItem("username", username.trim());
       }
 
+      const finalDisplayName = result?.user?.full_name || username.trim();
+
       onLoginSuccess?.({
         token: result.token,
         expiry: result.expiry || "",
-        username: username.trim(),
+        username: finalDisplayName,
+        user: result.user,
+        rememberMe,
       });
     } catch (error) {
       console.error("Login error:", error);

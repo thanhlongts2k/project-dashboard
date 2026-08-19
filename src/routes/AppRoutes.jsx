@@ -13,19 +13,20 @@ import DashboardBuDetailPage from "../pages/DashboardBuDetailPage";
 import InventoryReportPage from "../pages/InventoryReportPage";
 import ReceivableReportPage from "../pages/ReceivableReportPage";
 import DebtAgingReportPage from "../pages/DebtAgingReportPage";
+import { buIdFromCode } from "../utils/detailMapper";
 
 function LoginPageWrapper() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, firstAllowedPath } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || "/dashboard";
+  const from = location.state?.from?.pathname || firstAllowedPath || "/dashboard";
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard", { replace: true });
+      navigate(firstAllowedPath || "/dashboard", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, firstAllowedPath, navigate]);
 
   const handleSuccess = (authData) => {
     login(authData);
@@ -33,6 +34,11 @@ function LoginPageWrapper() {
   };
 
   return <LoginPage onLoginSuccess={handleSuccess} />;
+}
+
+function IndexRedirect() {
+  const { firstAllowedPath } = useAuth();
+  return <Navigate to={firstAllowedPath || "/dashboard"} replace />;
 }
 
 function DashboardOverviewPageWrapper() {
@@ -90,6 +96,7 @@ function DashboardOverviewPageWrapper() {
 function DashboardBuDetailPageWrapper() {
   const navigate = useNavigate();
   const params = useParams();
+  const { defaultAllowedBu } = useAuth();
   const {
     activeBu,
     setActiveBu,
@@ -99,13 +106,14 @@ function DashboardBuDetailPageWrapper() {
   } = useDashboard();
 
   const { filters, setFilters, preserveSearch } = useDashboardFilters("thisMonth");
-  const currentBuKey = params.buKey || activeBu || "elevator";
+  const rawKey = params.buKey || activeBu || defaultAllowedBu || "elevator";
+  const currentBuKey = buIdFromCode(rawKey) || rawKey || "elevator";
 
   useEffect(() => {
     if (params.buKey && params.buKey !== activeBu) {
-      setActiveBu(params.buKey);
+      setActiveBu(currentBuKey);
     }
-  }, [params.buKey, activeBu, setActiveBu]);
+  }, [params.buKey, activeBu, currentBuKey, setActiveBu]);
 
   useEffect(() => {
     loadDetailData({
@@ -257,23 +265,51 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardOverviewPageWrapper />} />
+        <Route index element={<IndexRedirect />} />
+        <Route
+          path="dashboard"
+          element={
+            <ProtectedRoute requiredTab="dashboard">
+              <DashboardOverviewPageWrapper />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="bu/:buKey"
           element={
-            <ProtectedRoute requireBuAccess>
+            <ProtectedRoute requiredTab="bu_detail" requireBuAccess>
               <DashboardBuDetailPageWrapper />
             </ProtectedRoute>
           }
         />
-        <Route path="inventory" element={<InventoryReportPageWrapper />} />
-        <Route path="receivables" element={<ReceivableReportPageWrapper />} />
-        <Route path="aging" element={<DebtAgingReportPage />} />
+        <Route
+          path="inventory"
+          element={
+            <ProtectedRoute requiredTab="inventory">
+              <InventoryReportPageWrapper />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="receivables"
+          element={
+            <ProtectedRoute requiredTab="debt_collection">
+              <ReceivableReportPageWrapper />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="aging"
+          element={
+            <ProtectedRoute requiredTab="aging">
+              <DebtAgingReportPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Fallback wildcard */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<IndexRedirect />} />
     </Routes>
   );
 }

@@ -83,6 +83,10 @@ function buildTabsFromMainUnits(mainUnits = []) {
     BU_ECO: "ECO",
     BU_AGRITECH: "AgriTech",
     BU_MANUFACTURING: "Sản xuất - Nhà máy",
+    BU_DTCT: "Đầu tư cho thuê / ĐTCT",
+    ĐTCT: "Đầu tư cho thuê / ĐTCT",
+    DTCT: "Đầu tư cho thuê / ĐTCT",
+    OVERSEA: "Oversea",
   };
 
   const toneMap = {
@@ -92,6 +96,8 @@ function buildTabsFromMainUnits(mainUnits = []) {
     eco: "green",
     agritech: "red",
     manufacturing: "",
+    dtct: "teal",
+    oversea: "blue",
   };
 
   return (Array.isArray(mainUnits) ? mainUnits : [])
@@ -103,7 +109,7 @@ function buildTabsFromMainUnits(mainUnits = []) {
         id,
         label:
           labelMap[
-            String(item.code).trim().replace(/\s+/g, "_").toUpperCase()
+          String(item.code).trim().replace(/\s+/g, "_").toUpperCase()
           ] || item.name,
         tone: toneMap[id] || "",
         owner: item.manager || "",
@@ -292,12 +298,19 @@ export function DashboardProvider({ children }) {
         ]);
 
         const tabs = buildTabsFromMainUnits(mainUnits);
-        const mainUnit = (Array.isArray(mainUnits) ? mainUnits : []).find(
-          (item) => buIdFromCode(item.code) === buId
+        let mainUnit = (Array.isArray(mainUnits) ? mainUnits : []).find(
+          (item) => buIdFromCode(item.code) === buId || buIdFromCode(item.code) === buIdFromCode(buId) || item.code === buId
         );
 
+        // Fallback an toàn: Nếu không tìm thấy buId tương ứng (ví dụ buId không phải BU thương mại), tự động chọn BU thương mại đầu tiên
+        if (!mainUnit && Array.isArray(mainUnits) && mainUnits.length > 0) {
+          mainUnit = mainUnits[0];
+          console.warn(`[DashboardContext] Không tìm thấy BU '${buId}'. Tự động chuyển hướng về BU '${buIdFromCode(mainUnit.code)}'.`);
+        }
+
         if (!mainUnit) {
-          throw new Error("Không tìm thấy đơn vị kinh doanh tương ứng.");
+          setLoadingDetail(false);
+          return;
         }
 
         let performanceRows = [];

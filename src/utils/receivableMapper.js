@@ -720,5 +720,7 @@ export function mapReceivableReportFromApi(
     receivableDonutData,
     commitmentRows,
     commitmentTotalRow,
+    latestAvailableDate: todayPayload?.latest_available_date || null,
+    hasData: todayPayload?.has_data ?? (todayTotals.total_collected > 0),
   };
 }

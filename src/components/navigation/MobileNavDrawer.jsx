@@ -13,7 +13,7 @@ export default function MobileNavDrawer({
   onOpenEmailConfig,
   onExportAllReports,
 }) {
-  const { user, role, switchRole, logout } = useAuth();
+  const { user, role, switchRole, logout, canAccessTab } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
@@ -28,13 +28,15 @@ export default function MobileNavDrawer({
 
   if (!isOpen) return null;
 
-  const displayName = user?.displayName || user?.username || "User";
+  const displayName = user?.displayName || user?.full_name || user?.username || "User";
   const avatar = displayName.trim().charAt(0).toUpperCase() || "U";
 
   const getRoleBadgeStyle = (r) => {
-    if (r === ROLES.BOD) return { bg: "#fef3c7", color: "#92400e", border: "#fde68a", text: "👑 BOD" };
-    if (r === ROLES.BU_HEAD) return { bg: "#e0f2fe", color: "#0369a1", border: "#bae6fd", text: "🏢 BU_HEAD" };
-    return { bg: "#f1f5f9", color: "#475569", border: "#e2e8f0", text: "👤 BU_STAFF" };
+    const norm = String(r || "").toUpperCase();
+    if (norm === "BOD" || norm === "BOD_ADMIN") return { bg: "#fef3c7", color: "#92400e", border: "#fde68a", text: "👑 BOD" };
+    if (norm === "BU_HEAD") return { bg: "#e0f2fe", color: "#0369a1", border: "#bae6fd", text: "🏢 BU_HEAD" };
+    if (norm === "SALES" || norm === "BU_STAFF") return { bg: "#dcfce7", color: "#166534", border: "#bbf7d0", text: "💼 SALES" };
+    return { bg: "#f1f5f9", color: "#475569", border: "#e2e8f0", text: "👤 VIEWER" };
   };
 
   const badge = getRoleBadgeStyle(role);
@@ -44,13 +46,15 @@ export default function MobileNavDrawer({
     toast.success(`Đã chuyển vai trò sang: ${newRole}`);
   };
 
-  const navItems = [
-    { key: "dashboard", path: "/dashboard", label: "📊 Báo cáo Tổng quan" },
-    { key: "bu", path: buDetailPath, label: "🏢 Báo cáo Chi tiết BU" },
-    { key: "inventory", path: "/inventory", label: "📦 Báo cáo Tồn kho" },
-    { key: "receivables", path: "/receivables", label: "💰 Báo cáo Công nợ & Thu tiền" },
-    { key: "aging", path: "/aging", label: "📈 Báo cáo Tuổi nợ (Aging Matrix)" },
+  const allNavItems = [
+    { key: "dashboard", tabKey: "dashboard", path: "/dashboard", label: "📊 Báo cáo Tổng quan" },
+    { key: "bu", tabKey: "bu_detail", path: buDetailPath, label: "🏢 Báo cáo Chi tiết BU" },
+    { key: "inventory", tabKey: "inventory", path: "/inventory", label: "📦 Báo cáo Tồn kho" },
+    { key: "receivables", tabKey: "debt_collection", path: "/receivables", label: "💰 Báo cáo Công nợ & Thu tiền" },
+    { key: "aging", tabKey: "aging", path: "/aging", label: "📈 Báo cáo Tuổi nợ (Aging Matrix)" },
   ];
+
+  const navItems = allNavItems.filter((item) => canAccessTab ? canAccessTab(item.tabKey) : true);
 
   return (
     <div className="mobile-drawer-backdrop" onClick={onClose}>
@@ -82,33 +86,37 @@ export default function MobileNavDrawer({
               </div>
             </div>
 
-            {/* Quick Role Switcher */}
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 6 }}>
-              Chuyển nhanh quyền hạn:
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, marginBottom: 10 }}>
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch(ROLES.BOD)}
-                style={{ fontSize: 10, padding: "5px 2px", borderRadius: 6, fontWeight: role === ROLES.BOD ? 700 : 500, background: role === ROLES.BOD ? "#fef3c7" : "#fff", color: role === ROLES.BOD ? "#92400e" : "#475569", border: "1px solid #cbd5e1", cursor: "pointer" }}
-              >
-                👑 BOD
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch(ROLES.BU_HEAD)}
-                style={{ fontSize: 10, padding: "5px 2px", borderRadius: 6, fontWeight: role === ROLES.BU_HEAD ? 700 : 500, background: role === ROLES.BU_HEAD ? "#e0f2fe" : "#fff", color: role === ROLES.BU_HEAD ? "#0369a1" : "#475569", border: "1px solid #cbd5e1", cursor: "pointer" }}
-              >
-                🏢 BU_HEAD
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch(ROLES.BU_STAFF)}
-                style={{ fontSize: 10, padding: "5px 2px", borderRadius: 6, fontWeight: role === ROLES.BU_STAFF ? 700 : 500, background: role === ROLES.BU_STAFF ? "#f1f5f9" : "#fff", color: role === ROLES.BU_STAFF ? "#334155" : "#475569", border: "1px solid #cbd5e1", cursor: "pointer" }}
-              >
-                👤 STAFF
-              </button>
-            </div>
+            {/* Quick Role Switcher - Chỉ hiển thị trong môi trường Development */}
+            {import.meta.env.DEV && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 6 }}>
+                  Chuyển vai trò (Dev only):
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSwitch(ROLES.BOD_ADMIN)}
+                    style={{ fontSize: 10, padding: "5px 2px", borderRadius: 6, fontWeight: role === "BOD_ADMIN" ? 700 : 500, background: role === "BOD_ADMIN" ? "#fef3c7" : "#fff", color: role === "BOD_ADMIN" ? "#92400e" : "#475569", border: "1px solid #cbd5e1", cursor: "pointer" }}
+                  >
+                    👑 BOD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSwitch(ROLES.BU_HEAD)}
+                    style={{ fontSize: 10, padding: "5px 2px", borderRadius: 6, fontWeight: role === "BU_HEAD" ? 700 : 500, background: role === "BU_HEAD" ? "#e0f2fe" : "#fff", color: role === "BU_HEAD" ? "#0369a1" : "#475569", border: "1px solid #cbd5e1", cursor: "pointer" }}
+                  >
+                    🏢 BU_HEAD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSwitch(ROLES.SALES)}
+                    style={{ fontSize: 10, padding: "5px 2px", borderRadius: 6, fontWeight: role === "SALES" ? 700 : 500, background: role === "SALES" ? "#dcfce7" : "#fff", color: role === "SALES" ? "#166534" : "#475569", border: "1px solid #cbd5e1", cursor: "pointer" }}
+                  >
+                    💼 SALES
+                  </button>
+                </div>
+              </div>
+            )}
 
             <button
               type="button"

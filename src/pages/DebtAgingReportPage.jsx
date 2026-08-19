@@ -14,11 +14,24 @@ import { BU_CODE_MAP, FALLBACK_BU_OPTIONS, normalizeBuCode, formatDateDisplay } 
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
 
 export default function DebtAgingReportPage() {
-  const { user, isBOD, isBuHead, allowedBUs, canAccessBu } = useAuth();
+  const { user, isBOD, userBuCode, employeeCode, allowedBUs, canAccessBu, getRoleInCurrentBu } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const isStaff = !isBOD && !isBuHead;
-  const staffFixedCode = user?.staffCode || user?.employeeCode || user?.ownerId || "2000996";
+  const staffFixedCode = employeeCode || user?.employee_code || user?.staffCode || "2000996";
+  const userFixedBu = useMemo(() => {
+    // 1. Tìm BU thương mại hợp lệ đầu tiên trong allowedBUs / assigned_bus (loại trừ HPC / ALL)
+    const validAllowedBu = (allowedBUs || []).find((b) => {
+      const norm = normalizeBuCode(b);
+      return norm && norm !== "HPC" && norm !== "ALL";
+    });
+    if (validAllowedBu) return normalizeBuCode(validAllowedBu);
+
+    // 2. Tìm theo userBuCode nếu không phải HPC
+    if (userBuCode && normalizeBuCode(userBuCode) !== "HPC") {
+      return normalizeBuCode(userBuCode);
+    }
+    return "BU_ELEVATOR";
+  }, [allowedBUs, userBuCode]);
 
   const urlPeriod = searchParams.get("period");
   const urlDate = searchParams.get("date");
@@ -29,14 +42,25 @@ export default function DebtAgingReportPage() {
   const period = useMemo(() => urlPeriod || reportDate.slice(0, 7), [urlPeriod, reportDate]);
 
   const selectedBu = useMemo(() => {
-    if (!urlBu || urlBu === "ALL") return isBOD ? "ALL" : normalizeBuCode(allowedBUs && allowedBUs[0]);
-    return normalizeBuCode(urlBu);
-  }, [urlBu, isBOD, allowedBUs]);
+    if (isBOD) {
+      if (!urlBu || urlBu === "ALL") return "ALL";
+      return normalizeBuCode(urlBu);
+    }
+    if (urlBu && urlBu !== "ALL" && urlBu !== "HPC") {
+      const normUrl = normalizeBuCode(urlBu);
+      if (canAccessBu(normUrl)) return normUrl;
+    }
+    return userFixedBu;
+  }, [urlBu, isBOD, canAccessBu, userFixedBu]);
+
+  // Xác định vai trò cụ thể tại BU đang chọn: nếu là BU_HEAD thì mở toàn quyền chọn nhân sự, nếu là SALES thì khóa theo mã cá nhân
+  const currentBuRole = useMemo(() => getRoleInCurrentBu(selectedBu), [getRoleInCurrentBu, selectedBu]);
+  const isStaffInCurrentBu = !isBOD && currentBuRole !== "BU_HEAD";
 
   const selectedStaff = useMemo(() => {
-    if (isStaff) return staffFixedCode;
+    if (isStaffInCurrentBu) return staffFixedCode;
     return urlEmployee && urlEmployee !== "ALL" ? urlEmployee : "ALL";
-  }, [isStaff, staffFixedCode, urlEmployee]);
+  }, [isStaffInCurrentBu, staffFixedCode, urlEmployee]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -102,33 +126,35 @@ export default function DebtAgingReportPage() {
     if (isBOD) return [{ value: "ALL", label: "🏢 Tất cả BU (Toàn công ty)" }, ...baseOptions];
 
     const filtered = baseOptions.filter((opt) => {
+      if (opt.value === "HPC" || opt.value === "ALL") return false;
       const rawKey = Object.keys(BU_CODE_MAP).find((k) => BU_CODE_MAP[k] === opt.value) || opt.value;
-      return canAccessBu(rawKey) || canAccessBu(opt.value);
+      return canAccessBu(rawKey) || canAccessBu(opt.value) || opt.value === userFixedBu;
     });
-    const isLocked = filtered.length <= 1;
-    return filtered.map((opt) => ({ value: opt.value, label: isLocked ? `${opt.label} 🔒` : opt.label }));
-  }, [allBUsData.results, isBOD, canAccessBu]);
+    return filtered.map((opt) => ({ value: opt.value, label: `${opt.label} 🔒` }));
+  }, [allBUsData.results, isBOD, canAccessBu, userFixedBu]);
 
+  // Cho phép chuyển đổi nếu nhân sự có từ 2 BU trở lên, khóa nếu chỉ có 1 BU
   const isBuLocked = !isBOD && buSelectOptions.length <= 1;
   const currentBu = useMemo(() => (allBUsData.results || []).find((b) => b.code === selectedBu), [allBUsData.results, selectedBu]);
   const fullBuData = useMemo(() => mapAgingDrilldownResponse(rawDrilldownData, "ALL"), [rawDrilldownData]);
 
   const agingData = useMemo(() => {
     let data = mapAgingDrilldownResponse(rawDrilldownData, selectedStaff);
-    if (isStaff && data.staffGroups.length === 0 && fullBuData.staffGroups.length > 0) {
+    if (isStaffInCurrentBu && data.staffGroups.length === 0 && fullBuData.staffGroups.length > 0) {
       const matched = fullBuData.staffGroups.find((st) => st.code === staffFixedCode || st.name.toLowerCase().includes("dương") || st.name.toLowerCase().includes(user?.displayName?.toLowerCase() || "")) || fullBuData.staffGroups[0];
       if (matched) data = mapAgingDrilldownResponse(rawDrilldownData, matched.code);
     }
     return data;
-  }, [rawDrilldownData, selectedStaff, isStaff, staffFixedCode, fullBuData, user]);
+  }, [rawDrilldownData, selectedStaff, isStaffInCurrentBu, staffFixedCode, fullBuData, user]);
 
   const staffOptions = useMemo(() => {
-    if (isStaff) {
+    if (isStaffInCurrentBu) {
       const current = agingData.staffGroups[0];
-      return [{ value: staffFixedCode, label: `${current?.name || "MAI TIẾN DƯƠNG"} (${current?.title || "Nhân viên kinh doanh"}) 🔒` }];
+      const staffName = user?.full_name || user?.displayName || current?.name || "Nhân viên";
+      return [{ value: staffFixedCode, label: `👤 ${staffName} (${staffFixedCode}) 🔒` }];
     }
     return [{ value: "ALL", label: "Tất cả nhân sự" }, ...fullBuData.staffGroups.map((st) => ({ value: st.code, label: `${st.name} (${st.title || st.role})` }))];
-  }, [isStaff, staffFixedCode, agingData.staffGroups, fullBuData.staffGroups]);
+  }, [isStaffInCurrentBu, staffFixedCode, agingData.staffGroups, fullBuData.staffGroups, user]);
 
   const handleBuChange = (nextBu) => updateUrlParams({ bu: nextBu === "ALL" ? null : nextBu, employee: null, period });
   const handleStaffChange = (nextStaff) => updateUrlParams({ bu: selectedBu, employee: nextStaff === "ALL" ? null : nextStaff, period });
@@ -159,7 +185,7 @@ export default function DebtAgingReportPage() {
           <>
             <CustomSelect value={selectedBu} onChange={handleBuChange} options={buSelectOptions} disabled={isBuLocked} placeholder="Chọn BU" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 200 }} />
             {selectedBu !== "ALL" && (
-              <CustomSelect value={selectedStaff} onChange={handleStaffChange} options={staffOptions} disabled={isStaff} placeholder="Chọn nhân sự" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 220 }} />
+              <CustomSelect value={selectedStaff} onChange={handleStaffChange} options={staffOptions} disabled={isStaffInCurrentBu} placeholder="Chọn nhân sự" triggerStyle={{ height: 36, fontSize: 12, padding: "0 10px", minWidth: 220 }} />
             )}
           </>
         }

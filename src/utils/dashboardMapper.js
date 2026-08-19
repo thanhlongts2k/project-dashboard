@@ -18,22 +18,52 @@ function displayNameFromCode(code = "", fallbackName = "") {
     BU_ECO: "ECO",
     BU_AGRITECH: "AgriTech",
     BU_MANUFACTURING: "Sản xuất - Nhà máy",
+    BU_DTCT: "Đối tác chiến lược / ĐTCT",
+    ĐTCT: "Đối tác chiến lược / ĐTCT",
+    DTCT: "Đối tác chiến lược / ĐTCT",
+    OVERSEA: "Oversea",
   };
 
   return map[normalizeCode(code)] || fallbackName || normalizeCode(code);
 }
 
 function buIdFromCode(code = "") {
+  if (!code) return null;
+  const raw = String(code).trim().toLowerCase();
+  const normalized = normalizeCode(code);
+
   const map = {
     BU_ELEVATOR: "elevator",
     BU_IBIZ_PREMIUM: "ibizPremium",
     BU_IBIZ_VALUE: "ibizValue",
     BU_ECO: "eco",
     BU_AGRITECH: "agritech",
+    BU_AGRITECH___ECO: "eco",
+    BU_AGRITECH_ECO: "eco",
     BU_MANUFACTURING: "manufacturing",
+    BU_DTCT: "dtct",
+    BU_ĐTCT: "dtct",
+    ĐTCT: "dtct",
+    DTCT: "dtct",
+    OVERSEA: "oversea",
+    ELEVATOR: "elevator",
+    IBIZPREMIUM: "ibizPremium",
+    IBIZVALUE: "ibizValue",
+    ECO: "eco",
+    AGRITECH: "agritech",
+    MANUFACTURING: "manufacturing",
   };
 
-  return map[normalizeCode(code)] || null;
+  if (map[normalized]) return map[normalized];
+  if (raw.includes("elevator") || raw.includes("thang máy")) return "elevator";
+  if (raw.includes("premium")) return "ibizPremium";
+  if (raw.includes("value")) return "ibizValue";
+  if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
+  if (raw.includes("eco") || raw.includes("agritech")) return "eco";
+  if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";
+  if (raw.includes("dtct") || raw.includes("đtct") || raw.includes("cho thuê") || raw.includes("đối tác")) return "dtct";
+  if (raw.includes("oversea") || raw.includes("campuchia")) return "oversea";
+  return null;
 }
 
 function toneFromBuId(buId = "") {

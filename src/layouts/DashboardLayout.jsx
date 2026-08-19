@@ -12,7 +12,7 @@ import MobileNavDrawer from "../components/navigation/MobileNavDrawer";
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, role, logout, defaultAllowedBu, canAccessBu } = useAuth();
+  const { user, role, logout, defaultAllowedBu, canAccessBu, canAccessTab, firstAllowedPath } = useAuth();
   const {
     activeBu,
     loadingOverlay,
@@ -56,7 +56,7 @@ export default function DashboardLayout() {
           <div className="topbar-left">
             <div
               style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
-              onClick={() => handleTabClick("/dashboard")}
+              onClick={() => handleTabClick(firstAllowedPath || "/dashboard")}
             >
               <img src="/HPC-Icon.png" alt="HPC" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "contain" }} />
               <div className="brand-title">
@@ -66,23 +66,33 @@ export default function DashboardLayout() {
               </div>
             </div>
 
-            {/* Desktop Navigation Tabs */}
+            {/* Desktop Navigation Tabs - Lọc hiển thị theo quyền User */}
             <nav className="desktop-nav-tabs">
-              <button type="button" className={`link-btn nav-tab-btn ${isOverviewActive ? "active" : ""}`} onClick={() => handleTabClick("/dashboard")}>
-                📊 Tổng quan
-              </button>
-              <button type="button" className={`link-btn nav-tab-btn ${isBuDetailActive ? "active" : ""}`} onClick={() => handleTabClick(buDetailPath)}>
-                🏢 Chi tiết BU
-              </button>
-              <button type="button" className={`link-btn nav-tab-btn ${isInventoryActive ? "active" : ""}`} onClick={() => handleTabClick("/inventory")}>
-                📦 Tồn kho
-              </button>
-              <button type="button" className={`link-btn nav-tab-btn ${isReceivablesActive ? "active" : ""}`} onClick={() => handleTabClick("/receivables")}>
-                💰 Công nợ & Thu tiền
-              </button>
-              <button type="button" className={`link-btn nav-tab-btn ${isAgingActive ? "active" : ""}`} onClick={() => handleTabClick("/aging")}>
-                📈 Tuổi nợ
-              </button>
+              {canAccessTab("dashboard") && (
+                <button type="button" className={`link-btn nav-tab-btn ${isOverviewActive ? "active" : ""}`} onClick={() => handleTabClick("/dashboard")}>
+                  📊 Tổng quan
+                </button>
+              )}
+              {canAccessTab("bu_detail") && (
+                <button type="button" className={`link-btn nav-tab-btn ${isBuDetailActive ? "active" : ""}`} onClick={() => handleTabClick(buDetailPath)}>
+                  🏢 Chi tiết BU
+                </button>
+              )}
+              {canAccessTab("inventory") && (
+                <button type="button" className={`link-btn nav-tab-btn ${isInventoryActive ? "active" : ""}`} onClick={() => handleTabClick("/inventory")}>
+                  📦 Tồn kho
+                </button>
+              )}
+              {canAccessTab("debt_collection") && (
+                <button type="button" className={`link-btn nav-tab-btn ${isReceivablesActive ? "active" : ""}`} onClick={() => handleTabClick("/receivables")}>
+                  💰 Công nợ & Thu tiền
+                </button>
+              )}
+              {canAccessTab("aging") && (
+                <button type="button" className={`link-btn nav-tab-btn ${isAgingActive ? "active" : ""}`} onClick={() => handleTabClick("/aging")}>
+                  📈 Tuổi nợ
+                </button>
+              )}
             </nav>
           </div>
 

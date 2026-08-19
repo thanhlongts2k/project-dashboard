@@ -3,6 +3,75 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.14] - 2026-08-19 (Feature: Key Accounts Debt Collection Pipeline Optimization & Smart Date Navigation)
+
+### Fixed & Enhanced
+- **Tối Ưu Giao Diện Thu Nợ Khách Hàng Trọng Yếu (`ReceivableReportPage.jsx`):**
+  - Tích hợp Smart Notification Banner khi ngày xem báo cáo chưa có chứng từ phát sinh mới trong sổ kế toán (`AccountDetail`).
+  - Hỗ trợ nút điều hướng 1-click chuyển ngay về ngày chốt số liệu gần nhất có dữ liệu (`18/08/2026`).
+  - Cập nhật `receivableMapper.js` nhận diện `latestAvailableDate` và `hasData`.
+
+## [1.0.13] - 2026-08-19 (Fix: Sales Aging Report Initialization Conflict & Smart BU Fallback)
+
+### Fixed & Enhanced
+- **Khắc Phục Xung Đột Khởi Tạo State Khi Sales Truy Cập Báo Cáo Tuổi Nợ (`DebtAgingReportPage.jsx`):**
+  - Cập nhật `userFixedBu` và `selectedBu`: Tự động tìm và chọn BU thương mại hợp lệ đầu tiên trong `allowedBUs` (loại trừ `HPC` và `ALL`), ngăn chặn hoàn toàn việc Frontend gửi request tới `/api/debt/bus/HPC/drilldown/`.
+  - Dropdown BU: Loại bỏ hoàn toàn tùy chọn `HPC` / `[🏢 Tất cả BU]` cho các tài khoản không phải `BOD_ADMIN`.
+  - Loại bỏ hoàn toàn lỗi 403 Forbidden và banner cảnh báo vàng trên giao diện người dùng.
+
+## [1.0.12] - 2026-08-19 (Feature: 4-Layer Data-Driven RBAC Engine, Commercial BU Support & Sales Aging-Only Permission)
+
+### Added & Enhanced
+- **Đồng Bộ Phân Quyền Theo Ma Trận Mới (Sales Aging Only):**
+  - Cập nhật quyền hạn vai trò `SALES`: Thu hồi tab `debt_collection`, chỉ cho phép truy cập duy nhất 1 Tab là `aging` ("Tuổi nợ").
+  - `ProtectedRoute` và `AppRoutes` tự động chuyển hướng người dùng SALES về `/aging` khi truy cập các URL khác.
+  - Navbar trên `DashboardLayout` và `MobileNavDrawer` chỉ hiển thị tab `aging` cho Sales và Viewer.
+- **Hỗ Trợ Toàn Diện 8 Đơn Vị Kinh Doanh Thương Mại (Full Commercial BU Support):**
+  - Đồng bộ nhận diện và hiển thị cho `ĐTCT` (`dtct`) và `Oversea` (`oversea`) trên `DashboardContext.jsx`, `detailMapper.js`, `dashboardMapper.js`.
+  - Cập nhật `labelMap` và `toneMap` chuẩn sắc thái giao diện cho toàn bộ 8 Commercial BUs.
+- **Gia Cố Bảo Mật Sản Xuất (Production Hardening):**
+  - Đảm bảo Dev Role Switcher hoàn toàn bị loại bỏ khi build production (`import.meta.env.DEV`).
+
+## [1.0.11] - 2026-08-19 (Feature: Multi-BU & Multi-Assignment RBAC, Dynamic Scope per BU)
+
+### Added & Enhanced
+- **Phân Quyền Nhân Sự Kiêm Nhiệm Đa BU & Đa Vai Trò (`AuthContext.jsx`):**
+  - Lưu trữ và phân giải danh sách `managed_bus` (BU quản lý), `assigned_bus` (BU công tác), và `assignments` (chi tiết từng phân công).
+  - Bổ sung helper `getRoleInCurrentBu(buCodeOrKey)`: Xác định chính xác vai trò của nhân sự tại BU đang xem (`BOD_ADMIN`, `BU_HEAD`, `SALES`, `VIEWER`).
+  - Nâng cấp `allowedBUs` và `canAccessBu(buId)` hỗ trợ kiểm tra linh hoạt đa BU.
+- **Bộ Lọc Động Theo Từng BU (Dynamic Filter Guard - `DebtAgingReportPage.jsx`):**
+  - **Dropdown BU**: Cho phép nhân sự có từ 2 BU công tác trở lên chuyển đổi linh hoạt qua lại giữa các BU thuộc quyền, ẩn các BU ngoài phạm vi; chỉ khóa cứng khi nhân sự thuộc duy nhất 1 BU.
+  - **Dropdown Nhân viên**:
+    * Khi đang chọn BU mà nhân sự giữ vai trò **`BU_HEAD`**: Dropdown mở toàn quyền xem `[Tất cả]` hoặc bất kỳ nhân viên nào trong BU.
+    * Khi đang chọn BU mà nhân sự giữ vai trò **`SALES`**: Dropdown tự động chọn và khóa cứng theo `employee_code` của chính nhân sự đó.
+- **Fallback Chống Crash Toàn Diện (`DashboardContext.jsx` & `AppRoutes.jsx`):**
+  - Tự động chuẩn hóa mã BU qua `buIdFromCode()` và fallback an toàn nếu BU không tồn tại, loại bỏ hoàn toàn các lỗi exception gây vỡ biểu đồ.
+
+## [1.0.10] - 2026-08-19 (Feature: Full-Stack RBAC, User Profile Sync, Route Guards, Filter Guards & Dev Switcher Isolation)
+
+### Added & Enhanced
+- **Chuẩn Hóa Phân Quyền & Quản Lý Profile Người Dùng (`AuthContext.jsx`):**
+  - Đồng bộ trực tiếp thông tin quyền hạn và profile mở rộng từ endpoint `GET /api/auth/me/`.
+  - Hỗ trợ đầy đủ 4 nhóm quyền: `BOD_ADMIN`, `BU_HEAD`, `SALES`, `VIEWER`.
+  - Quản lý danh sách `allowedTabs` động và đường dẫn truy cập đầu tiên `firstAllowedPath`.
+  - Cung cấp các helper quyền hạn: `isBOD`, `isBuHead`, `isSales`, `isViewer`, `canAccessTab(tabKey)`, `canAccessBu(buKey)`.
+- **Phân Quyền Hiển Thị Tab Trên Navbar (`DashboardLayout.jsx` & `MobileNavDrawer.jsx`):**
+  - `BOD_ADMIN`: Xem đủ 5 Tabs (`Tổng quan`, `Chi tiết BU`, `Tồn kho`, `Công nợ & Thu tiền`, `Tuổi nợ`).
+  - `BU_HEAD`: Ẩn Tab `Tổng quan`, chỉ hiển thị 4 Tabs quản lý BU (`Chi tiết BU`, `Tồn kho`, `Công nợ & Thu tiền`, `Tuổi nợ`).
+  - `SALES`: Ẩn `Tổng quan`, `Chi tiết BU`, `Tồn kho`, chỉ hiển thị Tab `Tuổi nợ` và `Công nợ`.
+  - `VIEWER`: Chỉ hiển thị Tab `Tuổi nợ`.
+- **Bảo Vệ Tuyến Đường & Tự Động Chuyển Hướng (Route Guard - `ProtectedRoute.jsx` & `AppRoutes.jsx`):**
+  - Thêm thuộc tính `requiredTab` vào `ProtectedRoute`.
+  - Người dùng truy cập trực tiếp URL của phân hệ không được phân quyền sẽ tự động chuyển hướng về trang hợp lệ đầu tiên (`firstAllowedPath`).
+  - Route gốc `/` và Wildcard `*` tự động chuyển hướng theo quyền của từng User.
+- **Khóa Cứng Bộ Lọc Dữ Liệu (Filter Guard - `DebtAgingReportPage.jsx`):**
+  - `BU_HEAD`: Dropdown BU tự động chọn đúng BU của mình và bị khóa (`disabled`).
+  - `SALES`: Dropdown BU bị khóa về BU của mình, Dropdown Nhân viên tự động chọn và khóa theo Mã nhân viên của chính mình.
+  - `BOD_ADMIN`: Toàn quyền chọn lọc tất cả BU và mọi nhân viên trong công ty.
+- **Bảo Mật Công Cụ Chuyển Vai Trò (Dev Switcher Isolation - `UserMenu.jsx` & `MobileNavDrawer.jsx`):**
+  - Bọc khối "Chuyển vai trò (Test nhanh)" trong điều kiện `{import.meta.env.DEV && ( ... )}`.
+  - Vite và Rollup tự động loại bỏ 100% mã nguồn kiểm thử trên bản build Production (`npm run build`).
+
 ---
 
 ## [1.0.9] - 2026-08-18 (Enhancement: Active Bucket Count Badge, KPI Collapsible Accordion, Modal Filter & Mobile Table Fix)
