@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../context/AuthContext";
 import Can from "../auth/Can";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import UserAvatar from "../common/UserAvatar";
 
 export default function MobileNavDrawer({
   isOpen,
@@ -23,7 +24,7 @@ export default function MobileNavDrawer({
   if (!isOpen) return null;
 
   const displayName = user?.displayName || user?.full_name || user?.username || "User";
-  const avatar = displayName.trim().charAt(0).toUpperCase() || "U";
+  const avatarUrl = user?.avatar || user?.avatar_url || "";
   const userEmail = user?.email || (user?.username && user?.username.includes("@") ? user?.username : "") || "";
   const employeeCode = user?.employee_code || "";
   const buName = user?.bu_name || user?.bu_code || "";
@@ -70,9 +71,12 @@ export default function MobileNavDrawer({
           {/* KHU VỰC 1: User Profile & RBAC Card */}
           <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#185fa5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>
-                {avatar}
-              </div>
+              <UserAvatar
+                src={avatarUrl}
+                name={displayName}
+                size={44}
+                fontSize={16}
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 13, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {displayName}

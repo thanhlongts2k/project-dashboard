@@ -3,6 +3,21 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.27] - 2026-08-20 (Feature: Smart Google Profile Avatar with Letter Fallback & Referrer Bypass)
+
+### Added & Enhanced
+- **[Profile & Branding] Tích Hợp Hiển Thị Ảnh Đại Diện Google Profile (Smart User Avatar):**
+  - **Khởi tạo Component `UserAvatar.jsx` (`src/components/common/UserAvatar.jsx`):**
+    - Hỗ trợ hiển thị ảnh đại diện sắc nét từ tài khoản Google SSO của người dùng.
+    - Cấu hình bắt buộc `referrerPolicy="no-referrer"` ngăn chặn Google CDN chặn tải ảnh đại diện do Referer header.
+    - Tích hợp cơ chế Fallback tự động: Nếu không có URL ảnh hoặc tải ảnh bị lỗi (`onError`), tự động chuyển sang hiển thị Avatar chữ cái đầu với màu xanh thương hiệu (`#185fa5`).
+  - **Đồng bộ hóa User State (`AuthContext.jsx`):**
+    - Bảo toàn trường `avatar` trong state `user` và lưu trữ bền vững vào `localStorage` / `sessionStorage` (`auth_user`) khi đăng nhập Google hoặc khi làm mới profile từ `/api/auth/me/`.
+  - **Cập nhật giao diện Desktop Header & Mobile Drawer:**
+    - `UserMenu.jsx`: Hiển thị `UserAvatar` tại nút bấm kích hoạt trên Header Desktop (22px) và trong phần đầu của Dropdown menu (36px).
+    - `MobileNavDrawer.jsx`: Hiển thị `UserAvatar` nổi bật tại thẻ thông tin người dùng trong thanh điều hướng trượt Mobile (44px).
+- **Files đã sửa:** `src/components/common/UserAvatar.jsx` [NEW], `src/context/AuthContext.jsx`, `src/components/UserMenu.jsx`, `src/components/navigation/MobileNavDrawer.jsx`, `src/styles/dashboard.css`.
+
 ## [1.0.26] - 2026-08-19 (Bugfix: Canonical BU Deduplication on /receivables & Unique React Keys)
 
 ### Fixed

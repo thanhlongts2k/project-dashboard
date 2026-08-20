@@ -123,8 +123,10 @@ export function AuthProvider({ children }) {
         if (response.ok) {
           const data = await response.json();
           if (data?.user && isMounted) {
+            const prevSaved = loadSavedUser();
             const enrichedUser = {
               ...data.user,
+              avatar: data.user.avatar || data.user.avatar_url || prevSaved?.avatar || prevSaved?.avatar_url || "",
               displayName: data.user.full_name || data.user.username,
             };
             setAuth((prev) => ({
@@ -180,6 +182,7 @@ export function AuthProvider({ children }) {
         username: username || rawUser?.username,
         full_name: rawUser?.full_name || username,
         displayName: rawUser?.full_name || username,
+        avatar: rawUser?.avatar || rawUser?.avatar_url || "",
         role: resolvedRole,
         allowed_tabs: resolvedTabs,
       };

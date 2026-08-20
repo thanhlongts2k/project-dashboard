@@ -3,6 +3,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { ROLES } from "../context/AuthContext";
 import Can from "./auth/Can";
+import UserAvatar from "./common/UserAvatar";
 
 export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmailConfig }) {
   const [open, setOpen] = useState(false);
@@ -12,7 +13,7 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
 
   const currentRole = roleBadge || role || "BOD_ADMIN";
   const displayName = user?.displayName || user?.full_name || currentUser || "User";
-  const avatar = displayName.trim().charAt(0).toUpperCase() || "U";
+  const avatarUrl = user?.avatar || user?.avatar_url || "";
   const employeeCode = user?.employee_code || "";
   const buName = user?.bu_name || user?.bu_code || "";
   const userEmail = user?.email || (user?.username && user?.username.includes("@") ? user?.username : "") || "";
@@ -62,9 +63,12 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
           cursor: "pointer",
         }}
       >
-        <span className="user-avatar" style={{ width: 22, height: 22, fontSize: 11 }}>
-          {avatar}
-        </span>
+        <UserAvatar
+          src={avatarUrl}
+          name={displayName}
+          size={22}
+          fontSize={11}
+        />
 
         <div style={{ textAlign: "left", lineHeight: 1.1 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: "#1f2937" }}>
@@ -106,7 +110,23 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
           }}
         >
           <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", lineHeight: 1.3 }}>{displayName}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <UserAvatar
+                src={avatarUrl}
+                name={displayName}
+                size={36}
+                fontSize={14}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {displayName}
+                </div>
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                  Vai trò: <strong style={{ color: badgeStyle.color }}>{badgeStyle.text}</strong>
+                </div>
+              </div>
+            </div>
+
             {userEmail && (
               <div
                 style={{
@@ -119,7 +139,7 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 5,
-                  margin: "5px 0 8px 0",
+                  margin: "4px 0 8px 0",
                   border: "1px solid #e2e8f0",
                   maxWidth: "100%",
                   boxSizing: "border-box",
@@ -139,9 +159,6 @@ export default function UserMenu({ currentUser, onLogout, roleBadge, onOpenEmail
               {buName && (
                 <span style={{ fontSize: 11, color: "#64748b" }}>Đơn vị: <strong style={{ color: "#334155" }}>{buName}</strong></span>
               )}
-            </div>
-            <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
-              Vai trò: <strong style={{ color: badgeStyle.color }}>{badgeStyle.text}</strong>
             </div>
           </div>
 

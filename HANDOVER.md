@@ -1,8 +1,8 @@
 # HANDOVER REPORT — PROJECT DASHBOARD
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
-**Phiên bản:** `v1.0.26` (Bugfix: Canonical BU Deduplication on /receivables & Unique React Keys)  
-**Ngày cập nhật:** 19/08/2026  
+**Phiên bản:** `v1.0.27` (Feature: Smart Google Profile Avatar with Letter Fallback & Referrer Bypass)  
+**Ngày cập nhật:** 20/08/2026  
 **Trạng thái:** 🚀 **PRODUCTION READY** (`Build 100% Pass`, 0 Errors)
 
 ---

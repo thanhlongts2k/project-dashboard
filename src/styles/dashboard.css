@@ -958,14 +958,22 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #111827;
+  background: #185fa5;
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   font-weight: 700;
-  flex: 0 0 28px;
+  flex: 0 0 auto;
+}
+
+.user-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .user-meta {
