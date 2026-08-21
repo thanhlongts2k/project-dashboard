@@ -139,13 +139,8 @@ export default function DebtAgingReportPage() {
   const fullBuData = useMemo(() => mapAgingDrilldownResponse(rawDrilldownData, "ALL"), [rawDrilldownData]);
 
   const agingData = useMemo(() => {
-    let data = mapAgingDrilldownResponse(rawDrilldownData, selectedStaff);
-    if (isStaffInCurrentBu && data.staffGroups.length === 0 && fullBuData.staffGroups.length > 0) {
-      const matched = fullBuData.staffGroups.find((st) => st.code === staffFixedCode || st.name.toLowerCase().includes("dương") || st.name.toLowerCase().includes(user?.displayName?.toLowerCase() || "")) || fullBuData.staffGroups[0];
-      if (matched) data = mapAgingDrilldownResponse(rawDrilldownData, matched.code);
-    }
-    return data;
-  }, [rawDrilldownData, selectedStaff, isStaffInCurrentBu, staffFixedCode, fullBuData, user]);
+    return mapAgingDrilldownResponse(rawDrilldownData, selectedStaff);
+  }, [rawDrilldownData, selectedStaff]);
 
   const staffOptions = useMemo(() => {
     if (isStaffInCurrentBu) {

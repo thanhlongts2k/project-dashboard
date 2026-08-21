@@ -74,7 +74,17 @@ export function mapAgingDrilldownResponse(rawResponse = {}, selectedStaffCode = 
     });
   }
 
-  if (rawGroups.length === 0) rawGroups = MOCK_STAFF_LIST;
+  const isApiLoaded = Boolean(
+    rawResponse &&
+      (rawResponse.tier_1_bu ||
+        rawResponse.tier_2_and_3 ||
+        rawResponse.period ||
+        rawResponse.reconciliation)
+  );
+
+  if (rawGroups.length === 0 && !isApiLoaded) {
+    rawGroups = MOCK_STAFF_LIST;
+  }
 
   let staffList = rawGroups.map(mapAgingStaffGroup);
   const isSingleStaff = selectedStaffCode && selectedStaffCode !== "ALL" && selectedStaffCode !== "all" && selectedStaffCode !== "Tất cả";

@@ -3,6 +3,20 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.28] - 2026-08-21 (Bugfix: Eliminate Production Mock Data Leak on Aging Report)
+
+### Fixed
+- **[Data Integrity & Production Safety] Khắc Phục Triệt Để Rò Rỉ Mock Data 7.2 Tỷ Trên Báo Cáo Tuổi Nợ (`/aging`):**
+  - **Root Cause:** Khi API Backend trả về kết quả rỗng `bu_teams: []` (vì nhân sự không có công nợ trong BU đó, ví dụ tài khoản 3003 Đào Tiến Dũng xem BU ĐTCT), file `src/utils/agingMapper.js` trước đây tự động fallback sang `MOCK_STAFF_LIST` trong `src/utils/agingMockData.js` chứa 5 khách hàng mẫu với số nợ giả định 7.198 tỷ. Đồng thời tại `DebtAgingReportPage.jsx`, logic fallback tự ý gán danh mục nhân sự đầu tiên khi số lượng bằng 0.
+  - **Dọn sạch Mock Data trong `src/utils/agingMockData.js`:**
+    - Thay thế toàn bộ mảng `MOCK_STAFF_LIST` thành mảng rỗng an toàn `[]`.
+    - Thay thế `MOCK_GLOBAL_BUS_SUMMARY` thành `{ global_summary: null, results: [] }`.
+    - Đảm bảo tuyệt đối không còn bất kỳ số liệu giả lập nào tồn tại trong bundle mã nguồn Frontend.
+  - **Khóa logic Mapper (`src/utils/agingMapper.js` & `src/pages/DebtAgingReportPage.jsx`):**
+    - Kiểm tra cờ `isApiLoaded`. Nếu API Backend đã kết nối và trả về dữ liệu rỗng hợp lệ từ máy chủ, Frontend giữ nguyên danh sách rỗng (`[]`).
+    - Khi nhân sự không có công nợ trong BU được chọn, giao diện hiển thị đúng chuẩn: `0 đồng / 📭 Không có phát sinh công nợ trong kỳ này`.
+- **Files đã sửa:** `src/utils/agingMockData.js`, `src/utils/agingMapper.js`, `src/pages/DebtAgingReportPage.jsx`.
+
 ## [1.0.27] - 2026-08-20 (Feature: Smart Google Profile Avatar with Letter Fallback & Referrer Bypass)
 
 ### Added & Enhanced
