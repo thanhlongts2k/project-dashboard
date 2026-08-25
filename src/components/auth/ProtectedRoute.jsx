@@ -33,6 +33,10 @@ export default function ProtectedRoute({
   }
 
   // 2. Nếu route yêu cầu Tab cụ thể mà người dùng không có quyền truy cập
+  if (requiredTab === "inventory" && role !== "TEST") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   if (requiredTab && canAccessTab && !canAccessTab(requiredTab)) {
     return <Navigate to={firstAllowedPath || "/aging"} replace />;
   }

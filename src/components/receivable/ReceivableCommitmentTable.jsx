@@ -19,11 +19,47 @@ export default function ReceivableCommitmentTable({
   tomorrowLabel,
   commitmentRows = [],
   commitmentTotalRow = null,
+  onOpenCommitmentDetail,
 }) {
   return (
     <div className="card" style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
-      <div className="card-title">
-        Cam kết thu nợ: {todayLabel} vs {tomorrowLabel}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "10px",
+          marginBottom: "12px",
+        }}
+      >
+        <div className="card-title" style={{ marginBottom: 0 }}>
+          Cam kết thu nợ: {todayLabel} vs {tomorrowLabel}
+        </div>
+        {onOpenCommitmentDetail && (
+          <button
+            type="button"
+            onClick={onOpenCommitmentDetail}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 14px",
+              borderRadius: "7px",
+              backgroundColor: "#eff6ff",
+              color: "#185fa5",
+              border: "1px solid #bfdbfe",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+            }}
+            title="Xem chi tiết tiến độ cam kết theo khách hàng"
+          >
+            <span>📋</span>
+            <span>Xem chi tiết tiến độ cam kết</span>
+          </button>
+        )}
       </div>
 
       <div className="table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>

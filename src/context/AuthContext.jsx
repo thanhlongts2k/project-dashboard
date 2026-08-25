@@ -52,11 +52,11 @@ export function mapBuCodeToFrontendKey(code = "") {
   return raw;
 }
 
-export function getFirstAllowedPath(allowedTabs = [], buKey = "elevator") {
+export function getFirstAllowedPath(allowedTabs = [], buKey = "elevator", userRole = "") {
   const safeBuKey = buKey || "elevator";
   if (allowedTabs.includes("dashboard")) return "/dashboard";
   if (allowedTabs.includes("bu_detail")) return `/bu/${safeBuKey}`;
-  if (allowedTabs.includes("inventory")) return "/inventory";
+  if (allowedTabs.includes("inventory") && userRole === "TEST") return "/inventory";
   if (allowedTabs.includes("debt_collection")) return "/receivables";
   if (allowedTabs.includes("aging")) return "/aging";
   return "/aging";
@@ -299,7 +299,7 @@ export function AuthProvider({ children }) {
     }
 
     const defaultAllowedBu = allowedBUs[0] || "elevator";
-    const firstAllowedPath = getFirstAllowedPath(allowedTabs, defaultAllowedBu);
+    const firstAllowedPath = getFirstAllowedPath(allowedTabs, defaultAllowedBu, userRole);
 
     // Xác định vai trò cụ thể của nhân sự trong BU đang chọn
     const getRoleInCurrentBu = (buCodeOrKey) => {
@@ -354,7 +354,12 @@ export function AuthProvider({ children }) {
       getRoleInCurrentBu,
       isBuHeadInBu: (bu) => getRoleInCurrentBu(bu) === "BU_HEAD",
       isSalesInBu: (bu) => getRoleInCurrentBu(bu) === "SALES",
-      canAccessTab: (tabKey) => allowedTabs.includes(tabKey),
+      canAccessTab: (tabKey) => {
+        if (tabKey === "inventory") {
+          return userRole === "TEST";
+        }
+        return allowedTabs.includes(tabKey);
+      },
       canAccessBu: (buId) => {
         if (!buId) return false;
         if (isBOD) return true;

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../context/DashboardContext";
-import { useDashboardFilters } from "../hooks/useDashboardFilters";
+import { useDashboardFilters, getDefaultReportingDate, formatIsoDate } from "../hooks/useDashboardFilters";
 
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -221,7 +221,10 @@ function ReceivableReportPageWrapper() {
 
   const { filters, setFilters } = useDashboardFilters("today");
 
-  const currentDate = filters.singleDate || filters.startDate || new Date().toISOString().slice(0, 10);
+  const currentDate =
+    filters.singleDate ||
+    filters.startDate ||
+    formatIsoDate(getDefaultReportingDate());
 
   useEffect(() => {
     loadReceivableReportData({ date: currentDate });
@@ -235,6 +238,7 @@ function ReceivableReportPageWrapper() {
     <ReceivableReportPage
       data={receivableReportData}
       selectedDate={currentDate}
+      selectedBu={filters.buId || filters.bu || "all"}
       onChangeDate={handleChangeDate}
       loadingReceivable={loadingReceivable}
       onRefreshReceivable={() =>

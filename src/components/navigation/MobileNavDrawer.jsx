@@ -52,7 +52,11 @@ export default function MobileNavDrawer({
     { key: "aging", tabKey: "aging", path: "/aging", label: "📈 Báo cáo Tuổi nợ (Aging Matrix)" },
   ];
 
-  const navItems = allNavItems.filter((item) => canAccessTab ? canAccessTab(item.tabKey) : true);
+  const isTestUser = user?.role === "TEST";
+  const navItems = allNavItems.filter((item) => {
+    if (item.key === "inventory" && !isTestUser) return false;
+    return canAccessTab ? canAccessTab(item.tabKey) : true;
+  });
 
   return (
     <div className="mobile-drawer-backdrop" onClick={onClose}>

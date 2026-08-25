@@ -12,6 +12,7 @@ import { fetchAllBUsDebtSummary, fetchBUDebtDrilldown } from "../api/agingApi";
 import { mapAgingDrilldownResponse } from "../utils/agingMapper";
 import { BU_CODE_MAP, FALLBACK_BU_OPTIONS, normalizeBuCode, formatDateDisplay } from "../utils/agingMockData";
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
+import { getDefaultReportingDate, formatIsoDate } from "../hooks/useDashboardFilters";
 
 export default function DebtAgingReportPage() {
   const { user, isBOD, userBuCode, employeeCode, allowedBUs, canAccessBu, getRoleInCurrentBu } = useAuth();
@@ -38,7 +39,10 @@ export default function DebtAgingReportPage() {
   const urlBu = searchParams.get("bu");
   const urlEmployee = searchParams.get("employee") || searchParams.get("staff");
 
-  const reportDate = useMemo(() => urlDate || (urlPeriod ? `${urlPeriod}-01` : new Date().toISOString().slice(0, 10)), [urlDate, urlPeriod]);
+  const reportDate = useMemo(
+    () => urlDate || (urlPeriod ? `${urlPeriod}-01` : formatIsoDate(getDefaultReportingDate())),
+    [urlDate, urlPeriod]
+  );
   const period = useMemo(() => urlPeriod || reportDate.slice(0, 7), [urlPeriod, reportDate]);
 
   const selectedBu = useMemo(() => {

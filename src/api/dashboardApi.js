@@ -140,3 +140,10 @@ export async function fetchCollectionByBu({ date }) {
     date,
   });
 }
+
+export async function fetchOverdueCustomers({ date, bu_code } = {}) {
+  return apiGet("/api/debt/overdue-customers/", {
+    date,
+    bu_code,
+  });
+}

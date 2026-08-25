@@ -5,6 +5,7 @@ import ReceivableKpiGrid from "../components/receivable/ReceivableKpiGrid";
 import ReceivableDetailTable from "../components/receivable/ReceivableDetailTable";
 import ReceivableCharts from "../components/receivable/ReceivableCharts";
 import ReceivableCommitmentTable from "../components/receivable/ReceivableCommitmentTable";
+import ReceivableCommitmentDetailModal from "../components/receivable/ReceivableCommitmentDetailModal";
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
 
 const BLANK = "—";
@@ -22,11 +23,13 @@ function formatDisplayDate(dateStr) {
 export default function ReceivableReportPage({
   data,
   selectedDate,
+  selectedBu = "all",
   onChangeDate,
   loadingReceivable,
   onRefreshReceivable,
 }) {
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const dashRef = useRef(null);
 
   const header = data?.header || {};
@@ -131,6 +134,7 @@ export default function ReceivableReportPage({
       <ReceivableKpiGrid
         label={`Tổng quan ngày ${header.todayLabel || BLANK}`}
         topKpis={topKpis}
+        onOpenCommitmentDetail={() => setIsCommitmentModalOpen(true)}
       />
 
       {/* BU Detail Collection & Executive Alerts */}
@@ -157,6 +161,16 @@ export default function ReceivableReportPage({
         tomorrowLabel={header.tomorrowLabel || "Ngày mai"}
         commitmentRows={commitmentRows}
         commitmentTotalRow={commitmentTotalRow}
+        onOpenCommitmentDetail={() => setIsCommitmentModalOpen(true)}
+      />
+
+      {/* Modal Chi Tiết Tiến Độ Cam Kết Theo Khách Hàng */}
+      <ReceivableCommitmentDetailModal
+        isOpen={isCommitmentModalOpen}
+        onClose={() => setIsCommitmentModalOpen(false)}
+        date={selectedDate}
+        reportDate={header.todayLabel || formatDisplayDate(selectedDate)}
+        buCode={selectedBu}
       />
     </div>
   );

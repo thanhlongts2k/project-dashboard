@@ -9,8 +9,9 @@ function hasValue(value) {
   return value !== null && value !== undefined && value !== "";
 }
 
-export default function MetricCard({ item = {} }) {
+export default function MetricCard({ item = {}, onClick, extraAction }) {
   const reverseTone = !!item.reverseTone;
+  const isClickable = typeof onClick === "function";
 
   const numericPercent = getPercentValue(item.percent);
   const hasPercent = numericPercent !== null;
@@ -38,17 +39,32 @@ export default function MetricCard({ item = {} }) {
   return (
     <div
       className={`metric-card ${item.accent || ""}`}
+      onClick={onClick}
       style={{
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
         height: "100%",
         minHeight: 120,
+        cursor: isClickable ? "pointer" : "default",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+        position: "relative",
       }}
     >
       <div>
-        <div className="metric-label" style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-          {item.label || "—"}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 6,
+            marginBottom: 4,
+          }}
+        >
+          <div className="metric-label" style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
+            {item.label || "—"}
+          </div>
+          {extraAction}
         </div>
 
         <div className="metric-value" style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>

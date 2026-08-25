@@ -95,7 +95,7 @@ export default function DashboardLayout() {
                   🏢 Chi tiết BU
                 </button>
               )}
-              {canAccessTab("inventory") && (
+              {user?.role === "TEST" && canAccessTab("inventory") && (
                 <button type="button" className={`link-btn nav-tab-btn ${isInventoryActive ? "active" : ""}`} onClick={() => handleTabClick("/inventory")}>
                   📦 Tồn kho
                 </button>

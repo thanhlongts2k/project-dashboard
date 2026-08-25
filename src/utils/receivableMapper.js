@@ -552,20 +552,6 @@ function buildAlertRows({
     });
   }
 
-  // 7) Dư nợ tăng / giảm
-  const todayReceivableTotal = toNumber(todayTotals.receivable_total);
-  const receivableDelta = totalReceivableTomorrow - todayReceivableTotal;
-
-  alerts.push({
-    label: `Dư nợ ${todayLabel} ${receivableDelta <= 0 ? "giảm" : "tăng"}`,
-    status:
-      todayReceivableTotal || totalReceivableTomorrow
-        ? formatGap(totalReceivableTomorrow, todayReceivableTotal)
-        : "0",
-    note: receivableDelta <= 0 ? "Tốt" : "Cần theo dõi",
-    tone: receivableDelta <= 0 ? "success" : "warn",
-  });
-
   return alerts;
 }
 
@@ -612,6 +598,7 @@ export function buildEmptyReceivableReport(month, year) {
     receivableDonutData: [],
     commitmentRows: [],
     commitmentTotalRow: null,
+    customerCommitments: [],
   };
 }
 
@@ -871,6 +858,7 @@ export function mapReceivableReportFromApi(
     receivableDonutData,
     commitmentRows,
     commitmentTotalRow,
+    customerCommitments: [],
     latestAvailableDate: todayPayload?.latest_available_date || null,
     hasData: todayPayload?.has_data ?? (todayTotals.total_collected > 0),
   };

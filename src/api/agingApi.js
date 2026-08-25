@@ -71,3 +71,15 @@ export async function fetchBUDebtDrilldown(buCode, { period, employee } = {}) {
     employee: employee && employee !== "ALL" ? employee : undefined,
   });
 }
+
+/**
+ * 3. GET /api/debt/overdue-customers/?date=YYYY-MM-DD&bu_code=...
+ * Lấy danh sách chi tiết khách hàng nợ quá hạn thật từ ReceivablesAgeing
+ */
+export async function fetchOverdueCustomers({ date, bu_code } = {}) {
+  return apiGet("/api/debt/overdue-customers/", {
+    date,
+    bu_code,
+  });
+}
+
