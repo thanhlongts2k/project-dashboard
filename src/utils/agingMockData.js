@@ -12,6 +12,7 @@ export const BU_CODE_MAP = {
   ibizValue: "BU_IBIZ VALUE",
   eco: "BU_ECO",
   agritech: "BU_AGRITECH",
+  sab: "BU_SAB",
   manufacturing: "BU_MANUFACTURING",
   ĐTCT: "ĐTCT",
   dtct: "ĐTCT",
@@ -25,6 +26,7 @@ export const FALLBACK_BU_OPTIONS = [
   { value: "BU_IBIZ VALUE", label: "Thiết bị điện phổ thông" },
   { value: "BU_ECO", label: "Năng lượng tái tạo" },
   { value: "BU_AGRITECH", label: "Nông nghiệp công nghệ cao" },
+  { value: "BU_SAB", label: "Thủy sản thông minh (SAB)" },
   { value: "BU_MANUFACTURING", label: "Sản xuất" },
   { value: "ĐTCT", label: "Đầu tư cho thuê" },
 ];

@@ -16,6 +16,7 @@ export const ALL_BU_KEYS = [
   "ibizValue",
   "eco",
   "agritech",
+  "sab",
   "manufacturing",
   "dtct",
   "oversea",
@@ -44,6 +45,7 @@ export function mapBuCodeToFrontendKey(code = "") {
   if (raw.includes("elevator") || raw.includes("thang máy")) return "elevator";
   if (raw.includes("premium")) return "ibizPremium";
   if (raw.includes("value")) return "ibizValue";
+  if (raw.includes("sab") || raw.includes("thủy sản") || raw.includes("tôm")) return "sab";
   if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
   if (raw.includes("eco") || raw.includes("agritech")) return "eco";
   if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";

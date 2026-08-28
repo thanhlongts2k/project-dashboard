@@ -17,6 +17,7 @@ function displayNameFromCode(code = "", fallbackName = "") {
     BU_IBIZ_VALUE: "Thiết bị điện phổ thông",
     BU_ECO: "ECO",
     BU_AGRITECH: "AgriTech",
+    BU_SAB: "SAB (Thủy sản)",
     BU_MANUFACTURING: "Sản xuất - Nhà máy",
     BU_DTCT: "Đầu tư cho thuê / ĐTCT",
     ĐTCT: "Đầu tư cho thuê / ĐTCT",
@@ -38,6 +39,8 @@ function buIdFromCode(code = "") {
     BU_IBIZ_VALUE: "ibizValue",
     BU_ECO: "eco",
     BU_AGRITECH: "agritech",
+    BU_SAB: "sab",
+    SAB: "sab",
     BU_AGRITECH___ECO: "eco",
     BU_AGRITECH_ECO: "eco",
     BU_MANUFACTURING: "manufacturing",
@@ -58,6 +61,7 @@ function buIdFromCode(code = "") {
   if (raw.includes("elevator") || raw.includes("thang máy")) return "elevator";
   if (raw.includes("premium")) return "ibizPremium";
   if (raw.includes("value")) return "ibizValue";
+  if (raw.includes("sab") || raw.includes("thủy sản") || raw.includes("tôm")) return "sab";
   if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
   if (raw.includes("eco") || raw.includes("agritech")) return "eco";
   if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";
@@ -73,6 +77,7 @@ function toneFromBuId(buId = "") {
     ibizValue: "red",
     eco: "green",
     agritech: "red",
+    sab: "blue",
     manufacturing: "",
   };
 
@@ -470,10 +475,10 @@ function buildSummarySubRow(subUnit, perfRow) {
     inventoryActualRaw: perfRow ? toNullableNumber(perfRow?.inventory_value_actual) : null,
     inventoryPercentValue: perfRow
       ? getPercent(
-          perfRow?.inventory_vs_plan,
-          perfRow?.inventory_value_actual,
-          perfRow?.inventory_value_plan
-        )
+        perfRow?.inventory_vs_plan,
+        perfRow?.inventory_value_actual,
+        perfRow?.inventory_value_plan
+      )
       : null,
 
     debtTargetRaw: perfRow ? toNullableNumber(perfRow?.bank_debt_plan) : null,
@@ -942,7 +947,7 @@ export function mapOverviewDashboard({
         return buildAlertRow(`${item.name} — DT`, null, BLANK, BLANK, {
           buId: buIdFromCode(
             mainList.find((main) => Number(main.id) === Number(item.parent))?.code ||
-              ""
+            ""
           ),
         });
       }
@@ -963,7 +968,7 @@ export function mapOverviewDashboard({
         {
           buId: buIdFromCode(
             mainList.find((main) => Number(main.id) === Number(item.parent))?.code ||
-              ""
+            ""
           ),
         }
       );

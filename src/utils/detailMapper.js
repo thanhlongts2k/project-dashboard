@@ -179,6 +179,7 @@ export function buIdFromCode(code = "") {
     BU_IBIZ_VALUE: "ibizValue",
     BU_ECO: "eco",
     BU_AGRITECH: "agritech",
+    BU_SAB: "sab",
     BU_AGRITECH___ECO: "eco",
     BU_AGRITECH_ECO: "eco",
     BU_MANUFACTURING: "manufacturing",
@@ -199,6 +200,7 @@ export function buIdFromCode(code = "") {
   if (raw.includes("elevator") || raw.includes("thang máy")) return "elevator";
   if (raw.includes("premium")) return "ibizPremium";
   if (raw.includes("value")) return "ibizValue";
+  if (raw.includes("sab") || raw.includes("thủy sản") || raw.includes("tôm")) return "sab";
   if (raw.includes("agritech") && !raw.includes("eco")) return "agritech";
   if (raw.includes("eco") || raw.includes("agritech")) return "eco";
   if (raw.includes("manufacturing") || raw.includes("sản xuất") || raw.includes("nhà máy")) return "manufacturing";
@@ -214,6 +216,7 @@ function displayNameFromCode(code = "", fallbackName = "") {
     BU_IBIZ_VALUE: "iBiz Value",
     BU_ECO: "ECO",
     BU_AGRITECH: "AgriTech",
+    BU_SAB: "SAB",
     BU_MANUFACTURING: "Sản xuất - Nhà máy",
     BU_DTCT: "Đầu tư cho thuê / ĐTCT",
     ĐTCT: "Đầu tư cho thuê / ĐTCT",

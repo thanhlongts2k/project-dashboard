@@ -123,6 +123,12 @@ const DISPLAY_WAREHOUSE_BUCKETS = [
     namePhrases: ["BU AGRITECH", "BU_AGRITECH", "AGRITECH"],
   },
   {
+    key: "bu_sab",
+    label: "Kho BU_SAB",
+    codePhrases: ["SAB", "THUY_SAN"],
+    namePhrases: ["BU SAB", "BU_SAB", "SAB", "KHO BU SAB"],
+  },
+  {
     key: "bu_eco",
     label: "Kho BU_Eco",
     codePhrases: ["ECO"],

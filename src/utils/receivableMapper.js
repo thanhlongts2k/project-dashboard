@@ -8,6 +8,7 @@ const CANONICAL_BU_KEYS = [
   "BU_IBIZ_VALUE",
   "BU_ECO",
   "BU_AGRITECH",
+  "BU_SAB",
   "BU_MANUFACTURING",
   "BU_DTCT",
   "BU_OVERSEA",
@@ -21,6 +22,7 @@ const CANONICAL_BU_CONFIG = {
   BU_IBIZ_VALUE: { key: "BU_IBIZ_VALUE", buId: "value", label: "IBIZ Value", shortLabel: "Value", color: "#D85A30" },
   BU_ECO: { key: "BU_ECO", buId: "eco", label: "ECO", shortLabel: "Eco", color: "#BA7517" },
   BU_AGRITECH: { key: "BU_AGRITECH", buId: "agritech", label: "Agritech", shortLabel: "Agritech", color: "#534AB7" },
+  BU_SAB: { key: "BU_SAB", buId: "sab", label: "SAB", shortLabel: "SAB", color: "#0284c7" },
   BU_MANUFACTURING: { key: "BU_MANUFACTURING", buId: "manufacturing", label: "Sản xuất", shortLabel: "SX", color: "#888780" },
   BU_DTCT: { key: "BU_DTCT", buId: "dtct", label: "Đầu tư cho thuê / ĐTCT", shortLabel: "ĐTCT", color: "#0891b2" },
   BU_OVERSEA: { key: "BU_OVERSEA", buId: "oversea", label: "Oversea", shortLabel: "Oversea", color: "#7c3aed" },
@@ -28,6 +30,7 @@ const CANONICAL_BU_CONFIG = {
 
 const BU_META = {
   ...CANONICAL_BU_CONFIG,
+  SAB: CANONICAL_BU_CONFIG.BU_SAB,
   ĐTCT: CANONICAL_BU_CONFIG.BU_DTCT,
   DTCT: CANONICAL_BU_CONFIG.BU_DTCT,
   BU_ĐTCT: CANONICAL_BU_CONFIG.BU_DTCT,
@@ -124,6 +127,16 @@ function getCanonicalBuKey(code = "", fallbackName = "") {
     nameNorm.includes("eco")
   ) {
     return "BU_ECO";
+  }
+  if (
+    normalized === "BU_SAB" ||
+    normalized === "SAB" ||
+    raw.includes("sab") ||
+    nameNorm.includes("sab") ||
+    nameNorm.includes("thủy sản") ||
+    nameNorm.includes("tôm")
+  ) {
+    return "BU_SAB";
   }
   if (
     normalized === "BU_AGRITECH" ||
