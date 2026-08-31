@@ -21,14 +21,15 @@ export const BU_CODE_MAP = {
 };
 
 export const FALLBACK_BU_OPTIONS = [
-  { value: "BU_ELEVATOR", label: "Thang máy" },
-  { value: "BU_IBIZ PREMIUM", label: "Thiết bị điện cao cấp" },
-  { value: "BU_IBIZ VALUE", label: "Thiết bị điện phổ thông" },
-  { value: "BU_ECO", label: "Năng lượng tái tạo" },
-  { value: "BU_AGRITECH", label: "Nông nghiệp công nghệ cao" },
-  { value: "BU_SAB", label: "Thủy sản thông minh (SAB)" },
-  { value: "BU_MANUFACTURING", label: "Sản xuất" },
-  { value: "ĐTCT", label: "Đầu tư cho thuê" },
+  { value: "BU_ELEVATOR", label: "[BU_ELEVATOR] Thang máy" },
+  { value: "BU_IBIZ PREMIUM", label: "[BU_IBIZ PREMIUM] Thiết bị điện cao cấp" },
+  { value: "BU_IBIZ VALUE", label: "[BU_IBIZ VALUE] Thiết bị điện phổ thông" },
+  { value: "BU_ECO", label: "[BU_ECO] Năng lượng tái tạo" },
+  { value: "BU_AGRITECH", label: "[BU_AGRITECH] Nông nghiệp công nghệ cao" },
+  { value: "BU_SAB", label: "[BU_SAB] Thủy sản thông minh (SAB)" },
+  { value: "BU_MANUFACTURING", label: "[BU_MANUFACTURING] Sản xuất" },
+  { value: "ĐTCT", label: "[ĐTCT] Đầu tư cho thuê" },
+  { value: "Oversea", label: "[Oversea] Oversea" },
 ];
 
 export function normalizeBuCode(code) {

@@ -125,7 +125,10 @@ export default function DebtAgingReportPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const buSelectOptions = useMemo(() => {
-    const rawOptions = (allBUsData.results || []).map((b) => ({ value: b.code, label: b.name }));
+    const rawOptions = (allBUsData.results || []).map((b) => ({
+      value: b.code,
+      label: b.code && b.name && b.code !== b.name ? `[${b.code}] ${b.name}` : (b.name || b.code),
+    }));
     const baseOptions = rawOptions.length > 0 ? rawOptions : FALLBACK_BU_OPTIONS;
     if (isBOD) return [{ value: "ALL", label: "🏢 Tất cả BU (Toàn công ty)" }, ...baseOptions];
 

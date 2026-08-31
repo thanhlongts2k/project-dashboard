@@ -3,6 +3,18 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.29] - 2026-08-31 (Feature: Prepend [BU_CODE] in BU Selectors & Receivable Commitment Modal)
+
+### Added & Enhanced
+- **[UI/UX & Filter Visibility] Bổ Sung Tiền Tố `[BU_CODE]` Vào Bộ Lọc BU & Bảng Chi Tiết Cam Kết Thu Nợ:**
+  - **Modal Chi Tiết Cam Kết Thu Nợ (`ReceivableCommitmentDetailModal.jsx`):**
+    - Dropdown bộ lọc `buSelectOptions` hiển thị đầy đủ định dạng `[BU_CODE] Tên BU` (ví dụ: `[BU_ELEVATOR] Thang máy`, `[Oversea] Oversea`, `[BU_MANUFACTURING] Sản xuất - Nhà máy`, `[BU_ECO] ECO (Solar)`...).
+    - Ô tìm kiếm hỗ trợ lọc nhanh theo cả mã BU (`BU_CODE`) và tên BU (`BU_NAME`).
+    - Cột "Đơn Vị BU" trong bảng hiển thị trực quan mã `[BU_CODE]` nổi bật màu xanh thương hiệu đi kèm tên bộ phận.
+  - **Trang Báo Cáo Tuổi Nợ (`DebtAgingReportPage.jsx` & `agingMockData.js`):**
+    - Đồng bộ hóa định dạng hiển thị `[BU_CODE] Tên BU` trên dropdown chọn BU chính của trang Tuổi nợ.
+- **Files đã sửa:** `src/components/receivable/ReceivableCommitmentDetailModal.jsx`, `src/pages/DebtAgingReportPage.jsx`, `src/utils/agingMockData.js`.
+
 ## [1.0.28] - 2026-08-21 (Bugfix: Eliminate Production Mock Data Leak on Aging Report)
 
 ### Fixed

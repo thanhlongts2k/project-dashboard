@@ -159,9 +159,10 @@ export default function ReceivableCommitmentDetailModal({
       { value: "all", label: "Tất cả Đơn vị BU", icon: "🏢" },
     ];
     buMap.forEach((name, code) => {
+      const displayLabel = code && name && code !== name ? `[${code}] ${name}` : (code ? `[${code}]` : name);
       options.push({
         value: code,
-        label: name,
+        label: displayLabel,
         icon: "🏢",
       });
     });
@@ -176,7 +177,7 @@ export default function ReceivableCommitmentDetailModal({
         const matchName = item.customerName?.toLowerCase().includes(query);
         const matchCode = item.customerCode?.toLowerCase().includes(query);
         const matchStaff = item.assignedStaff?.toLowerCase().includes(query);
-        const matchBu = item.buName?.toLowerCase().includes(query);
+        const matchBu = item.buName?.toLowerCase().includes(query) || item.buCode?.toLowerCase().includes(query);
         if (!matchName && !matchCode && !matchStaff && !matchBu) return false;
       }
 
@@ -433,7 +434,16 @@ export default function ReceivableCommitmentDetailModal({
                         <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px" }}>{row.customerCode}</div>
                       </td>
                       <td>
-                        <span style={{ fontSize: "12px", fontWeight: 500, color: "#334155" }}>{row.buName}</span>
+                        <span style={{ fontSize: "12px", fontWeight: 500, color: "#334155" }}>
+                          {row.buCode && row.buName && row.buCode !== row.buName ? (
+                            <>
+                              <strong style={{ color: "#185fa5", marginRight: 4 }}>[{row.buCode}]</strong>
+                              <span>{row.buName}</span>
+                            </>
+                          ) : (
+                            row.buCode ? `[${row.buCode}]` : (row.buName || "—")
+                          )}
+                        </span>
                       </td>
                       <td style={{ textAlign: "right", fontWeight: 700, color: "#185fa5" }}>
                         {(row.commitmentAmount || 0).toLocaleString("vi-VN")}
