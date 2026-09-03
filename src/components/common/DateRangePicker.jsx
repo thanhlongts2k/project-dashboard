@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { calculatePresetDateRange } from "../../hooks/useDashboardFilters";
 
 const PRESET_LABELS = {
@@ -17,6 +17,36 @@ const PRESET_KEYS = [
   "lastWeek",
   "thisMonth",
   "lastMonth",
+];
+
+const SINGLE_PRESET_ITEMS = [
+  {
+    key: "today",
+    label: "Hôm nay",
+    getDate: () => new Date(),
+  },
+  {
+    key: "yesterday",
+    label: "Hôm qua",
+    getDate: () => {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return d;
+    },
+  },
+  {
+    key: "thisMonth",
+    label: "Tháng này",
+    getDate: () => new Date(),
+  },
+  {
+    key: "lastMonth",
+    label: "Tháng trước",
+    getDate: () => {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), 0);
+    },
+  },
 ];
 
 function formatDateInput(date) {
@@ -98,6 +128,52 @@ export default function DateRangePicker({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const [activeSinglePreset, setActiveSinglePreset] = useState(null);
+
+  useEffect(() => {
+    if (mode === "single" && singleDate) {
+      const now = new Date();
+      const iso = formatDateInput(singleDate);
+      const todayIso = formatDateInput(now);
+      const yest = new Date();
+      yest.setDate(yest.getDate() - 1);
+      const yestIso = formatDateInput(yest);
+      const lastDayPrevMonthIso = formatDateInput(new Date(now.getFullYear(), now.getMonth(), 0));
+
+      if (iso === lastDayPrevMonthIso) {
+        setActiveSinglePreset("lastMonth");
+      } else if (iso === yestIso) {
+        setActiveSinglePreset("yesterday");
+      } else if (iso === todayIso) {
+        setActiveSinglePreset((prev) => (prev === "thisMonth" ? "thisMonth" : "today"));
+      } else {
+        setActiveSinglePreset(null);
+      }
+    }
+  }, [mode, singleDate]);
+
+  const activeSingleBadge = useMemo(() => {
+    if (activeSinglePreset === "thisMonth") return "Tháng này";
+    if (activeSinglePreset === "lastMonth") return "Tháng trước";
+    if (activeSinglePreset === "today") return "Hôm nay";
+    if (activeSinglePreset === "yesterday") return "Hôm qua";
+
+    if (singleDate) {
+      const now = new Date();
+      const iso = formatDateInput(singleDate);
+      const todayIso = formatDateInput(now);
+      const yest = new Date();
+      yest.setDate(yest.getDate() - 1);
+      const yestIso = formatDateInput(yest);
+      const lastDayPrevMonthIso = formatDateInput(new Date(now.getFullYear(), now.getMonth(), 0));
+
+      if (iso === lastDayPrevMonthIso) return "Tháng trước";
+      if (iso === todayIso) return "Hôm nay";
+      if (iso === yestIso) return "Hôm qua";
+    }
+    return "Ngày";
+  }, [activeSinglePreset, singleDate]);
+
   const rangeLabel =
     mode === "single"
       ? formatDateDisplay(singleDate || new Date())
@@ -142,7 +218,7 @@ export default function DateRangePicker({
             <path d="M7 2v3M13 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           <span className="date-picker-range">
-            <span className="date-picker-preset-badge">Ngày</span>
+            <span className="date-picker-preset-badge">{activeSingleBadge}</span>
             <span>{rangeLabel}</span>
           </span>
           <svg className={`date-picker-caret ${isOpen ? "rotated" : ""}`} viewBox="0 0 16 16" fill="none">
@@ -154,21 +230,18 @@ export default function DateRangePicker({
           <div className="date-picker-dropdown" style={{ right: 0, left: "auto" }}>
             <div className="date-picker-presets">
               <div className="date-picker-presets-label">Nhanh</div>
-              {[
-                { label: "Hôm qua", offset: -1 },
-                { label: "Hôm nay", offset: 0 },
-                { label: "Ngày mai", offset: 1 },
-              ].map(({ label, offset }) => {
-                const target = new Date();
-                target.setDate(target.getDate() + offset);
+              {SINGLE_PRESET_ITEMS.map(({ key, label, getDate }) => {
+                const target = getDate();
                 const isoStr = formatDateInput(target);
-                const isActive = formatDateInput(singleDate) === isoStr;
+                const isMatch = formatDateInput(singleDate) === isoStr;
+                const isActive = activeSinglePreset ? activeSinglePreset === key : isMatch;
                 return (
                   <button
-                    key={offset}
+                    key={key}
                     type="button"
                     className={`date-preset-item ${isActive ? "is-active" : ""}`}
                     onClick={() => {
+                      setActiveSinglePreset(key);
                       onChangeSingleDate?.(isoStr);
                       setIsOpen(false);
                     }}
@@ -189,6 +262,7 @@ export default function DateRangePicker({
                   value={singleDate ? new Date(singleDate) : new Date()}
                   onChange={(d) => {
                     if (d) {
+                      setActiveSinglePreset(null);
                       onChangeSingleDate?.(formatDateInput(d));
                       setIsOpen(false);
                     }

@@ -3,6 +3,20 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.30] - 2026-09-03 (Feature: "Tháng Này" & "Tháng Trước" Quick Date Presets on Aging Report)
+
+### Added & Enhanced
+- **[UI/UX & Quick Filter] Bổ Sung Tùy Chọn "Tháng Này" và "Tháng Trước" Vào Cột Nhanh Của DateRangePicker (`DateRangePicker.jsx`):**
+  - **Component Bộ Lọc Ngày (`src/components/common/DateRangePicker.jsx`):**
+    - Cập nhật chế độ chọn ngày đơn (`mode="single"`) dùng trên trang Báo cáo Tuổi nợ (`/aging`) và Thu nợ khách hàng (`/debt_collection`).
+    - Bổ sung 2 preset nhanh:
+      * **"Tháng này":** Gán ngày báo cáo về ngày hiện tại (`formatDateInput(new Date())`, ví dụ: `2026-09-03`).
+      * **"Tháng trước":** Tự động tính toán ngày cuối cùng của tháng trước (`new Date(year, month, 0)`, ví dụ: `2026-08-31` đối với kỳ 2026-08).
+    - Loại bỏ tùy chọn thừa "Ngày mai" (vì báo cáo công nợ kế toán không phát sinh số liệu tương lai).
+    - Cập nhật badge động trên nút bấm trigger bên ngoài: Hiển thị trực quan `[Tháng này]`, `[Tháng trước]`, `[Hôm nay]`, `[Hôm qua]` tương ứng với ngày đang được chọn thay vì badge tĩnh `[Ngày]`.
+    - Tự động đóng popover sau khi bấm chọn preset nhanh.
+- **Files đã sửa:** `src/components/common/DateRangePicker.jsx`.
+
 ## [1.0.29] - 2026-08-31 (Feature: Prepend [BU_CODE] in BU Selectors & Receivable Commitment Modal)
 
 ### Added & Enhanced

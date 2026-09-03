@@ -1,23 +1,20 @@
 # HANDOVER REPORT — PROJECT DASHBOARD
 
 **Dự án:** Project Dashboard — Executive BI & Operations Report System  
-**Phiên bản:** `v1.0.27` (Feature: Smart Google Profile Avatar with Letter Fallback & Referrer Bypass)  
-**Ngày cập nhật:** 20/08/2026  
+**Phiên bản:** `v1.0.30` (Feature: "Tháng Này" & "Tháng Trước" Quick Date Presets on Aging Report)  
+**Ngày cập nhật:** 03/09/2026  
 **Trạng thái:** 🚀 **PRODUCTION READY** (`Build 100% Pass`, 0 Errors)
 
 ---
 
-## 1. 🏗️ Tính Năng Mới & Nâng Cấp (v1.0.21)
+## 1. 🏗️ Tính Năng Mới & Nâng Cấp (v1.0.30)
 
-- **Loại Bỏ Hoàn Toàn CSS Sledgehammer Overrides (`dashboard.css`, `CustomSelect.jsx`, `DateRangePicker.jsx`):**
-  * Xóa bỏ triệt để các selector phá hoại `.parent > *` có chứa `!important` ép `height`/`padding`, trả toàn bộ quyền kiểm soát kích thước Box-Model về cho chính component nội bộ.
-  * Xóa file demo `src/App.css` và ngắt import thừa trong `App.jsx`.
-- **Chuẩn Hóa Design System Vùng Chạm Mobile (Apple HIG & Material 42px Standard):**
-  * Nút bấm (`.btn`, `.otb-icon-btn`, `.otb-nav-btn`, `.link-btn`): Desktop `min-height: 38px`, Mobile `min-height: 42px`, `padding: 10px 16px`, `border-radius: 8px`, chống co ép trên mọi kích thước màn hình (360px, 375px, 390px, 412px).
-  * Dropdown & DatePicker (`.custom-select-trigger`, `.date-picker-trigger`, `select.filter-sel`): Desktop `min-height: 38px`, Mobile `min-height: 42px`, `padding: 10px 14px`, `border-radius: 8px`.
-  * Ô nhập liệu (`input[type="text"]`, `input[type="password"]`, `input[type="email"]`): Mobile `min-height: 42px`, `font-size: 14px` chống iOS auto-zoom khi focus.
-- **Đồng Bộ Hoàn Chỉnh Trên Cả 5 Phân Hệ:**
-  * Chuẩn hóa layout Sub-Header, bộ lọc Dropdown, DatePicker và nút bấm hiển thị đầy đặn, tròn trịa, không bị bóp méo hay xẹp trên toàn bộ các trang (`/dashboard`, `/bu/:buKey`, `/inventory`, `/receivables`, `/aging`, `/login`).
+- **Bổ Sung Tùy Chọn "Tháng Này" và "Tháng Trước" Vào Cột Nhanh Của DateRangePicker (`DateRangePicker.jsx`):**
+  * **Tháng này:** Gán ngày báo cáo về ngày hiện tại (`YYYY-MM-DD`, ví dụ: `2026-09-03`).
+  * **Tháng trước:** Tự động tính ngày cuối cùng của tháng trước (`new Date(year, month, 0)`, ví dụ: `2026-08-31` đối với kỳ 2026-08).
+  * **Loại bỏ "Ngày mai":** Loại bỏ lựa chọn dư thừa vì công nợ kế toán không phát sinh số liệu tương lai.
+  * **Badge động thông minh:** Nút bấm trigger hiển thị badge trực quan `[Tháng này]`, `[Tháng trước]`, `[Hôm nay]`, `[Hôm qua]` tương ứng với ngày đang chọn thay vì nhãn tĩnh `[Ngày]`.
+  * **Tự động đóng popover:** Đóng popover ngay sau khi click chọn preset, cập nhật URL params và gọi API tương ứng.
 
 ---
 
@@ -25,18 +22,18 @@
 
 | STT | Đường Dẫn File | Thao Tác | Vai Trò & Chức Năng |
 | :---: | :--- | :---: | :--- |
-| 1 | [`src/styles/dashboard.css`](file:///d:/Sources/project-dashboard/src/styles/dashboard.css) | MODIFY | Chuẩn hóa Design System tokens, loại bỏ sledgehammers, áp dụng chuẩn 42px touch-targets. |
-| 2 | [`src/components/common/CustomSelect.jsx`](file:///d:/Sources/project-dashboard/src/components/common/CustomSelect.jsx) | MODIFY | Áp dụng class `custom-select-trigger`, xóa inline heights. |
-| 3 | [`src/components/common/DateRangePicker.jsx`](file:///d:/Sources/project-dashboard/src/components/common/DateRangePicker.jsx) | MODIFY | Xóa inline minWidth để CSS responsive quản lý. |
-| 4 | [`src/components/common/UnifiedSubHeader.jsx`](file:///d:/Sources/project-dashboard/src/components/common/UnifiedSubHeader.jsx) | MODIFY | Xóa hardcoded `height: 34` ở triggerStyle. |
-| 5 | [`src/pages/DashboardOverviewPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DashboardOverviewPage.jsx) | MODIFY | Xóa hardcoded `height: 36` ở secondaryFilter triggerStyle. |
-| 6 | [`src/pages/DebtAgingReportPage.jsx`](file:///d:/Sources/project-dashboard/src/pages/DebtAgingReportPage.jsx) | MODIFY | Xóa hardcoded `height: 36` ở secondaryFilter triggerStyle. |
-| 7 | [`src/components/aging/AgingCustomerCardGrid.jsx`](file:///d:/Sources/project-dashboard/src/components/aging/AgingCustomerCardGrid.jsx) | MODIFY | Đổi `height: 34` thành `minHeight: 34`. |
-| 8 | [`src/App.jsx`](file:///d:/Sources/project-dashboard/src/App.jsx) | MODIFY | Xóa import `App.css` thừa. |
-| 9 | [`CHANGELOG.md`](file:///d:/Sources/project-dashboard/CHANGELOG.md) | MODIFY | Ghi nhận phiên bản `[1.0.21]`. |
+| 1 | [`src/components/common/DateRangePicker.jsx`](file:///d:/Sources/project-dashboard/src/components/common/DateRangePicker.jsx) | MODIFY | Bổ sung preset Tháng này, Tháng trước, badge động và loại bỏ Ngày mai. |
+| 2 | [`CHANGELOG.md`](file:///d:/Sources/project-dashboard/CHANGELOG.md) | MODIFY | Ghi nhận phiên bản `[1.0.30]`. |
+| 3 | [`HANDOVER.md`](file:///d:/Sources/project-dashboard/HANDOVER.md) | MODIFY | Báo cáo bàn giao phiên bản `v1.0.30`. |
 
 ---
 
 ## 3. 🛡️ Trạng Thái Kiểm Thử & Build
+
+- **Vite Build (`npm run build`):**
+  * ✅ `✓ 848 modules transformed.`
+  * ✅ `dist/index.html`: `0.69 kB`
+  * ✅ `✓ built in 4.91s` — **0 lỗi**.
+- **Git Status:** Sạch sẽ, không tự ý commit theo quy tắc bảo vệ an toàn Git.
 
 - **Production Build:** `npm run build` → **✅ Built in 666ms, 0 Errors**
