@@ -146,4 +146,12 @@ export async function fetchOverdueCustomers({ date, bu_code } = {}) {
     date,
     bu_code,
   });
+}
+
+export async function fetchSalesPerformanceByEmployee({ date, period, bu_code } = {}) {
+  return apiGet("/api/sales/performance-by-employee/", {
+    date,
+    period,
+    bu_code,
+  });
 }

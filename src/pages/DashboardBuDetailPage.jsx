@@ -4,6 +4,7 @@ import UnifiedSubHeader from "../components/common/UnifiedSubHeader";
 import BuDetailKpiGrid from "../components/buDetail/BuDetailKpiGrid";
 import BuDailyChart from "../components/buDetail/BuDailyChart";
 import BuSubUnitTable from "../components/buDetail/BuSubUnitTable";
+import SalesPerformanceTable from "../components/sales/SalesPerformanceTable";
 import { buildPdfFileName, exportElementToPdf } from "../utils/exportPdf";
 
 function formatDateDisplay(date) {
@@ -109,6 +110,15 @@ export default function DashboardBuDetailPage({
 
       {/* Sub-Unit Performance & Breakdown Tables */}
       <BuSubUnitTable safeDetail={safeDetail} />
+
+      {/* Sales Performance by Employee Table (Mục tiêu 2026) */}
+      <SalesPerformanceTable
+        buKey={activeBu}
+        reportDate={data?.header?.reportDate}
+        period={`${selectedYear}-${String(selectedMonth).padStart(2, "0")}`}
+        detailFilter={detailFilter}
+        title={`Theo dõi Doanh thu theo Nhân viên Sale — ${safeDetail.title}`}
+      />
     </div>
   );
 }
