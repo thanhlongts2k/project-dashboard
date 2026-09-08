@@ -327,3 +327,255 @@
 .alert-gap-text.danger { color: #dc2626; }
 .alert-gap-text.warn { color: #d97706; }
 .alert-gap-text.good { color: #16a34a; }
+
+/* ==========================================================================
+   DESKTOP DEFAULT DEFAULTS (>= 768px)
+   ========================================================================== */
+.overview-mobile-segmented-tabs {
+  display: none;
+}
+
+.overview-desktop-table-view {
+  display: block;
+}
+
+.overview-mobile-cards-view {
+  display: none;
+}
+
+.chart-inner-scroll {
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   MOBILE OPTIMIZATION (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 1. Mobile Segmented Tabs Switcher */
+  .overview-mobile-segmented-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .overview-segmented-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .overview-segmented-btn.active {
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .overview-segmented-label {
+    white-space: nowrap;
+  }
+
+  .overview-segmented-count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    background: #e2e8f0;
+    color: #475569;
+  }
+
+  .overview-segmented-btn.active .overview-segmented-count {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+
+  .overview-segmented-count.alert {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  /* 2. Toggle Tab Visibility on Mobile */
+  .overview-grid-col.mobile-hide {
+    display: none !important;
+  }
+
+  .overview-grid-col.mobile-show {
+    display: block !important;
+  }
+
+  .overview-desktop-table-view {
+    display: none !important;
+  }
+
+  .overview-mobile-cards-view {
+    display: block !important;
+  }
+
+  .overview-card-body-mobile {
+    padding: 10px;
+    background: #f8fafc;
+  }
+
+  /* 3. Mobile BU Cards (Compact 2-Column Info) */
+  .overview-mobile-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .overview-mobile-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .overview-mobile-card-total {
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .overview-mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .overview-mobile-card-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+  }
+
+  .overview-mobile-card-owner {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  .overview-mobile-card-pace {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .overview-mobile-card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .overview-mobile-metric-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .overview-mobile-metric-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.03em;
+  }
+
+  .overview-mobile-metric-val {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    line-height: 1.2;
+    flex-wrap: wrap;
+  }
+
+  .overview-mobile-actual {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .overview-mobile-plan {
+    font-size: 10.5px;
+    color: #64748b;
+  }
+
+  .overview-mobile-metric-progress {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+
+  .overview-mobile-pct {
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 35px;
+    text-align: right;
+  }
+
+  .overview-mobile-pct.good { color: #059669; }
+  .overview-mobile-pct.warn { color: #d97706; }
+  .overview-mobile-pct.danger { color: #dc2626; }
+
+  .overview-mobile-gap {
+    font-size: 10px;
+    color: #94a3b8;
+    line-height: 1.1;
+  }
+
+  .overview-mobile-runrate {
+    font-size: 10px;
+    font-weight: 600;
+    color: #0284c7;
+    line-height: 1.1;
+  }
+
+  /* 4. Chart Horizontal Swipe on Mobile (Không bao giờ đè chữ trục X) */
+  .chart-scrollable-mobile {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .chart-scrollable-mobile::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .chart-inner-scroll {
+    width: 660px !important;
+    min-width: 660px !important;
+    height: 100% !important;
+    display: block !important;
+  }
+}

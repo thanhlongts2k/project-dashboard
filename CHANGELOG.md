@@ -3,6 +3,40 @@
 Tất cả các thay đổi quan trọng của dự án **`project-dashboard`** sẽ được ghi nhận tại file này.
 Định dạng tuân thủ chuẩn [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) và [Semantic Versioning](https://semver.org/).
 
+## [1.0.31] - 2026-09-08 (Overview Refactor: Zero-Scroll Dual-Tier BU Table, Filtered Executive Alerts & Mobile Optimization)
+
+### Added & Enhanced
+- **[Executive Overview Refactor] Tái Cấu Trúc Khối Bảng Tổng Hợp BU & Cảnh Báo Điều Hành:**
+  - **4 Cột Cốt Lõi Đa Tầng (Dual-tier Cell):**
+    - Rút gọn bảng từ 7 cột xuống 4 cột chính: `Đơn vị kinh doanh` (kèm người phụ trách in mờ ngay dưới), `Tiến độ Doanh thu` (Dual-tier), `Tiến độ Thu tiền` (Dual-tier), và `Nhịp độ thời gian` (Time-Pace Badge).
+    - Tích hợp số Thực hiện / Kế hoạch ở tầng 1, Micro Progress Bar và % Đạt (kèm Gap) ở tầng 2.
+    - Cột Thu tiền tích hợp hiển thị tự động Tốc độ thu bình quân ngày (Run-rate `~X/ngày` = Thực thu / Cutoff Day) giúp Lãnh đạo nắm bắt vận tốc dòng tiền.
+  - **Chỉ Số Nhịp Độ Thời Gian (Time-Pace Metric):**
+    - Đánh giá tiến độ bằng cách so sánh % Đạt với % Thời gian thực tế trong tháng ($D_{\text{cutoff}} / D_{\text{total}} \approx 23.3\%$).
+    - Xóa bỏ triệt để hiện tượng "đỏ rực cả bảng" do so sánh ngày 7 với chỉ tiêu cả tháng. BU đạt bám sát nhịp (như TBĐ Cao cấp đạt 20.47%) nhận Badge "Bám sát" màu xanh lá.
+  - **Zero-Scroll & Fit-to-Content:**
+    - Loại bỏ hoàn toàn thanh cuộn dọc nội bộ (overflow-y scrollbar) trên Bảng BU.
+    - Tinh chỉnh Compact Row Density (`padding: 5.5px 10px; height: auto`) hiển thị trọn vẹn 100% 10 dòng (1 Tổng toàn công ty + 9 BU, bao gồm dòng cuối cùng SAB Thủy sản).
+    - Hàng TỔNG TOÀN CÔNG TY nổi bật với nền `bg-slate-100/90`, chữ in đậm `font-bold` và viền phân cách `border-b-2 border-slate-300`.
+  - **Executive Exception Alerts (Lọc Ngoại Lệ Nguy Cấp):**
+    - Triệt tiêu 100% cảnh báo rác (`Target=0, Gap=0` hoặc BU đã đạt nhịp $\ge 80\%$).
+    - Chỉ xếp hạng Top 6 ngoại lệ nguy cấp nhất: Tồn kho vượt trần (+10.94 tỷ), Dư nợ NH sát trần (còn 431 triệu), và các BU chậm nhịp nặng nhất (Elevator, TBĐ cao cấp, ĐTCT).
+  - **Tối Ưu Hóa Toàn Diện Giao Diện Mobile (< 768px):**
+    - **Trục X Biểu Đồ Vuốt Ngang:** Bọc `ProgressChart` trong container `chart-inner-scroll` (`min-width: 660px`, `scrollbar-none`), triệt tiêu 100% tình trạng nhãn BU bị rớt dòng đè chữ.
+    - **Segmented Tabs Switcher:** Bổ sung thanh chuyển đổi tinh gọn `[ 📊 Tổng Hợp BU (10) ]` và `[ 🚨 Cảnh Báo (6) ]`, giảm hơn 60% chiều dài trang cuộn trên Mobile.
+    - **Mobile BU Cards:** Render dạng danh sách thẻ compact 2 cột cân đối (Doanh thu & Thu tiền), ghim thẻ TỔNG lên đầu với nền `bg-slate-100`.
+    - **Bảo toàn Desktop (>= 768px):** Tự động ẩn tab, giữ nguyên 100% layout 2 cột song song zero-scroll.
+  - **Kỷ Luật Modular CSS:**
+    - Đóng gói toàn bộ style mới trong module độc lập [`src/styles/modules/overview-table.css`](file:///d:/Sources/project-dashboard/src/styles/modules/overview-table.css), chỉ import 1 dòng duy nhất tại `src/styles/dashboard.css`.
+- **Files đã sửa / tạo mới:**
+  - `src/components/dashboard/BuMobileCards.jsx` [NEW]
+  - `src/styles/modules/overview-table.css` [NEW]
+  - `src/components/DataTable.jsx` [MODIFY]
+  - `src/components/dashboard/BuPerformanceTable.jsx` [MODIFY]
+  - `src/components/ProgressChart.jsx` [MODIFY]
+  - `src/styles/dashboard.css` [MODIFY]
+  - `src/utils/dashboardMapper.js` [MODIFY]
+
 ## [1.0.30] - 2026-09-03 (Feature: "Tháng Này" & "Tháng Trước" Quick Date Presets on Aging Report)
 
 ### Added & Enhanced

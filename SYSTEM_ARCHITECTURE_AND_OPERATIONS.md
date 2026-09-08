@@ -138,7 +138,8 @@ project-dashboard/
     │   │   ├── DateRangePicker.jsx # Bộ lọc chọn ngày đơn / khoảng ngày
     │   │   └── UnifiedSubHeader.jsx# Khung Sub-Header hợp nhất tầng 2
     │   ├── dashboard/
-    │   │   ├── BuPerformanceTable.jsx # Bảng tổng hợp BU & cảnh báo
+    │   │   ├── BuPerformanceTable.jsx # Bảng tổng hợp BU & cảnh báo (hỗ trợ Mobile Segmented Tabs)
+    │   │   ├── BuMobileCards.jsx      # Danh sách thẻ BU compact 2 cột chuẩn Mobile
     │   │   ├── DailyPerformanceChart.jsx # Biểu đồ ngày & tiến độ BU
     │   │   ├── FinanceKpiGrid.jsx  # Lưới chỉ số tài chính & nợ ngân hàng
     │   │   └── OverviewKpiGrid.jsx # 4 Thẻ KPI chính & Thẻ Oversea
@@ -169,9 +170,13 @@ project-dashboard/
     ├── routes/
     │   └── AppRoutes.jsx           # Cây định tuyến Router v7
     ├── styles/
-    │   └── dashboard.css           # Design Tokens, Utility Classes, Print Styles
+    │   ├── dashboard.css           # Design Tokens, Utility Classes, Print Styles
+    │   └── modules/                # Kiến trúc Modular CSS độc lập
+    │       ├── overview-table.css  # CSS cho Bảng Tổng quan, Alert Hub, Segmented Tabs & Mobile Cards
+    │       ├── sales-table.css     # CSS cho Bảng theo dõi Sales & Action Hub
+    │       └── bento-metrics.css   # CSS cho cụm Bento Metric Cards
     └── utils/
-        ├── dashboardMapper.js      # Map dữ liệu trang Tổng Quan
+        ├── dashboardMapper.js      # Map dữ liệu Tổng Quan (Time-Pace, Run-rate, Dual-tier)
         ├── detailMapper.js         # Map dữ liệu trang Chi Tiết BU
         ├── emailSchedule.js        # Logic lưu & lập lịch gửi email
         ├── exportPdf.js            # Engine xuất file PDF đa trang

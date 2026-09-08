@@ -109,68 +109,70 @@ export default function ProgressChart({ title, data = [], theme = "blue" }) {
       </div>
 
       <div
-        className="chart-wrap chart-no-focus"
+        className="chart-wrap chart-no-focus chart-scrollable-mobile"
         onMouseDown={(e) => e.preventDefault()}
         style={{ minWidth: 0 }}
       >
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} debounce={50}>
-          <ComposedChart
-            data={data}
-            margin={{ top: 22, right: 10, left: -15, bottom: 14 }}
-          >
-            <CartesianGrid stroke="#f1efe8" vertical={false} />
-            <XAxis
-              dataKey="name"
-              interval={0}
-              height={46}
-              tick={<WrappedAxisTick fontSize={11} fill="#5f5e5a" width={92} />}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: "#888780" }}
-              tickFormatter={(value) => formatCompactShort(value)}
-            />
-
-            <Tooltip content={<CustomTooltip />} />
-
-            <Bar
-              dataKey="actual"
-              stackId="a"
-              fill={colors.actual}
-              barSize={70}
-              maxBarSize={70}
-              isAnimationActive={false}
+        <div className="chart-inner-scroll">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200} debounce={50}>
+            <ComposedChart
+              data={data}
+              margin={{ top: 22, right: 10, left: -15, bottom: 14 }}
             >
-              <LabelList
-                valueAccessor={actualWhenNoGap}
-                position="top"
-                style={labelStyle}
+              <CartesianGrid stroke="#f1efe8" vertical={false} />
+              <XAxis
+                dataKey="name"
+                interval={0}
+                height={46}
+                tick={<WrappedAxisTick fontSize={11} fill="#5f5e5a" width={92} />}
               />
-            </Bar>
-
-            <Bar
-              dataKey="gap"
-              stackId="a"
-              fill={colors.gap}
-              barSize={70}
-              maxBarSize={70}
-              isAnimationActive={false}
-            >
-              <LabelList
-                valueAccessor={actualOnGapTop}
-                position="top"
-                style={labelStyle}
+              <YAxis
+                tick={{ fontSize: 10, fill: "#888780" }}
+                tickFormatter={(value) => formatCompactShort(value)}
               />
-            </Bar>
 
-            <Line
-              dataKey="target"
-              stroke={colors.target}
-              strokeDasharray="5 5"
-              dot={false}
-              isAnimationActive={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              <Tooltip content={<CustomTooltip />} />
+
+              <Bar
+                dataKey="actual"
+                stackId="a"
+                fill={colors.actual}
+                barSize={70}
+                maxBarSize={70}
+                isAnimationActive={false}
+              >
+                <LabelList
+                  valueAccessor={actualWhenNoGap}
+                  position="top"
+                  style={labelStyle}
+                />
+              </Bar>
+
+              <Bar
+                dataKey="gap"
+                stackId="a"
+                fill={colors.gap}
+                barSize={70}
+                maxBarSize={70}
+                isAnimationActive={false}
+              >
+                <LabelList
+                  valueAccessor={actualOnGapTop}
+                  position="top"
+                  style={labelStyle}
+                />
+              </Bar>
+
+              <Line
+                dataKey="target"
+                stroke={colors.target}
+                strokeDasharray="5 5"
+                dot={false}
+                isAnimationActive={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
