@@ -391,13 +391,118 @@ function buildAlertRow(
   };
 }
 
-function buildSummaryMainRow(item) {
+export function calculateTimePace(actual, plan, cutoffDay = 7, totalDays = 30) {
+  if (plan === null || plan === undefined || plan <= 0) {
+    return {
+      status: "none",
+      label: "—",
+      tone: "neutral",
+      paceRatio: null,
+      deltaPaceText: "",
+      subLabel: "Chưa giao KH",
+    };
+  }
+
+  const actualVal = actual || 0;
+  const percentActual = (actualVal / plan) * 100;
+  const timeRatio = Math.min(Math.max((cutoffDay / totalDays) * 100, 1), 100);
+  const paceRatio = percentActual / timeRatio;
+
+  const deltaPace = percentActual - timeRatio;
+  const deltaText = `${deltaPace >= 0 ? "+" : ""}${deltaPace.toFixed(1)}% vs nhịp`;
+
+  if (paceRatio >= 0.8) {
+    return {
+      status: "good",
+      label: paceRatio >= 1.0 ? "Vượt nhịp" : "Bám sát",
+      tone: "good",
+      paceRatio,
+      deltaPaceText: deltaText,
+      percentActual,
+      timeRatio,
+      subLabel: `Đạt ${percentActual.toFixed(1)}% (Kỳ vọng ${timeRatio.toFixed(1)}%)`,
+    };
+  } else if (paceRatio >= 0.5) {
+    return {
+      status: "warn",
+      label: "Cần bám sát",
+      tone: "warn",
+      paceRatio,
+      deltaPaceText: deltaText,
+      percentActual,
+      timeRatio,
+      subLabel: `Đạt ${percentActual.toFixed(1)}% (Kỳ vọng ${timeRatio.toFixed(1)}%)`,
+    };
+  } else {
+    return {
+      status: "danger",
+      label: "Chậm nhịp",
+      tone: "danger",
+      paceRatio,
+      deltaPaceText: deltaText,
+      percentActual,
+      timeRatio,
+      subLabel: `Đạt ${percentActual.toFixed(1)}% (Kỳ vọng ${timeRatio.toFixed(1)}%)`,
+    };
+  }
+}
+
+export function getPaceTone(percent, timeRatio) {
+  if (percent === null || percent === undefined) return "neutral";
+  if (!timeRatio || timeRatio <= 0) return "neutral";
+  const ratio = percent / timeRatio;
+  if (ratio >= 0.8) return "good";
+  if (ratio >= 0.5) return "warn";
+  return "danger";
+}
+
+function buildSummaryMainRow(item, timeContext = {}) {
+  const { cutoffDay = 7, totalDays = 30, timeRatio = 23.33 } = timeContext;
+  const revPlan = item.revenuePlan;
+  const revAct = item.revenueActual;
+  const revPct = item.revenuePercent;
+
+  const cashPlan = item.cashPlan;
+  const cashAct = item.cashActual;
+  const cashPct = item.cashPercent;
+
+  const primaryAct = (cashPlan && cashPlan > 0) ? cashAct : revAct;
+  const primaryPlan = (cashPlan && cashPlan > 0) ? cashPlan : revPlan;
+  const pace = calculateTimePace(primaryAct, primaryPlan, cutoffDay, totalDays);
+
   return {
     isTotal: false,
     isSub: false,
     buId: item.buId,
     bu: item.label,
     owner: item.owner,
+
+    revenueProgress: {
+      actual: revAct,
+      plan: revPlan,
+      actualText: formatCompactMoney(revAct),
+      planText: formatCompactMoney(revPlan),
+      percent: revPct,
+      percentText: formatPercentOrBlank(revPct),
+      gapText: formatGap(revAct, revPlan),
+      gapVal: getGapValue(revAct, revPlan),
+      tone: getPaceTone(revPct, timeRatio),
+    },
+
+    cashProgress: {
+      actual: cashAct,
+      plan: cashPlan,
+      actualText: formatCompactMoney(cashAct),
+      planText: formatCompactMoney(cashPlan),
+      percent: cashPct,
+      percentText: formatPercentOrBlank(cashPct),
+      gapText: formatGap(cashAct, cashPlan),
+      gapVal: getGapValue(cashAct, cashPlan),
+      tone: getPaceTone(cashPct, timeRatio),
+      runRateText: (cutoffDay > 0 && cashAct > 0) ? `~${formatCompactMoney(cashAct / cutoffDay)}/ngày` : "",
+    },
+
+    timePace: pace,
 
     revenueTarget: formatCompactMoney(item.revenuePlan),
     revenueTargetRaw: item.revenuePlan,
@@ -435,7 +540,8 @@ function buildSummaryMainRow(item) {
   };
 }
 
-function buildSummarySubRow(subUnit, perfRow) {
+function buildSummarySubRow(subUnit, perfRow, timeContext = {}) {
+  const { cutoffDay = 7, totalDays = 30, timeRatio = 23.33 } = timeContext;
   const revenuePlan = perfRow ? toNullableNumber(perfRow?.mtd_revenue_plan) : null;
   const revenueActual = perfRow ? toNullableNumber(perfRow?.mtd_revenue_actual) : null;
   const cashPlan = perfRow ? toNullableNumber(perfRow?.mtd_collection_plan) : null;
@@ -448,12 +554,43 @@ function buildSummarySubRow(subUnit, perfRow) {
     ? getPercent(perfRow?.collection_kpi, cashActual, cashPlan)
     : null;
 
+  const primaryAct = (cashPlan && cashPlan > 0) ? cashActual : revenueActual;
+  const primaryPlan = (cashPlan && cashPlan > 0) ? cashPlan : revenuePlan;
+  const pace = calculateTimePace(primaryAct, primaryPlan, cutoffDay, totalDays);
+
   return {
     isTotal: false,
     isSub: true,
     buId: null,
     bu: `— ${subUnit.name}`,
     owner: "",
+
+    revenueProgress: {
+      actual: revenueActual,
+      plan: revenuePlan,
+      actualText: perfRow ? formatCompactMoney(revenueActual) : BLANK,
+      planText: perfRow ? formatCompactMoney(revenuePlan) : BLANK,
+      percent: revenuePercent,
+      percentText: perfRow ? formatPercentOrBlank(revenuePercent) : BLANK,
+      gapText: perfRow ? formatGap(revenueActual, revenuePlan) : BLANK,
+      gapVal: getGapValue(revenueActual, revenuePlan),
+      tone: getPaceTone(revenuePercent, timeRatio),
+    },
+
+    cashProgress: {
+      actual: cashActual,
+      plan: cashPlan,
+      actualText: perfRow ? formatCompactMoney(cashActual) : BLANK,
+      planText: perfRow ? formatCompactMoney(cashPlan) : BLANK,
+      percent: cashPercent,
+      percentText: perfRow ? formatPercentOrBlank(cashPercent) : BLANK,
+      gapText: perfRow ? formatGap(cashActual, cashPlan) : BLANK,
+      gapVal: getGapValue(cashActual, cashPlan),
+      tone: getPaceTone(cashPercent, timeRatio),
+      runRateText: (cutoffDay > 0 && cashActual > 0) ? `~${formatCompactMoney(cashActual / cutoffDay)}/ngày` : "",
+    },
+
+    timePace: pace,
 
     revenueTarget: perfRow ? formatCompactMoney(revenuePlan) : BLANK,
     revenueTargetRaw: revenuePlan,
@@ -470,6 +607,7 @@ function buildSummarySubRow(subUnit, perfRow) {
     cashPercent: perfRow ? formatPercentOrBlank(cashPercent) : BLANK,
     cashPercentValue: cashPercent,
     cashGap: perfRow ? formatGap(cashActual, cashPlan) : BLANK,
+
 
     inventoryTargetRaw: perfRow ? toNullableNumber(perfRow?.inventory_value_plan) : null,
     inventoryActualRaw: perfRow ? toNullableNumber(perfRow?.inventory_value_actual) : null,
@@ -566,45 +704,22 @@ function buildRangeAwareDailySeries(rows, month, year, startDate, endDate) {
 }
 
 export function buildOverviewSummaryColumns(month, startDate, endDate) {
-  if (startDate && endDate) {
-    return [
-      { key: "bu", label: "BU" },
-      { key: "owner", label: "Phụ trách" },
-      { key: "revenueTarget", label: "KH DT" },
-      { key: "revenueActual", label: "TH DT" },
-      { key: "revenuePercent", label: "% KH DT" },
-      { key: "revenueGap", label: "Gap DT" },
-      { key: "cashTarget", label: "KH TT" },
-      { key: "cashActual", label: "TH TT" },
-      { key: "cashPercent", label: "% KH TT" },
-      { key: "vsPrev", label: "vs kỳ trước" },
-    ];
-  }
-
-  const mm = String(month).padStart(2, "0");
-  const prev = String(month === 1 ? 12 : month - 1).padStart(2, "0");
-
   return [
-    { key: "bu", label: "BU" },
-    { key: "owner", label: "Phụ trách" },
-    { key: "revenueTarget", label: "KH tháng DT" },
-    { key: "revenueActual", label: `LK T${mm} DT` },
-    { key: "revenuePercent", label: "% KH DT" },
-    { key: "revenueGap", label: "Gap DT" },
-    { key: "cashTarget", label: "KH tháng TT" },
-    { key: "cashActual", label: `LK T${mm} TT` },
-    { key: "cashPercent", label: "% KH TT" },
-    { key: "vsPrev", label: `vs T${prev} DT` },
+    { key: "bu", label: "Đơn vị Kinh doanh", width: "26%" },
+    { key: "revenueProgress", label: "Tiến độ Doanh thu", width: "28%" },
+    { key: "cashProgress", label: "Tiến độ Thu tiền", width: "28%" },
+    { key: "timePace", label: "Nhịp độ Thời gian", width: "18%" },
   ];
 }
 
 export function buildOverviewAlertColumns() {
   return [
-    { key: "item", label: "BU / Chỉ tiêu" },
-    { key: "percent", label: "% KH" },
-    { key: "gap", label: "Gap" },
+    { key: "item", label: "Điểm nóng / Ngoại lệ", width: "54%" },
+    { key: "status", label: "Mức độ", width: "23%" },
+    { key: "gap", label: "Độ lệch (Gap)", width: "23%" },
   ];
 }
+
 
 export function mapOverviewDashboard({
   rootRows,
@@ -810,13 +925,61 @@ export function mapOverviewDashboard({
   );
   const rootOpexPercent = getPercent(null, rootOpexActual, rootOpexPlan);
 
+  // 1. Tính toán Cutoff Day & Nhịp độ Thời gian (Time-Pace)
+  const totalDays = new Date(year, month, 0).getDate();
+  let cutoffDay = totalDays;
+  if (endDate) {
+    const endD = new Date(endDate);
+    if (!isNaN(endD.getTime())) {
+      cutoffDay = Math.min(Math.max(endD.getDate(), 1), totalDays);
+    }
+  } else {
+    const now = new Date();
+    if (now.getFullYear() === Number(year) && now.getMonth() + 1 === Number(month)) {
+      cutoffDay = Math.min(Math.max(now.getDate(), 1), totalDays);
+    }
+  }
+  const timeRatio = Math.min(Math.max((cutoffDay / totalDays) * 100, 1), 100);
+  const timeContext = { cutoffDay, totalDays, timeRatio };
+
+  const primaryRootAct = (rootCashPlan && rootCashPlan > 0) ? rootCashActual : rootRevenueActual;
+  const primaryRootPlan = (rootCashPlan && rootCashPlan > 0) ? rootCashPlan : rootRevenuePlan;
+  const rootPace = calculateTimePace(primaryRootAct, primaryRootPlan, cutoffDay, totalDays);
+
   const summaryRows = [
     {
       isTotal: true,
       isSub: false,
       buId: null,
-      bu: "TỔNG",
+      bu: "TỔNG TOÀN CÔNG TY",
       owner: "",
+
+      revenueProgress: {
+        actual: rootRevenueActual,
+        plan: rootRevenuePlan,
+        actualText: formatCompactMoney(rootRevenueActual),
+        planText: formatCompactMoney(rootRevenuePlan),
+        percent: rootRevenuePercent,
+        percentText: formatPercentOrBlank(rootRevenuePercent),
+        gapText: formatGap(rootRevenueActual, rootRevenuePlan),
+        gapVal: getGapValue(rootRevenueActual, rootRevenuePlan),
+        tone: getPaceTone(rootRevenuePercent, timeRatio),
+      },
+
+      cashProgress: {
+        actual: rootCashActual,
+        plan: rootCashPlan,
+        actualText: formatCompactMoney(rootCashActual),
+        planText: formatCompactMoney(rootCashPlan),
+        percent: rootCashPercent,
+        percentText: formatPercentOrBlank(rootCashPercent),
+        gapText: formatGap(rootCashActual, rootCashPlan),
+        gapVal: getGapValue(rootCashActual, rootCashPlan),
+        tone: getPaceTone(rootCashPercent, timeRatio),
+        runRateText: (cutoffDay > 0 && rootCashActual > 0) ? `~${formatCompactMoney(rootCashActual / cutoffDay)}/ngày` : "",
+      },
+
+      timePace: rootPace,
 
       revenueTarget: formatCompactMoney(rootRevenuePlan),
       revenueTargetRaw: rootRevenuePlan,
@@ -855,7 +1018,7 @@ export function mapOverviewDashboard({
   ];
 
   buRows.forEach((item) => {
-    summaryRows.push(buildSummaryMainRow(item));
+    summaryRows.push(buildSummaryMainRow(item, timeContext));
 
     const childUnits = subList.filter(
       (sub) => Number(sub.parent) === Number(item.mainId)
@@ -867,7 +1030,7 @@ export function mapOverviewDashboard({
         perfByCode.get(normalizeCode(sub.code)) ||
         null;
 
-      summaryRows.push(buildSummarySubRow(sub, perf));
+      summaryRows.push(buildSummarySubRow(sub, perf, timeContext));
     });
   });
 
@@ -881,102 +1044,106 @@ export function mapOverviewDashboard({
       ? formatRangeDisplay(startDate, endDate)
       : `Tháng ${String(month).padStart(2, "0")}/${year}`;
 
-  const mainBuAlertRows = buRows.flatMap((item) => [
-    buildAlertRow(
-      `${item.label} — Doanh thu`,
-      item.revenuePercent,
-      item.revenueActual,
-      item.revenuePlan,
-      { buId: item.buId }
-    ),
-    buildAlertRow(
-      `${item.label} — Thu tiền`,
-      item.cashPercent,
-      item.cashActual,
-      item.cashPlan,
-      { buId: item.buId }
-    ),
-  ]);
+  // =========================================================================
+  // BỘ LỌC CẢNH BÁO NGOẠI LỆ ĐIỀU HÀNH (EXECUTIVE EXCEPTION ALERTS)
+  // Loại bỏ 100% cảnh báo rác (Target=0, Gap=0, Pace >= 0.8)
+  // =========================================================================
+  const candidateAlerts = [];
 
-  const globalAlertRows = [
-    buildAlertRow(
-      metricLabels.cashAlertLabel,
-      rootCashPercent,
-      rootCashActual,
-      rootCashPlan
-    ),
-    buildAlertRow(
-      "Nợ NH sát ngưỡng",
-      rootDebtPercent,
-      rootDebtActual,
-      rootDebtPlan,
-      {},
-      {
-        reverseTone: false,
-        percentTone: getToneByPercent(rootDebtPercent, false),
-        dotTone: getToneByPercent(rootDebtPercent, false),
-        gapTone: getGapTone(debtGapRaw, false),
-      }
-    ),
-    buildAlertRow(
-      "Tồn kho vượt ngưỡng",
-      rootInventoryPercent,
-      rootInventoryActual,
-      rootInventoryPlan,
-      {},
-      {
-        reverseTone: true,
-        percentTone: getToneByPercent(rootInventoryPercent, true),
-        dotTone: getToneByPercent(rootInventoryPercent, true),
-        gapTone: getGapTone(inventoryGapRaw, true),
-      }
-    ),
-  ];
-
-  const subPlaceholderAlerts = subList
-    .filter((item) =>
-      mainList.some((main) => Number(main.id) === Number(item.parent))
-    )
-    .map((item) => {
-      const perf =
-        perfByBusinessUnit.get(Number(item.id)) ||
-        perfByCode.get(normalizeCode(item.code)) ||
-        null;
-
-      if (!perf) {
-        return buildAlertRow(`${item.name} — DT`, null, BLANK, BLANK, {
-          buId: buIdFromCode(
-            mainList.find((main) => Number(main.id) === Number(item.parent))?.code ||
-            ""
-          ),
-        });
-      }
-
-      const revenuePlan = toNullableNumber(perf?.mtd_revenue_plan);
-      const revenueActual = toNullableNumber(perf?.mtd_revenue_actual);
-      const revenuePercent = getPercent(
-        perf?.revenue_kpi,
-        revenueActual,
-        revenuePlan
-      );
-
-      return buildAlertRow(
-        `${item.name} — DT`,
-        revenuePercent,
-        revenueActual,
-        revenuePlan,
-        {
-          buId: buIdFromCode(
-            mainList.find((main) => Number(main.id) === Number(item.parent))?.code ||
-            ""
-          ),
-        }
-      );
+  // 1. Ngoại lệ Vi Phạm Hạn Mức Trần Toàn Công Ty (Critical Ceiling Breaches)
+  if (rootInventoryPlan && rootInventoryPlan > 0 && rootInventoryActual > rootInventoryPlan) {
+    const diff = rootInventoryActual - rootInventoryPlan;
+    candidateAlerts.push({
+      item: "Tồn kho vượt hạn mức trần",
+      status: "Vượt trần",
+      percent: formatPercentOrBlank(rootInventoryPercent),
+      gap: `+${formatCompactMoney(diff)}`,
+      gapTone: "danger",
+      dotTone: "danger",
+      tone: "danger",
+      priority: 1,
+      gapVal: diff,
+      subText: `Thực tế ${formatCompactMoney(rootInventoryActual)} / Trần ${formatCompactMoney(rootInventoryPlan)}`,
     });
+  }
 
-  const alertRows = [...globalAlertRows, ...mainBuAlertRows, ...subPlaceholderAlerts]
-    .sort((a, b) => (a._severity || 99) - (b._severity || 99))
-    .map(({ _severity, reverseTone, ...rest }) => rest);
+  if (rootDebtPlan && rootDebtPlan > 0) {
+    const debtRatio = rootDebtActual / rootDebtPlan;
+    if (debtRatio >= 0.98) {
+      const remainingRoom = rootDebtPlan - rootDebtActual;
+      candidateAlerts.push({
+        item: "Dư nợ NH sát hạn mức trần",
+        status: "Sát trần",
+        percent: formatPercentOrBlank(rootDebtPercent),
+        gap: remainingRoom > 0 ? `Còn ${formatCompactMoney(remainingRoom)}` : `Vượt +${formatCompactMoney(-remainingRoom)}`,
+        gapTone: remainingRoom > 0 ? "warn" : "danger",
+        dotTone: "danger",
+        tone: "danger",
+        priority: 1,
+        gapVal: rootDebtActual,
+        subText: `Dư nợ ${formatCompactMoney(rootDebtActual)} / Trần ${formatCompactMoney(rootDebtPlan)}`,
+      });
+    }
+  }
+
+  // 2. Điểm Nóng Doanh Thu & Thu Tiền Cấp BU (Chỉ lấy BU có KH > 0 và Pace < 0.8)
+  buRows.forEach((item) => {
+    if ((!item.revenuePlan || item.revenuePlan <= 0) && (!item.cashPlan || item.cashPlan <= 0)) {
+      return;
+    }
+
+    if (item.revenuePlan && item.revenuePlan > 0) {
+      const pace = calculateTimePace(item.revenueActual, item.revenuePlan, cutoffDay, totalDays);
+      if (pace.status === "danger" || pace.status === "warn") {
+        const gapVal = Math.max((item.revenuePlan || 0) - (item.revenueActual || 0), 0);
+        if (gapVal > 0) {
+          candidateAlerts.push({
+            item: `${item.label} — Doanh thu`,
+            status: pace.label,
+            percent: formatPercentOrBlank(item.revenuePercent),
+            gap: formatGap(item.revenueActual, item.revenuePlan),
+            gapTone: "danger",
+            dotTone: pace.tone,
+            tone: pace.tone,
+            priority: gapVal >= 10000000000 ? 2 : (pace.status === "danger" ? 3 : 4),
+            gapVal,
+            subText: `Đạt ${item.revenuePercent?.toFixed(1) || 0}% / Nhịp kỳ vọng ${timeRatio.toFixed(1)}%`,
+            buId: item.buId,
+          });
+        }
+      }
+    }
+
+    if (item.cashPlan && item.cashPlan > 0) {
+      const pace = calculateTimePace(item.cashActual, item.cashPlan, cutoffDay, totalDays);
+      if (pace.status === "danger" || pace.status === "warn") {
+        const gapVal = Math.max((item.cashPlan || 0) - (item.cashActual || 0), 0);
+        if (gapVal > 0) {
+          candidateAlerts.push({
+            item: `${item.label} — Thu tiền`,
+            status: pace.label,
+            percent: formatPercentOrBlank(item.cashPercent),
+            gap: formatGap(item.cashActual, item.cashPlan),
+            gapTone: "danger",
+            dotTone: pace.tone,
+            tone: pace.tone,
+            priority: gapVal >= 10000000000 ? 2 : (pace.status === "danger" ? 3 : 4),
+            gapVal,
+            subText: `Đạt ${item.cashPercent?.toFixed(1) || 0}% / Nhịp kỳ vọng ${timeRatio.toFixed(1)}%`,
+            buId: item.buId,
+          });
+        }
+      }
+    }
+  });
+
+  candidateAlerts.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    return (b.gapVal || 0) - (a.gapVal || 0);
+  });
+
+  const alertRows = candidateAlerts.slice(0, 6);
+
 
   return {
     header: {

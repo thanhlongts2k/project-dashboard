@@ -1,5 +1,6 @@
 @import "./modules/sales-table.css";
 @import "./modules/bento-metrics.css";
+@import "./modules/overview-table.css";
 
 :root {
   /* Brand & Core Accents */

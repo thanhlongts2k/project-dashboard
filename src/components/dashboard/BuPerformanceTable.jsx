@@ -8,7 +8,7 @@ export default function BuPerformanceTable({
   alertRows = [],
 }) {
   return (
-    <div className="table-grid">
+    <div className="overview-table-grid">
       <DataTable
         title={`Bảng tổng hợp tất cả BU — ${monthLabel || ""}`}
         columns={summaryColumns}
