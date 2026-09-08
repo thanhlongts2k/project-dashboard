@@ -229,8 +229,8 @@ export default function SalesPerformanceTable({
   // 2. Mobile Tab State: 'top' | 'warning' | 'regions' (trên mobile chỉ render 1 card tại 1 thời điểm)
   const [activeMobileWidgetTab, setActiveMobileWidgetTab] = useState("top");
 
-  // 3. Toggle Kỳ báo cáo cho Action Hub: 'YTD' (Cả năm) | 'MTD' (Tháng này)
-  const [hubPeriodType, setHubPeriodType] = useState("YTD");
+  // 3. Toggle Kỳ báo cáo cho Action Hub: Cố định 'MTD' (Tháng này) theo chỉ đạo điều hành
+  const [hubPeriodType, setHubPeriodType] = useState("MTD");
 
   // 4. Progressive disclosure: Mặc định đóng bảng chi tiết
   const [isDetailTableOpen, setIsDetailTableOpen] = useState(false);
@@ -1160,9 +1160,9 @@ export default function SalesPerformanceTable({
           className="flex items-center gap-2 flex-nowrap flex-shrink-0 ml-auto"
           style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "nowrap", flexShrink: 0 }}
         >
-          {/* TIỆN ÍCH 2: TOGGLE KỲ BÁO CÁO (MTD / YTD) */}
+          {/* TIỆN ÍCH: PHẠM VI THEO DÕI CỐ ĐỊNH THÁNG NÀY (MTD) */}
           <div
-            className="bg-slate-100 p-0.5 rounded-lg inline-flex items-center gap-0.5 border border-slate-200/80"
+            className="bg-slate-100 p-0.5 rounded-lg inline-flex items-center border border-slate-200/80"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -1170,55 +1170,23 @@ export default function SalesPerformanceTable({
               padding: "2px",
               borderRadius: "8px",
               border: "1px solid #e2e8f0",
-              gap: "2px",
             }}
           >
-            <button
-              type="button"
-              className={`px-2.5 py-1 text-xs rounded-md transition-all font-medium ${
-                hubPeriodType === "MTD"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+            <span
+              className="px-2.5 py-1 text-xs rounded-md font-semibold bg-white text-slate-900 shadow-2xs"
               style={{
-                padding: isMobile ? "3px 7px" : "3px 10px",
+                padding: isMobile ? "3px 8px" : "3px 10px",
                 fontSize: "11px",
                 borderRadius: "6px",
-                fontWeight: hubPeriodType === "MTD" ? 600 : 500,
-                border: "none",
-                cursor: "pointer",
-                backgroundColor: hubPeriodType === "MTD" ? "#ffffff" : "transparent",
-                color: hubPeriodType === "MTD" ? "#0f172a" : "#64748b",
-                boxShadow: hubPeriodType === "MTD" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+                fontWeight: 600,
+                backgroundColor: "#ffffff",
+                color: "#0f172a",
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
               }}
-              onClick={() => setHubPeriodType("MTD")}
               title={`Theo dõi tiến độ Tháng ${currentMonthNum}`}
             >
               Tháng này
-            </button>
-            <button
-              type="button"
-              className={`px-2.5 py-1 text-xs rounded-md transition-all font-medium ${
-                hubPeriodType === "YTD"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-              style={{
-                padding: isMobile ? "3px 7px" : "3px 10px",
-                fontSize: "11px",
-                borderRadius: "6px",
-                fontWeight: hubPeriodType === "YTD" ? 600 : 500,
-                border: "none",
-                cursor: "pointer",
-                backgroundColor: hubPeriodType === "YTD" ? "#ffffff" : "transparent",
-                color: hubPeriodType === "YTD" ? "#0f172a" : "#64748b",
-                boxShadow: hubPeriodType === "YTD" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
-              }}
-              onClick={() => setHubPeriodType("YTD")}
-              title={`Theo dõi tiến độ cả Năm ${currentYear}`}
-            >
-              Cả năm
-            </button>
+            </span>
           </div>
 
           <button
