@@ -33,7 +33,7 @@ export function getBuCodeFromKey(key = "") {
 }
 
 /**
- * Định dạng tiền tệ VND: 1.234.567.890 đ
+ * Định dạng tiền tệ VND chuẩn: 1.234.567.890 đ
  */
 function formatVnd(val) {
   if (val === null || val === undefined || val === "") return "—";
@@ -52,46 +52,149 @@ function formatDisplayDate(dateStr) {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-function formatDayMonth(dateStr) {
-  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr || "—";
-  const parts = dateStr.split("-");
-  return `${parts[2]}/${parts[1]}`;
-}
-
 /**
- * Tính chênh lệch Thực tế - Kế hoạch
+ * Định dạng tiền tệ ngắn gọn (tỷ / tr / k) cho subtitle và metric cards
  */
-function formatGap(actual, target) {
-  if (target === null || target === undefined || Number(target) <= 0) return null;
-  const diff = Number(actual || 0) - Number(target || 0);
-  const formatted = new Intl.NumberFormat("vi-VN").format(Math.abs(Math.round(diff)));
-  if (diff === 0) return "Đạt chuẩn";
-  return diff > 0 ? `+${formatted} đ` : `-${formatted} đ`;
+function formatVndCompact(val) {
+  if (val === null || val === undefined || val === "") return "—";
+  const num = Number(val);
+  if (!Number.isFinite(num)) return "—";
+  const abs = Math.abs(num);
+  if (abs === 0) return "0";
+  if (abs >= 1_000_000_000) {
+    const b = num / 1_000_000_000;
+    const formatted = b.toFixed(1).replace(/\.0$/, "");
+    return `${formatted} tỷ`;
+  }
+  if (abs >= 1_000_000) {
+    const m = num / 1_000_000;
+    const formatted = m.toFixed(1).replace(/\.0$/, "");
+    return `${formatted} tr`;
+  }
+  if (abs >= 1_000) {
+    return `${(num / 1_000).toFixed(0)} k`;
+  }
+  return new Intl.NumberFormat("vi-VN").format(Math.round(num));
 }
 
-function getGapTone(actual, target) {
-  if (target === null || target === undefined || Number(target) <= 0) return "neutral";
-  const diff = Number(actual || 0) - Number(target || 0);
-  return diff >= 0 ? "positive" : "negative";
-}
-
-/**
- * Màu sắc & tone cho Badge %
- */
-function getRateTone(rate, target) {
+function formatPlanCompact(actual, target) {
   if (target === null || target === undefined || Number(target) <= 0) {
-    return "neutral";
+    return "KH: —";
+  }
+  const targetStr = formatVndCompact(target);
+  const diff = Number(actual || 0) - Number(target || 0);
+  if (diff === 0) {
+    return `KH: ${targetStr} (Đạt)`;
+  }
+  const diffStr = diff > 0 ? `+${formatVndCompact(diff)}` : `-${formatVndCompact(Math.abs(diff))}`;
+  return `KH: ${targetStr} (${diffStr})`;
+}
+
+/**
+ * Lấy chữ cái viết tắt của tên nhân viên làm Avatar
+ */
+function getInitials(name) {
+  if (!name) return "?";
+  const clean = name.trim().replace(/^Mr\.\s*|^Ms\.\s*|^Anh\s*|^Chị\s*/i, "");
+  const parts = clean.split(/\s+/);
+  if (parts.length === 0) return "?";
+  const last = parts[parts.length - 1];
+  return (last[0] || "?").toUpperCase();
+}
+
+/**
+ * Render Pill Badge % Tiến độ chuẩn màu Tremor/Stripe (êm dịu mắt)
+ */
+function renderRatePill(rate, target) {
+  const hasTarget = target !== null && target !== undefined && Number(target) > 0;
+  if (!hasTarget) {
+    return (
+      <span
+        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-400 font-mono"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "1.5px 7px",
+          borderRadius: "9999px",
+          fontSize: "11px",
+          fontWeight: 500,
+          backgroundColor: "#f1f5f9",
+          color: "#94a3b8",
+          fontFamily: "ui-monospace, monospace",
+          lineHeight: 1.2,
+        }}
+      >
+        —
+      </span>
+    );
   }
   const r = Number(rate);
-  if (!Number.isFinite(r) || r <= 0) return "danger";
-  if (r >= 100) return "good";
-  if (r >= 70) return "warn";
-  return "danger";
+  const text = `${(Number.isFinite(r) && r > 0 ? r : 0).toFixed(1)}%`;
+
+  let styleObj = {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "1.5px 7px",
+    borderRadius: "9999px",
+    fontSize: "11px",
+    fontWeight: 600,
+    fontFamily: "ui-monospace, monospace",
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 1.2,
+  };
+  let className = "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono tabular-nums ";
+
+  if (r >= 100) {
+    className += "bg-emerald-50 text-emerald-700 border border-emerald-200/60";
+    styleObj = {
+      ...styleObj,
+      backgroundColor: "#ecfdf5",
+      color: "#047857",
+      border: "1px solid rgba(167, 243, 208, 0.8)",
+    };
+  } else if (r >= 70) {
+    className += "bg-blue-50 text-blue-700 border border-blue-200/60";
+    styleObj = {
+      ...styleObj,
+      backgroundColor: "#eff6ff",
+      color: "#1d4ed8",
+      border: "1px solid rgba(191, 219, 254, 0.8)",
+    };
+  } else {
+    className += "bg-amber-50 text-amber-700 border border-amber-200/60";
+    styleObj = {
+      ...styleObj,
+      backgroundColor: "#fffbeb",
+      color: "#b45309",
+      border: "1px solid rgba(253, 230, 138, 0.8)",
+    };
+  }
+
+  return (
+    <span className={className} style={styleObj}>
+      {text}
+    </span>
+  );
 }
 
-/**
- * Tính độ rộng thanh Progress Bar (tối đa 100%)
- */
+function getProgressColor(rate, target) {
+  const hasTarget = target !== null && target !== undefined && Number(target) > 0;
+  if (!hasTarget) return "#e2e8f0";
+  const r = Number(rate) || 0;
+  if (r >= 100) return "#10b981"; // emerald
+  if (r >= 70) return "#3b82f6"; // blue
+  return "#f59e0b"; // amber
+}
+
+function getProgressColorClass(rate, target) {
+  const hasTarget = target !== null && target !== undefined && Number(target) > 0;
+  if (!hasTarget) return "bg-slate-200";
+  const r = Number(rate) || 0;
+  if (r >= 100) return "bg-emerald-500";
+  if (r >= 70) return "bg-blue-500";
+  return "bg-amber-500";
+}
+
 function getProgressWidth(rate, target) {
   if (target === null || target === undefined || Number(target) <= 0) return 0;
   const r = Number(rate) || 0;
@@ -110,40 +213,39 @@ export default function SalesPerformanceTable({
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
 
-  // 1. Quản lý trạng thái Card Accordion kèm localStorage persistence
-  const storageKey = `sales_perf_card_expanded_${buKey || "default"}`;
-  const [isCardExpanded, setIsCardExpanded] = useState(() => {
-    try {
-      const saved = localStorage.getItem(`sales_perf_card_expanded_${buKey || "default"}`);
-      if (saved !== null) return JSON.parse(saved);
-    } catch {
-      // ignore
-    }
-    return true; // Mặc định mở rộng khi tải trang
+  // 1. Hook xác định Viewport Mobile (< 768px) để render chuyển đổi giao diện
+  const [isMobile, setIsMobile] = useState(() => {
+    return typeof window !== "undefined" ? window.innerWidth < 768 : false;
   });
 
-  const toggleCardExpanded = () => {
-    setIsCardExpanded((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  };
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-  // 2. Trạng thái mở rộng các hàng con Miền / Khu vực
+  // 2. Mobile Tab State: 'top' | 'warning' | 'regions' (trên mobile chỉ render 1 card tại 1 thời điểm)
+  const [activeMobileWidgetTab, setActiveMobileWidgetTab] = useState("top");
+
+  // 3. Toggle Kỳ báo cáo cho Action Hub: 'YTD' (Cả năm) | 'MTD' (Tháng này)
+  const [hubPeriodType, setHubPeriodType] = useState("YTD");
+
+  // 4. Progressive disclosure: Mặc định đóng bảng chi tiết
+  const [isDetailTableOpen, setIsDetailTableOpen] = useState(false);
+
+  // 5. Ô tìm kiếm nhanh (Quick Search) theo tên hoặc mã NV
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 6. Trạng thái mở rộng các hàng con Miền / Khu vực trong bảng chi tiết
   const [expandedRegionIds, setExpandedRegionIds] = useState(new Set());
 
-  // 3. Bộ lọc nhanh (Quick Filter Pills): 'all' | 'north' | 'south' | 'warning'
+  // 7. Quick Filter Tabs trong bảng chi tiết: 'all' | 'north' | 'south' | 'warning'
   const [activeFilter, setActiveFilter] = useState("all");
 
-  // Xác định bu_code
   const buCode = useMemo(() => getBuCodeFromKey(buKey), [buKey]);
 
-  // Xác định date & period linh hoạt
   const queryDate = useMemo(() => {
     if (detailFilter?.endDate) return detailFilter.endDate;
     if (reportDate && /^\d{4}-\d{2}-\d{2}$/.test(reportDate)) return reportDate;
@@ -157,7 +259,6 @@ export default function SalesPerformanceTable({
     return null;
   }, [detailFilter?.endDate, queryDate, period]);
 
-  // Tải dữ liệu từ API
   const loadData = useCallback(async () => {
     if (!buCode) return;
     setLoading(true);
@@ -185,17 +286,55 @@ export default function SalesPerformanceTable({
     loadData();
   }, [loadData]);
 
-  // Thống kê danh sách Region IDs
-  const allRegionIds = useMemo(() => {
+  // Danh sách phẳng toàn bộ nhân viên Sale từ cây dữ liệu (Deduplicated theo mã nhân viên)
+  const allEmployees = useMemo(() => {
     if (!data?.tree) return [];
-    const ids = [];
-    data.tree.forEach((buNode) => {
-      (buNode.children || []).forEach((regNode) => {
-        if (regNode.id) ids.push(regNode.id);
+    const map = new Map();
+    data.tree.forEach((bu) => {
+      (bu.children || []).forEach((reg) => {
+        (reg.children || []).forEach((emp) => {
+          const key = String(emp.employee_code || emp.id || emp.name);
+          if (!map.has(key)) {
+            map.set(key, {
+              ...emp,
+              regionId: reg.id,
+              regionName: reg.region_name || reg.name || "",
+              buName: bu.name || "",
+            });
+          } else {
+            // Nếu đã có nhưng đang ghi tên 'Tổng Miền' mà gặp đơn vị cụ thể, ưu tiên tên đơn vị cụ thể
+            const existing = map.get(key);
+            if ((existing.regionName || "").includes("Tổng Miền") && !(reg.region_name || reg.name || "").includes("Tổng Miền")) {
+              map.set(key, {
+                ...emp,
+                regionId: reg.id,
+                regionName: reg.region_name || reg.name || "",
+                buName: bu.name || "",
+              });
+            }
+          }
+        });
       });
     });
-    return ids;
+    return Array.from(map.values());
   }, [data]);
+
+  // Danh sách các Miền / Khối con
+  const allRegions = useMemo(() => {
+    if (!data?.tree) return [];
+    const list = [];
+    data.tree.forEach((bu) => {
+      (bu.children || []).forEach((reg) => {
+        list.push({
+          ...reg,
+          buName: bu.name,
+        });
+      });
+    });
+    return list;
+  }, [data]);
+
+  const allRegionIds = useMemo(() => allRegions.map((r) => r.id), [allRegions]);
 
   const isAllRegionsExpanded = useMemo(() => {
     if (allRegionIds.length === 0) return false;
@@ -222,93 +361,183 @@ export default function SalesPerformanceTable({
     setExpandedRegionIds(new Set());
   };
 
-  // Tính số lượng Sales cho từng filter pill
+  // Tự động mở rộng tất cả vùng miền khi tìm kiếm có text
+  useEffect(() => {
+    if (searchQuery.trim() && allRegionIds.length > 0) {
+      setExpandedRegionIds(new Set(allRegionIds));
+    }
+  }, [searchQuery, allRegionIds]);
+
+  const effectivePeriod = data?.period || queryPeriod || "2026-09";
+  const currentMonthNum = effectivePeriod ? parseInt(effectivePeriod.split("-")[1], 10) : 9;
+  const currentYear = effectivePeriod ? effectivePeriod.split("-")[0] : "2026";
+  const effectiveDate = data?.date || queryDate;
+
+  const buTopNode = data?.tree?.[0] || null;
+  const buTopMetrics = buTopNode?.metrics || null;
+
+  const shortBuTag = buKey
+    ? buKey.replace(/[-_]/g, " ").toUpperCase()
+    : buTopNode?.code
+    ? buTopNode.code.replace(/^BU_/, "")
+    : "ECO";
+
+  // 1. TOP VINH DANH (LEADERBOARD): Tính theo MTD hoặc YTD tùy toggle
+  const topPerformers = useMemo(() => {
+    if (allEmployees.length === 0) return [];
+    const isMtd = hubPeriodType === "MTD";
+
+    return [...allEmployees]
+      .map((emp) => {
+        const actual = Number(isMtd ? emp.metrics?.month_actual : emp.metrics?.year_actual) || 0;
+        const target = Number(isMtd ? emp.metrics?.month_target : emp.metrics?.year_target) || 0;
+        const rate = Number(isMtd ? emp.metrics?.month_rate : emp.metrics?.year_rate) || 0;
+        return {
+          ...emp,
+          displayActual: actual,
+          displayTarget: target,
+          displayRate: rate,
+        };
+      })
+      .filter((emp) => emp.displayActual > 0 || emp.displayRate > 0)
+      .sort((a, b) => {
+        if (b.displayActual !== a.displayActual) return b.displayActual - a.displayActual;
+        return b.displayRate - a.displayRate;
+      })
+      .slice(0, 3);
+  }, [allEmployees, hubPeriodType]);
+
+  // 2. BÁO ĐỘNG CHẬM TIẾN ĐỘ (ACTION REQUIRED): Tính theo MTD hoặc YTD tùy toggle
+  const actionRequiredList = useMemo(() => {
+    if (allEmployees.length === 0) return [];
+    const isMtd = hubPeriodType === "MTD";
+
+    const withTarget = allEmployees
+      .map((e) => {
+        const target = Number(isMtd ? e.metrics?.month_target : e.metrics?.year_target) || 0;
+        const actual = Number(isMtd ? e.metrics?.month_actual : e.metrics?.year_actual) || 0;
+        const rate = Number(isMtd ? e.metrics?.month_rate : e.metrics?.year_rate) || 0;
+        const gap = Math.max(0, target - actual);
+        return {
+          ...e,
+          displayGap: gap,
+          displayRate: rate,
+          displayTarget: target,
+          displayActual: actual,
+        };
+      })
+      .filter((e) => e.displayTarget > 0 && e.displayRate < 70);
+
+    // Sắp xếp theo tỷ lệ % thấp nhất, sau đó đến khoảng cách thiếu (Gap) lớn nhất
+    withTarget.sort((a, b) => {
+      if (a.displayRate !== b.displayRate) return a.displayRate - b.displayRate;
+      return b.displayGap - a.displayGap;
+    });
+
+    return withTarget.slice(0, 3);
+  }, [allEmployees, hubPeriodType]);
+
+  // 3. TIẾN ĐỘ THEO KHỐI & VÙNG MIỀN: Tính theo MTD hoặc YTD tùy toggle
+  const regionalSummary = useMemo(() => {
+    if (allRegions.length === 0) return [];
+    const isMtd = hubPeriodType === "MTD";
+    const buTotalActual = Number(isMtd ? buTopMetrics?.month_actual : buTopMetrics?.year_actual) || 1;
+
+    return allRegions
+      .map((reg) => {
+        const actual = Number(isMtd ? reg.metrics?.month_actual : reg.metrics?.year_actual) || 0;
+        const target = Number(isMtd ? reg.metrics?.month_target : reg.metrics?.year_target) || 0;
+        const rate = Number(isMtd ? reg.metrics?.month_rate : reg.metrics?.year_rate) || 0;
+        const share = buTotalActual > 0 ? (actual / buTotalActual) * 100 : 0;
+        return {
+          ...reg,
+          displayActual: actual,
+          displayTarget: target,
+          displayRate: rate,
+          share: Math.min(Math.round(share * 10) / 10, 100),
+        };
+      })
+      .sort((a, b) => b.displayActual - a.displayActual);
+  }, [allRegions, buTopMetrics, hubPeriodType]);
+
+  // Lọc tìm kiếm nhân viên
+  const filteredEmployeesForDetail = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return allEmployees.filter((emp) => {
+      // 1. Filter theo tab
+      const isNorth = (emp.regionName || "").includes("Bắc");
+      const isSouth =
+        (emp.regionName || "").includes("Nam") ||
+        (emp.regionName || "").includes("ECO") ||
+        (emp.regionName || "").includes("AGRITECH") ||
+        (emp.regionName || "").includes("SAB");
+      if (activeFilter === "north" && !isNorth) return false;
+      if (activeFilter === "south" && !isSouth) return false;
+      if (activeFilter === "warning") {
+        const m = emp.metrics;
+        if (!(m?.month_target > 0 && Number(m?.month_rate || 0) < 70)) return false;
+      }
+      // 2. Filter theo Search Query (an toàn với số và chữ)
+      if (q) {
+        const matchName = String(emp.name || "").toLowerCase().includes(q);
+        const matchCode = String(emp.employee_code ?? "").toLowerCase().includes(q);
+        const matchReg = String(emp.regionName || "").toLowerCase().includes(q);
+        return matchName || matchCode || matchReg;
+      }
+      return true;
+    });
+  }, [allEmployees, activeFilter, searchQuery]);
+
+  // Đếm số lượng bộ lọc chuẩn
   const filterCounts = useMemo(() => {
-    if (!data?.tree) return { all: 0, north: 0, south: 0, warning: 0 };
-    let all = 0;
+    let all = allEmployees.length;
     let north = 0;
     let south = 0;
     let warning = 0;
 
-    data.tree.forEach((bu) => {
-      (bu.children || []).forEach((reg) => {
-        const isNorth = (reg.region_name || reg.name || "").includes("Bắc");
-        const isSouth = (reg.region_name || reg.name || "").includes("Nam");
-        (reg.children || []).forEach((emp) => {
-          all += 1;
-          if (isNorth) north += 1;
-          if (isSouth) south += 1;
-          const m = emp.metrics;
-          if (m?.month_target > 0 && Number(m?.month_rate || 0) < 70) {
-            warning += 1;
-          }
-        });
-      });
+    allEmployees.forEach((emp) => {
+      const reg = emp.regionName || "";
+      if (reg.includes("Bắc")) north += 1;
+      if (reg.includes("Nam") || reg.includes("ECO") || reg.includes("AGRITECH") || reg.includes("SAB")) south += 1;
+      const m = emp.metrics;
+      if (m?.month_target > 0 && Number(m?.month_rate || 0) < 70) {
+        warning += 1;
+      }
     });
 
     return { all, north, south, warning };
-  }, [data]);
-
-  // Khi chọn filter warning, tự động bung mở các Miền để quản lý quan sát
-  useEffect(() => {
-    if (activeFilter === "warning" && allRegionIds.length > 0) {
-      setExpandedRegionIds(new Set(allRegionIds));
-    }
-  }, [activeFilter, allRegionIds]);
-
-  // Render Badge % Tỷ lệ hoàn thành
-  const renderRateBadge = (rate, target) => {
-    const tone = getRateTone(rate, target);
-    const hasTarget = target !== null && target !== undefined && Number(target) > 0;
-    const text = rate !== null && rate !== undefined && hasTarget ? `${Number(rate).toFixed(1)}%` : "—";
-    return <span className={`sales-rate-badge badge-${tone}`}>{text}</span>;
-  };
-
-  // Render Cột Tiến độ trực quan (Visual Progress Column)
-  const renderProgressCell = (actual, target, rate, labelPrefix = "Mục tiêu") => {
-    const hasTarget = target !== null && target !== undefined && Number(target) > 0;
-    const progressWidth = getProgressWidth(rate, target);
-    const tone = getRateTone(rate, target);
-    const gapText = formatGap(actual, target);
-    const gapTone = getGapTone(actual, target);
-
-    return (
-      <div className="progress-cell-wrap">
-        {/* Dòng 1: Số thực tế & Badge % */}
-        <div className="d-flex align-items-center justify-content-between gap-2 mb-1">
-          <span className="font-numeric actual-value">{formatVnd(actual)} đ</span>
-          {renderRateBadge(rate, target)}
-        </div>
-
-        {/* Dòng 2: Thanh Progress Bar mỏng bo tròn */}
-        <div className="progress-bar-track">
-          <div
-            className={`progress-bar-fill fill-${tone}`}
-            style={{ width: `${progressWidth}%` }}
-          />
-        </div>
-
-        {/* Dòng 3: Kế hoạch & Chênh lệch */}
-        <div className="d-flex align-items-center justify-content-between text-muted sub-metrics-row mt-1">
-          <span className="target-text">
-            {labelPrefix}: <strong>{hasTarget ? `${formatVnd(target)} đ` : "—"}</strong>
-          </span>
-          {gapText && (
-            <span className={`gap-indicator gap-${gapTone}`}>
-              {gapText}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  };
+  }, [allEmployees]);
 
   if (loading && !data) {
     return (
-      <div className="card sales-performance-card mt-4 p-5 text-center">
-        <div className="loading-state">
-          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
-          <span className="text-muted">Đang tải bảng theo dõi doanh thu theo nhân viên sale...</span>
+      <div
+        className="bg-white border border-slate-200/80 shadow-sm rounded-xl mt-4 p-8 text-center"
+        style={{
+          marginTop: "16px",
+          backgroundColor: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          padding: "32px",
+          textAlign: "center",
+        }}
+      >
+        <div
+          className="inline-flex items-center gap-2 text-slate-500 text-sm"
+          style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#64748b", fontSize: "14px" }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }}
+          >
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
+            <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" opacity="0.75" />
+          </svg>
+          <span>Đang tải Action Hub doanh thu theo nhân viên sale...</span>
         </div>
       </div>
     );
@@ -316,9 +545,32 @@ export default function SalesPerformanceTable({
 
   if (error && !data) {
     return (
-      <div className="card sales-performance-card mt-4 p-4 text-center">
-        <div className="text-danger mb-2">⚠️ {error}</div>
-        <button className="btn btn-sm btn-outline-primary" onClick={loadData}>
+      <div
+        className="bg-white border border-rose-200 rounded-xl mt-4 p-5 text-center"
+        style={{
+          marginTop: "16px",
+          backgroundColor: "#ffffff",
+          border: "1px solid #fecdd3",
+          borderRadius: "12px",
+          padding: "20px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ color: "#e11d48", fontSize: "14px", fontWeight: 500, marginBottom: "12px" }}>⚠️ {error}</div>
+        <button
+          type="button"
+          style={{
+            padding: "6px 14px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #cbd5e1",
+            color: "#334155",
+            fontSize: "12px",
+            fontWeight: 600,
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+          onClick={loadData}
+        >
           Thử lại
         </button>
       </div>
@@ -330,417 +582,1406 @@ export default function SalesPerformanceTable({
     return null;
   }
 
-  const effectivePeriod = data?.period || queryPeriod || "2026-08";
-  const currentMonthNum = effectivePeriod ? parseInt(effectivePeriod.split("-")[1], 10) : 8;
-  const currentYear = effectivePeriod ? effectivePeriod.split("-")[0] : "2026";
-  const effectiveDate = data?.date || queryDate;
-  const dayColLabel = effectiveDate ? `NGÀY ${formatDayMonth(effectiveDate)}` : "NGÀY CHỐT";
-
-  const buTopNode = tree[0] || null;
-  const buTopMetrics = buTopNode?.metrics || null;
-
-  return (
-    <div className={`card sales-performance-card mt-4 ${!isCardExpanded ? "card-collapsed" : ""}`}>
-      {/* 1. HEADER CARD (CƠ CHẾ ACCORDION BLOCK VÀ TÓM TẮT NHANH) */}
-      <div className="sales-perf-header d-flex flex-wrap justify-content-between align-items-center">
-        <div className="header-left d-flex flex-column gap-1">
-          <div className="d-flex align-items-center gap-2 flex-wrap">
-            <span className="card-icon">📊</span>
-            <h3 className="card-title m-0">
-              {title || "Báo cáo Doanh thu theo Nhân viên Sale"}
-            </h3>
-            <span className="badge-target-pill">Mục tiêu {currentYear}</span>
-            {buTopNode && (
-              <span className="bu-name-pill">{buTopNode.name}</span>
-            )}
+  // Helper render Widget 1: Top Vinh danh
+  const renderTopVinhDanhCard = () => (
+    <div
+      className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs flex flex-col justify-between"
+      style={{
+        backgroundColor: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+        height: "100%",
+      }}
+    >
+      <div
+        className="flex items-center justify-between pb-3 border-b border-slate-100"
+        style={{ display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "space-between", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "16px" }}>🏆</span>
+          <div>
+            <h4 style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
+              TOP VINH DANH
+            </h4>
+            <span style={{ fontSize: "11px", color: "#64748b" }}>
+              {hubPeriodType === "MTD" ? `Dẫn đầu Tháng ${currentMonthNum}` : `Dẫn đầu Năm ${currentYear}`}
+            </span>
           </div>
+        </div>
+        <span
+          style={{
+            fontSize: "10.5px",
+            fontWeight: 600,
+            color: "#047857",
+            backgroundColor: "#ecfdf5",
+            border: "1px solid #a7f3d0",
+            padding: "2px 7px",
+            borderRadius: "9999px",
+          }}
+        >
+          Leaderboard
+        </span>
+      </div>
 
-          <div className="card-subtitle text-muted d-flex align-items-center gap-2 flex-wrap">
-            <span>Ngày chốt: <strong className="text-dark">{formatDisplayDate(effectiveDate)}</strong></span>
-            <span className="text-separator">•</span>
-            <span>Kỳ báo cáo: <strong className="text-dark">{effectivePeriod}</strong></span>
-            <span className="text-separator">•</span>
-            <span className="text-exclude-hint">(Loại trừ DT nội bộ & đối ứng HiSa)</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px", flexGrow: 1 }}>
+        {topPerformers.length === 0 ? (
+          <div style={{ color: "#94a3b8", fontSize: "12px", textAlign: "center", padding: "16px" }}>
+            Chưa có số liệu kỳ này
           </div>
+        ) : (
+          topPerformers.map((emp, idx) => {
+            const rankBadges = [
+              { label: "🥇 #1", bg: "#fef3c7", text: "#92400e", border: "#fde68a" },
+              { label: "🥈 #2", bg: "#f1f5f9", text: "#334155", border: "#cbd5e1" },
+              { label: "🥉 #3", bg: "#ffedd5", text: "#9a3412", border: "#fed7aa" },
+            ];
+            const badge = rankBadges[idx] || { label: `#${idx + 1}`, bg: "#f1f5f9", text: "#64748b", border: "#e2e8f0" };
 
-          {/* DẢI TÓM TẮT NHANH KHI CARD BỊ THU GỌN */}
-          {!isCardExpanded && buTopMetrics && (
-            <div className="collapsed-summary-strip d-flex align-items-center gap-3 mt-2 flex-wrap">
-              <div className="summary-metric-item">
-                <span className="metric-label">{dayColLabel}:</span>
-                <span className="metric-value highlight-day">{formatVnd(buTopMetrics.day_revenue)} đ</span>
+            return (
+              <div
+                key={emp.id || emp.employee_code}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  backgroundColor: idx === 0 ? "rgba(240, 253, 244, 0.6)" : "#ffffff",
+                  border: idx === 0 ? "1px solid #dcfce7" : "1px solid #f1f5f9",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        padding: "1.5px 5px",
+                        borderRadius: "4px",
+                        backgroundColor: badge.bg,
+                        color: badge.text,
+                        border: `1px solid ${badge.border}`,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {badge.label}
+                    </span>
+                    <div
+                      style={{
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ecfdf5",
+                        color: "#047857",
+                        border: "1px solid #a7f3d0",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {getInitials(emp.name)}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {emp.name}
+                      </div>
+                      <div style={{ fontSize: "10px", color: "#64748b" }}>
+                        #{emp.employee_code} • {emp.regionName}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: "12px", fontWeight: 700, fontFamily: "ui-monospace, monospace", color: "#0f172a" }}>
+                      {formatVndCompact(emp.displayActual)}
+                    </div>
+                    {emp.displayTarget > 0 && (
+                      <div style={{ fontSize: "10px", color: "#64748b", fontFamily: "ui-monospace, monospace" }}>
+                        / {formatVndCompact(emp.displayTarget)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    width: "100%",
+                    height: "4px",
+                    backgroundColor: "#e2e8f0",
+                    borderRadius: "9999px",
+                    overflow: "hidden",
+                    marginTop: "6px",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${Math.min(emp.displayRate > 0 ? emp.displayRate : 100, 100)}%`,
+                      background: "linear-gradient(90deg, #059669, #10b981)",
+                      borderRadius: "9999px",
+                      transition: "width 0.3s ease",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "3px", fontSize: "10px" }}>
+                  <span style={{ color: "#059669", fontWeight: 600 }}>
+                    {emp.displayRate >= 100 ? `Vượt KH ${emp.displayRate.toFixed(1)}%` : `Đạt ${emp.displayRate.toFixed(1)}%`}
+                  </span>
+                  <span style={{ color: "#94a3b8" }}>
+                    {hubPeriodType === "MTD" ? `Tháng ${currentMonthNum}` : `Năm ${currentYear}`}
+                  </span>
+                </div>
               </div>
-              <div className="summary-metric-item">
-                <span className="metric-label">Thực tế Tháng {currentMonthNum}:</span>
-                <span className="metric-value font-bold">{formatVnd(buTopMetrics.month_actual)} đ</span>
-                <span className="metric-sub">/ {formatVnd(buTopMetrics.month_target)} đ</span>
-                {renderRateBadge(buTopMetrics.month_rate, buTopMetrics.month_target)}
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
+  // Helper render Widget 2: Báo động chậm tiến độ
+  const renderActionRequiredCard = () => (
+    <div
+      className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs flex flex-col justify-between"
+      style={{
+        backgroundColor: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+        height: "100%",
+      }}
+    >
+      <div
+        className="flex items-center justify-between pb-3 border-b border-slate-100"
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "16px" }}>⚠️</span>
+          <div>
+            <h4 style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#991b1b" }}>
+              BÁO ĐỘNG CHẬM TIẾN ĐỘ
+            </h4>
+            <span style={{ fontSize: "11px", color: "#64748b" }}>
+              {hubPeriodType === "MTD" ? `Cần đôn đốc Tháng ${currentMonthNum}` : `Cần đôn đốc Năm ${currentYear}`}
+            </span>
+          </div>
+        </div>
+        <span
+          style={{
+            fontSize: "10.5px",
+            fontWeight: 600,
+            color: "#b45309",
+            backgroundColor: "#fffbeb",
+            border: "1px solid #fde68a",
+            padding: "2px 7px",
+            borderRadius: "9999px",
+          }}
+        >
+          Action Required
+        </span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px", flexGrow: 1 }}>
+        {actionRequiredList.length === 0 ? (
+          <div style={{ color: "#047857", fontSize: "12px", textAlign: "center", padding: "20px 16px" }}>
+            🎉 Tất cả nhân sự có chỉ tiêu đều đang bám sát tiến độ rất tốt!
+          </div>
+        ) : (
+          actionRequiredList.map((emp) => (
+            <div
+              key={emp.id || emp.employee_code}
+              style={{
+                padding: "8px 10px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 251, 235, 0.5)",
+                border: "1px solid #fef3c7",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: "22px",
+                      height: "22px",
+                      borderRadius: "50%",
+                      backgroundColor: "#fef3c7",
+                      color: "#b45309",
+                      border: "1px solid #fde68a",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "10.5px",
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {getInitials(emp.name)}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {emp.name}
+                    </div>
+                    <div style={{ fontSize: "10px", color: "#64748b" }}>
+                      #{emp.employee_code} • {emp.regionName}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 700,
+                      color: "#b45309",
+                      backgroundColor: "#fef3c7",
+                      border: "1px solid #fde68a",
+                      padding: "1.5px 6px",
+                      borderRadius: "9999px",
+                      fontFamily: "ui-monospace, monospace",
+                    }}
+                  >
+                    {emp.displayRate.toFixed(1)}%
+                  </span>
+                </div>
               </div>
-              <div className="summary-metric-item">
-                <span className="metric-label">Lũy kế Năm {currentYear}:</span>
-                <span className="metric-value font-bold">{formatVnd(buTopMetrics.year_actual)} đ</span>
-                <span className="metric-sub">/ {formatVnd(buTopMetrics.year_target)} đ</span>
-                {renderRateBadge(buTopMetrics.year_rate, buTopMetrics.year_target)}
+
+              <div
+                style={{
+                  width: "100%",
+                  height: "4px",
+                  backgroundColor: "#fee2e2",
+                  borderRadius: "9999px",
+                  overflow: "hidden",
+                  marginTop: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.max(emp.displayRate, 3)}%`,
+                    backgroundColor: "#f59e0b",
+                    borderRadius: "9999px",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px", fontSize: "10.5px" }}>
+                <span style={{ color: "#dc2626", fontWeight: 600 }}>
+                  Cần thêm: <strong>{formatVndCompact(emp.displayGap)}</strong> để đạt KH
+                </span>
+                <span style={{ color: "#64748b", fontFamily: "ui-monospace, monospace" }}>
+                  Đã có: {formatVndCompact(emp.displayActual)}
+                </span>
               </div>
             </div>
-          )}
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  // Helper render Widget 3: Tiến độ Khối & Vùng miền
+  const renderRegionalCard = () => (
+    <div
+      className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs flex flex-col justify-between"
+      style={{
+        backgroundColor: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
+        padding: "14px 16px",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+        height: "100%",
+      }}
+    >
+      <div
+        className="flex items-center justify-between pb-3 border-b border-slate-100"
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "16px" }}>📍</span>
+          <div>
+            <h4 style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
+              TIẾN ĐỘ THEO KHỐI & VÙNG MIỀN
+            </h4>
+            <span style={{ fontSize: "11px", color: "#64748b" }}>
+              {hubPeriodType === "MTD" ? `Tỷ trọng Tháng ${currentMonthNum}` : `Tỷ trọng Năm ${currentYear}`}
+            </span>
+          </div>
+        </div>
+        <span
+          style={{
+            fontSize: "10.5px",
+            fontWeight: 600,
+            color: "#1d4ed8",
+            backgroundColor: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            padding: "2px 7px",
+            borderRadius: "9999px",
+          }}
+        >
+          {regionalSummary.length} Khối/Miền
+        </span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "11px", marginTop: "12px", flexGrow: 1 }}>
+        {regionalSummary.map((reg) => {
+          const hasTarget = reg.displayTarget > 0;
+          return (
+            <div key={reg.id || reg.name} style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11.5px" }}>
+                <span style={{ fontWeight: 600, color: "#1e293b" }}>
+                  {reg.name}
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700, color: "#0f172a" }}>
+                    {formatVndCompact(reg.displayActual)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: "#64748b",
+                      backgroundColor: "#f1f5f9",
+                      padding: "1px 5px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {reg.share}% BU
+                  </span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  width: "100%",
+                  height: "5px",
+                  backgroundColor: "#f1f5f9",
+                  borderRadius: "9999px",
+                  overflow: "hidden",
+                  marginTop: "4px",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.min(reg.share, 100)}%`,
+                    backgroundColor: "#3b82f6",
+                    borderRadius: "9999px",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px", fontSize: "10px", color: "#64748b" }}>
+                <span>
+                  {hasTarget ? `KH: ${formatVndCompact(reg.displayTarget)} (${reg.displayRate.toFixed(1)}%)` : "Chưa đặt KH"}
+                </span>
+                <span style={{ fontFamily: "ui-monospace, monospace" }}>
+                  {hasTarget ? (reg.displayActual >= reg.displayTarget ? "Đạt chỉ tiêu" : `Còn thiếu: ${formatVndCompact(reg.displayTarget - reg.displayActual)}`) : ""}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      className="bg-white border border-slate-200 shadow-sm rounded-xl mt-4 overflow-hidden transition-all"
+      style={{
+        marginTop: "16px",
+        backgroundColor: "#ffffff",
+        border: "1px solid rgba(226, 232, 240, 0.9)",
+        borderRadius: "12px",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02)",
+        overflow: "hidden",
+      }}
+    >
+      {/* ==================================================================== */}
+      {/* 1. HUB HEADER: TIÊU ĐỀ EXECUTIVE + TOGGLE KỲ BÁO CÁO (MTD / YTD) */}
+      {/* ==================================================================== */}
+      <div
+        className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap md:flex-nowrap bg-white"
+        style={{
+          padding: isMobile ? "10px 12px" : "11px 18px",
+          borderBottom: "1px solid #f1f5f9",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "10px",
+          flexWrap: isMobile ? "wrap" : "nowrap",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        {/* BÊN TRÁI: Icon Hub + Tiêu đề + BU Tag */}
+        <div
+          className="flex items-center gap-2.5 flex-nowrap min-w-0"
+          style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs"
+            style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "8px",
+              backgroundColor: "#4f46e5",
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ width: "15px", height: "15px", flexShrink: 0 }}
+            >
+              <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+          </div>
+          <div
+            className="flex items-baseline gap-2 flex-nowrap truncate"
+            style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "nowrap", minWidth: 0 }}
+          >
+            <h3
+              className="m-0 text-sm font-semibold text-slate-900 truncate"
+              style={{ margin: 0, fontSize: isMobile ? "13px" : "14px", fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}
+            >
+              {title || "Executive Sales Performance Hub"}
+            </h3>
+            <span
+              className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 tracking-wide flex-shrink-0"
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                padding: "1px 7px",
+                borderRadius: "4px",
+                backgroundColor: "#f1f5f9",
+                color: "#334155",
+                border: "1px solid #e2e8f0",
+                flexShrink: 0,
+              }}
+            >
+              {shortBuTag}
+            </span>
+            <span
+              className="text-xs text-slate-500 font-normal whitespace-nowrap hidden sm:inline"
+              style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}
+            >
+              (Chốt: <strong style={{ color: "#334155", fontWeight: 600 }}>{formatDisplayDate(effectiveDate)}</strong>)
+            </span>
+          </div>
         </div>
 
-        {/* NÚT ĐIỀU KHIỂN GÓC PHẢI */}
-        <div className="header-right d-flex align-items-center gap-2 mt-2 mt-md-0">
-          {/* NÚT THU GỌN / MỞ RỘNG TOÀN BỘ BLOCK (ACCORDION) */}
-          <button
-            type="button"
-            className={`btn-card-accordion ${isCardExpanded ? "btn-accordion-collapse" : "btn-accordion-expand"}`}
-            onClick={toggleCardExpanded}
-            title={isCardExpanded ? "Thu gọn toàn bộ khối bảng" : "Mở rộng bảng dữ liệu chi tiết"}
+        {/* BÊN PHẢI: TOGGLE KỲ (THÁNG NÀY | CẢ NĂM) + NÚT RELOAD */}
+        <div
+          className="flex items-center gap-2 flex-nowrap flex-shrink-0 ml-auto"
+          style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "nowrap", flexShrink: 0 }}
+        >
+          {/* TIỆN ÍCH 2: TOGGLE KỲ BÁO CÁO (MTD / YTD) */}
+          <div
+            className="bg-slate-100 p-0.5 rounded-lg inline-flex items-center gap-0.5 border border-slate-200/80"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              backgroundColor: "#f1f5f9",
+              padding: "2px",
+              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+              gap: "2px",
+            }}
           >
-            {isCardExpanded ? (
-              <>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
-                <span>Thu gọn</span>
-              </>
-            ) : (
-              <>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-                <span>Mở rộng</span>
-              </>
-            )}
-          </button>
+            <button
+              type="button"
+              className={`px-2.5 py-1 text-xs rounded-md transition-all font-medium ${
+                hubPeriodType === "MTD"
+                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              style={{
+                padding: isMobile ? "3px 7px" : "3px 10px",
+                fontSize: "11px",
+                borderRadius: "6px",
+                fontWeight: hubPeriodType === "MTD" ? 600 : 500,
+                border: "none",
+                cursor: "pointer",
+                backgroundColor: hubPeriodType === "MTD" ? "#ffffff" : "transparent",
+                color: hubPeriodType === "MTD" ? "#0f172a" : "#64748b",
+                boxShadow: hubPeriodType === "MTD" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+              }}
+              onClick={() => setHubPeriodType("MTD")}
+              title={`Theo dõi tiến độ Tháng ${currentMonthNum}`}
+            >
+              Tháng này
+            </button>
+            <button
+              type="button"
+              className={`px-2.5 py-1 text-xs rounded-md transition-all font-medium ${
+                hubPeriodType === "YTD"
+                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              style={{
+                padding: isMobile ? "3px 7px" : "3px 10px",
+                fontSize: "11px",
+                borderRadius: "6px",
+                fontWeight: hubPeriodType === "YTD" ? 600 : 500,
+                border: "none",
+                cursor: "pointer",
+                backgroundColor: hubPeriodType === "YTD" ? "#ffffff" : "transparent",
+                color: hubPeriodType === "YTD" ? "#0f172a" : "#64748b",
+                boxShadow: hubPeriodType === "YTD" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+              }}
+              onClick={() => setHubPeriodType("YTD")}
+              title={`Theo dõi tiến độ cả Năm ${currentYear}`}
+            >
+              Cả năm
+            </button>
+          </div>
 
-          {/* NÚT RELOAD DỮ LIỆU */}
           <button
             type="button"
-            className="btn-reload-icon"
+            className="w-7 h-7 inline-flex items-center justify-center text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-800 rounded-md shadow-2xs transition-colors"
+            style={{
+              width: "28px",
+              height: "28px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#64748b",
+              backgroundColor: "#ffffff",
+              border: "1px solid #cbd5e1",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
             onClick={loadData}
-            title="Làm mới dữ liệu từ server"
+            title="Làm mới dữ liệu"
             disabled={loading}
           >
             <svg
-              width="14"
-              height="14"
+              width="13"
+              height="13"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className={loading ? "spin-icon" : ""}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ width: "13px", height: "13px", flexShrink: 0 }}
             >
-              <path d="M23 4v6h-6M1 20v-6h6" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
       </div>
 
-      {/* 2. BODY KHỐI BẢNG DỮ LIỆU TINH GỌN 4 CỘT (CHỈ HIỂN THỊ KHI CARD EXPANDED) */}
-      {isCardExpanded && (
-        <div className="sales-card-body mt-3">
-          {/* THANH BỘ LỌC NHANH (QUICK FILTER PILLS) & ACTIONS */}
-          <div className="quick-filter-bar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-            <div className="filter-pills d-flex align-items-center gap-2 flex-wrap">
-              <span className="filter-label text-muted font-medium">Bộ lọc:</span>
+      {/* ==================================================================== */}
+      {/* 2. EXECUTIVE BENTO GRID (RESPONSIVE: MOBILE TABS vs DESKTOP 3-COL) */}
+      {/* ==================================================================== */}
+      <div
+        className="p-3 md:p-4 bg-slate-50/40"
+        style={{
+          padding: isMobile ? "12px" : "16px",
+          backgroundColor: "#fcfdfe",
+        }}
+      >
+        {/* RESPONSIVE MOBILE TABS: HIỂN THỊ TRÊN MÀN HÌNH NHỎ (< 768px) */}
+        {isMobile ? (
+          <div>
+            {/* Cụm tab di động chuyển đổi 3 card */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: "#f1f5f9",
+                padding: "3px",
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+                gap: "3px",
+                marginBottom: "12px",
+              }}
+            >
               <button
                 type="button"
-                className={`pill-btn ${activeFilter === "all" ? "active" : ""}`}
+                style={{
+                  flex: 1,
+                  padding: "6px 4px",
+                  fontSize: "11px",
+                  fontWeight: activeMobileWidgetTab === "top" ? 700 : 500,
+                  borderRadius: "6px",
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeMobileWidgetTab === "top" ? "#ffffff" : "transparent",
+                  color: activeMobileWidgetTab === "top" ? "#0f172a" : "#64748b",
+                  boxShadow: activeMobileWidgetTab === "top" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                }}
+                onClick={() => setActiveMobileWidgetTab("top")}
+              >
+                🏆 Vinh danh
+              </button>
+              <button
+                type="button"
+                style={{
+                  flex: 1,
+                  padding: "6px 4px",
+                  fontSize: "11px",
+                  fontWeight: activeMobileWidgetTab === "warning" ? 700 : 500,
+                  borderRadius: "6px",
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeMobileWidgetTab === "warning" ? "#ffffff" : "transparent",
+                  color: activeMobileWidgetTab === "warning" ? "#991b1b" : "#64748b",
+                  boxShadow: activeMobileWidgetTab === "warning" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                }}
+                onClick={() => setActiveMobileWidgetTab("warning")}
+              >
+                ⚠️ Cảnh báo ({actionRequiredList.length})
+              </button>
+              <button
+                type="button"
+                style={{
+                  flex: 1,
+                  padding: "6px 4px",
+                  fontSize: "11px",
+                  fontWeight: activeMobileWidgetTab === "regions" ? 700 : 500,
+                  borderRadius: "6px",
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeMobileWidgetTab === "regions" ? "#ffffff" : "transparent",
+                  color: activeMobileWidgetTab === "regions" ? "#1d4ed8" : "#64748b",
+                  boxShadow: activeMobileWidgetTab === "regions" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                }}
+                onClick={() => setActiveMobileWidgetTab("regions")}
+              >
+                📍 Vùng miền
+              </button>
+            </div>
+
+            {/* Render Card tương ứng trên Mobile */}
+            <div>
+              {activeMobileWidgetTab === "top" && renderTopVinhDanhCard()}
+              {activeMobileWidgetTab === "warning" && renderActionRequiredCard()}
+              {activeMobileWidgetTab === "regions" && renderRegionalCard()}
+            </div>
+          </div>
+        ) : (
+          /* DESKTOP (>= 768px): RENDER ĐẦY ĐỦ 3 CỘT GRID */
+          <div
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: "16px",
+            }}
+          >
+            {renderTopVinhDanhCard()}
+            {renderActionRequiredCard()}
+            {renderRegionalCard()}
+          </div>
+        )}
+      </div>
+
+      {/* ==================================================================== */}
+      {/* 3. THANH PROGRESSIVE DISCLOSURE BẬT/TẮT BẢNG CHI TIẾT */}
+      {/* ==================================================================== */}
+      <div
+        className="px-4 py-3 bg-white border-t border-slate-100 flex items-center justify-center"
+        style={{
+          padding: "12px 16px",
+          backgroundColor: "#ffffff",
+          borderTop: "1px solid #f1f5f9",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-full shadow-2xs transition-all"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 18px",
+            backgroundColor: isDetailTableOpen ? "#f1f5f9" : "#ffffff",
+            border: "1px solid #cbd5e1",
+            borderRadius: "9999px",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "#334155",
+            cursor: "pointer",
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+            transition: "all 0.15s ease",
+          }}
+          onClick={() => setIsDetailTableOpen((prev) => !prev)}
+        >
+          {isDetailTableOpen ? (
+            <>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: "12px", height: "12px" }}>
+                <path d="M5 15l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Thu gọn danh sách chi tiết</span>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: "13px" }}>👁️</span>
+              <span>Xem danh sách bảng số liệu chi tiết ({allEmployees.length} nhân sự)</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: "12px", height: "12px" }}>
+                <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* ==================================================================== */}
+      {/* 4. PHẦN CHI TIẾT (PROGRESSIVE DISCLOSURE): QUICK SEARCH + TABLE/CARDS */}
+      {/* ==================================================================== */}
+      {isDetailTableOpen && (
+        <div style={{ borderTop: "1px solid #e2e8f0" }}>
+          {/* TOOLBAR PHỤ TRỢ: QUICK SEARCH + TABS LỌC + NÚT BUNG */}
+          <div
+            className="px-3 md:px-4 py-2 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap"
+            style={{
+              padding: isMobile ? "8px 12px" : "8px 16px",
+              backgroundColor: "rgba(248, 250, 252, 0.9)",
+              borderBottom: "1px solid #e2e8f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            {/* TIỆN ÍCH 1: Ô TÌM KIẾM NHANH (QUICK SEARCH) */}
+            <div
+              style={{
+                position: "relative",
+                display: "inline-flex",
+                alignItems: "center",
+                width: isMobile ? "100%" : "200px",
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                style={{
+                  position: "absolute",
+                  left: "9px",
+                  width: "13px",
+                  height: "13px",
+                  color: "#94a3b8",
+                  pointerEvents: "none",
+                }}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm tên sale, mã NV..."
+                style={{
+                  width: "100%",
+                  padding: "4.5px 24px 4.5px 28px",
+                  fontSize: "11.5px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                  backgroundColor: "#ffffff",
+                  color: "#0f172a",
+                  outline: "none",
+                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  style={{
+                    position: "absolute",
+                    right: "6px",
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    color: "#94a3b8",
+                    padding: "2px",
+                  }}
+                  title="Xóa tìm kiếm"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Segmented control lọc */}
+            <div
+              className="bg-slate-200/70 p-0.5 rounded-lg inline-flex items-center gap-0.5 border border-slate-300/60"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                backgroundColor: "#e2e8f0",
+                padding: "2px",
+                borderRadius: "8px",
+                border: "1px solid #cbd5e1",
+                gap: "2px",
+                flexWrap: isMobile ? "wrap" : "nowrap",
+              }}
+            >
+              <button
+                type="button"
+                style={{
+                  padding: "3px 8px",
+                  fontSize: "11px",
+                  borderRadius: "6px",
+                  fontWeight: activeFilter === "all" ? 600 : 500,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeFilter === "all" ? "#ffffff" : "transparent",
+                  color: activeFilter === "all" ? "#0f172a" : "#64748b",
+                  boxShadow: activeFilter === "all" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+                }}
                 onClick={() => setActiveFilter("all")}
               >
                 Tất cả ({filterCounts.all})
               </button>
               <button
                 type="button"
-                className={`pill-btn ${activeFilter === "north" ? "active" : ""}`}
+                style={{
+                  padding: "3px 8px",
+                  fontSize: "11px",
+                  borderRadius: "6px",
+                  fontWeight: activeFilter === "north" ? 600 : 500,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeFilter === "north" ? "#ffffff" : "transparent",
+                  color: activeFilter === "north" ? "#0f172a" : "#64748b",
+                  boxShadow: activeFilter === "north" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+                }}
                 onClick={() => setActiveFilter("north")}
               >
                 Miền Bắc ({filterCounts.north})
               </button>
               <button
                 type="button"
-                className={`pill-btn ${activeFilter === "south" ? "active" : ""}`}
+                style={{
+                  padding: "3px 8px",
+                  fontSize: "11px",
+                  borderRadius: "6px",
+                  fontWeight: activeFilter === "south" ? 600 : 500,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeFilter === "south" ? "#ffffff" : "transparent",
+                  color: activeFilter === "south" ? "#0f172a" : "#64748b",
+                  boxShadow: activeFilter === "south" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+                }}
                 onClick={() => setActiveFilter("south")}
               >
                 Miền Nam ({filterCounts.south})
               </button>
               <button
                 type="button"
-                className={`pill-btn warning-pill ${activeFilter === "warning" ? "active" : ""}`}
+                style={{
+                  padding: "3px 8px",
+                  fontSize: "11px",
+                  borderRadius: "6px",
+                  fontWeight: activeFilter === "warning" ? 600 : 500,
+                  border: "none",
+                  cursor: "pointer",
+                  backgroundColor: activeFilter === "warning" ? "#fef3c7" : "transparent",
+                  color: "#b45309",
+                  boxShadow: activeFilter === "warning" ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
+                }}
                 onClick={() => setActiveFilter("warning")}
-                title="Lọc các nhân sự chưa đạt tiến độ tháng (< 70%)"
               >
-                <span className="warning-dot" />
-                Cần bám sát (&lt; 70%) ({filterCounts.warning})
+                Cần bám sát ({filterCounts.warning})
               </button>
             </div>
 
-            <div className="table-actions-sub d-flex align-items-center gap-2">
+            {/* Nút Bung tất cả / Thu gọn (chỉ hiển thị trên Desktop khi có cây phân cấp) */}
+            {!isMobile && (
               <button
                 type="button"
-                className="btn-toggle-subrows"
+                style={{
+                  height: "26px",
+                  padding: "0 9px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  color: "#475569",
+                  backgroundColor: "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
                 onClick={isAllRegionsExpanded ? handleCollapseAllRegions : handleExpandAllRegions}
               >
-                {isAllRegionsExpanded ? (
-                  <>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
-                    </svg>
-                    <span>Thu gọn Sales</span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                    </svg>
-                    <span>Bung tất cả Sales</span>
-                  </>
-                )}
+                {isAllRegionsExpanded ? "Thu gọn toàn bộ" : "Bung tất cả nhân sự"}
               </button>
-            </div>
+            )}
           </div>
 
-          {/* BẢNG 4 CỘT TINH GỌN (VISUAL PROGRESS TABLE) */}
-          <div className="sales-table-wrap table-responsive">
-            <table className="sales-data-table modern-4col-table">
-              <thead>
-                <tr className="header-main-row">
-                  <th className="sticky-col col-header-emp">
-                    NHÂN VIÊN / NHÓM
-                  </th>
-                  <th className="col-header-progress">
-                    TIẾN ĐỘ THÁNG NÀY (THÁNG {currentMonthNum})
-                  </th>
-                  <th className="col-header-progress">
-                    TIẾN ĐỘ CẢ NĂM {currentYear}
-                  </th>
-                  <th className="col-header-day text-end">
-                    DOANH SỐ TRONG NGÀY ({dayColLabel})
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {tree.map((buNode) => {
-                  const buMetrics = buNode.metrics;
-                  const regions = buNode.children || [];
-
-                  // Lọc regions theo activeFilter
-                  const filteredRegions = regions.filter((regNode) => {
-                    const isNorth = (regNode.region_name || regNode.name || "").includes("Bắc");
-                    const isSouth = (regNode.region_name || regNode.name || "").includes("Nam");
-                    if (activeFilter === "north") return isNorth;
-                    if (activeFilter === "south") return isSouth;
-                    return true;
-                  });
+          {/* ==================================================================== */}
+          {/* TRƯỜNG HỢP A: MOBILE CARDS (< 768px) ĐỂ TRÁNH TRÀN CUỘN NGANG HOẶC VỠ KHUNG */}
+          {/* ==================================================================== */}
+          {isMobile ? (
+            <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              {filteredEmployeesForDetail.length === 0 ? (
+                <div style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "12px" }}>
+                  Không tìm thấy nhân viên sale phù hợp
+                </div>
+              ) : (
+                filteredEmployeesForDetail.map((emp) => {
+                  const m = emp.metrics;
+                  const isLeader = emp.is_leader;
+                  const yearActual = Number(m?.year_actual || 0);
+                  const yearTarget = Number(m?.year_target || 0);
+                  const yearRate = Number(m?.year_rate || 0);
+                  const monthActual = Number(m?.month_actual || 0);
 
                   return (
-                    <React.Fragment key={buNode.id || buNode.code}>
-                      {/* DÒNG TỔNG BU */}
-                      <tr className="row-bu-total">
-                        <td className="sticky-col col-bu-name">
-                          <div className="bu-cell-wrap d-flex align-items-center gap-2">
-                            <span className="bu-badge-label">TỔNG BU</span>
-                            <span className="bu-title-text">{buNode.name}</span>
+                    <div
+                      key={emp.id || emp.employee_code}
+                      className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs"
+                      style={{
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        padding: "10px 12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.02)",
+                      }}
+                    >
+                      {/* Dòng 1: [Avatar + Tên Sale + Mã NV] bên trái, [Doanh số thực tế] bên phải */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: "24px",
+                              height: "24px",
+                              borderRadius: "50%",
+                              backgroundColor: isLeader ? "#eff6ff" : "#f1f5f9",
+                              color: isLeader ? "#1d4ed8" : "#475569",
+                              border: isLeader ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "10.5px",
+                              fontWeight: 700,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {getInitials(emp.name)}
                           </div>
-                        </td>
-
-                        {/* TIẾN ĐỘ THÁNG NÀY */}
-                        <td className="col-cell-progress">
-                          {renderProgressCell(
-                            buMetrics.month_actual,
-                            buMetrics.month_target,
-                            buMetrics.month_rate,
-                            "Mục tiêu tháng"
-                          )}
-                        </td>
-
-                        {/* TIẾN ĐỘ CẢ NĂM */}
-                        <td className="col-cell-progress">
-                          {renderProgressCell(
-                            buMetrics.year_actual,
-                            buMetrics.year_target,
-                            buMetrics.year_rate,
-                            "Kế hoạch năm"
-                          )}
-                        </td>
-
-                        {/* DOANH SỐ TRONG NGÀY */}
-                        <td className="col-cell-day text-end">
-                          <div className="day-revenue-wrap">
-                            <span className="day-revenue-amount font-numeric">
-                              {formatVnd(buMetrics.day_revenue)} đ
-                            </span>
-                            <span className="day-revenue-tag">Ngày chốt</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#0f172a" }}>
+                                {emp.name}
+                              </span>
+                              {isLeader && (
+                                <span style={{ fontSize: "9px", color: "#1d4ed8", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "0.5px 4px", borderRadius: "3px" }}>
+                                  Trưởng nhóm
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: "10px", color: "#64748b" }}>
+                              #{emp.employee_code} • {emp.regionName}
+                            </div>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
 
-                      {/* CÁC MIỀN / KHU VỰC TRONG BU */}
-                      {filteredRegions.map((regNode) => {
-                        const regMetrics = regNode.metrics;
-                        const allEmployees = regNode.children || [];
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          <div style={{ fontSize: "12.5px", fontWeight: 700, fontFamily: "ui-monospace, monospace", color: "#0f172a" }}>
+                            {formatVnd(yearActual)} đ
+                          </div>
+                          <div style={{ fontSize: "10px", color: "#64748b", fontFamily: "ui-monospace, monospace" }}>
+                            Tháng: {formatVndCompact(monthActual)}
+                          </div>
+                        </div>
+                      </div>
 
-                        // Lọc nhân viên theo filter warning (< 70%) nếu được chọn
-                        const displayedEmployees = activeFilter === "warning"
-                          ? allEmployees.filter(
-                              (emp) => emp.metrics?.month_target > 0 && Number(emp.metrics?.month_rate || 0) < 70
-                            )
-                          : allEmployees;
+                      {/* Dòng 2: Thanh progress bar mỏng (h-1.5) + text [Target & % đạt] */}
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "4px",
+                          backgroundColor: "#f1f5f9",
+                          borderRadius: "9999px",
+                          overflow: "hidden",
+                          marginTop: "2px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${getProgressWidth(yearRate, yearTarget)}%`,
+                            backgroundColor: getProgressColor(yearRate, yearTarget),
+                            borderRadius: "9999px",
+                          }}
+                        />
+                      </div>
 
-                        // Nếu filter là warning và region không có sales nào < 70% thì bỏ qua
-                        if (activeFilter === "warning" && displayedEmployees.length === 0) {
-                          return null;
-                        }
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "10.5px" }}>
+                        <span style={{ color: "#64748b", fontFamily: "ui-monospace, monospace" }}>
+                          {formatPlanCompact(yearActual, yearTarget)}
+                        </span>
+                        {renderRatePill(yearRate, yearTarget)}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ) : (
+            /* ==================================================================== */
+            /* TRƯỜNG HỢP B: DESKTOP TABLE (>= 768px) 3 CỘT ĐẦY ĐỦ */
+            /* ==================================================================== */
+            <div style={{ overflowX: "auto", width: "100%" }}>
+              <table
+                className="w-full text-left border-collapse"
+                style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}
+              >
+                <thead>
+                  <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                    <th
+                      style={{
+                        width: "40%",
+                        padding: "8px 16px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "#475569",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      NHÂN VIÊN / BỘ PHẬN
+                    </th>
+                    <th
+                      style={{
+                        width: "25%",
+                        padding: "8px 16px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "#475569",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      TIẾN ĐỘ THÁNG {currentMonthNum}
+                    </th>
+                    <th
+                      style={{
+                        width: "35%",
+                        padding: "8px 16px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "#475569",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      TIẾN ĐỘ CẢ NĂM {currentYear}
+                    </th>
+                  </tr>
+                </thead>
 
-                        const isExpanded = expandedRegionIds.has(regNode.id);
+                <tbody className="divide-y divide-slate-100">
+                  {tree.map((buNode) => {
+                    const buMetrics = buNode.metrics;
+                    const regions = buNode.children || [];
 
-                        return (
-                          <React.Fragment key={regNode.id}>
-                            {/* DÒNG MIỀN / KHU VỰC (ACCORDION ROW) */}
-                            <tr
-                              className={`row-region ${isExpanded ? "region-expanded" : ""}`}
-                              onClick={() => toggleRegion(regNode.id)}
-                            >
-                              <td className="sticky-col col-region-name">
-                                <div className="region-cell-wrap d-flex align-items-center gap-2">
-                                  <span className={`region-arrow-icon ${isExpanded ? "arrow-down" : "arrow-right"}`}>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                      <polyline points="9 18 15 12 9 6" />
+                    const filteredRegions = regions.filter((regNode) => {
+                      const isNorth = (regNode.region_name || regNode.name || "").includes("Bắc");
+                      const isSouth = (regNode.region_name || regNode.name || "").includes("Nam");
+                      if (activeFilter === "north") return isNorth;
+                      if (activeFilter === "south") return isSouth;
+                      return true;
+                    });
+
+                    return (
+                      <React.Fragment key={buNode.id || buNode.code}>
+                        {/* Hàng Tổng BU */}
+                        <tr
+                          style={{
+                            backgroundColor: "#f8fafc",
+                            borderBottom: "1px solid #cbd5e1",
+                            borderTop: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <td style={{ padding: "9px 16px", verticalAlign: "middle" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <div
+                                style={{
+                                  width: "24px",
+                                  height: "24px",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#4f46e5",
+                                  color: "#ffffff",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ width: 13, height: 13 }}>
+                                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                              </div>
+                              <div>
+                                <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#0f172a" }}>
+                                  {buNode.name}
+                                </span>
+                                <span style={{ fontSize: "10.5px", color: "#64748b", marginLeft: "6px" }}>
+                                  ({regions.length} khu vực)
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td style={{ padding: "9px 16px", verticalAlign: "middle" }}>
+                            <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                                <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700, color: "#0f172a", fontSize: "12.5px" }}>
+                                  {formatVnd(buMetrics.month_actual)} đ
+                                </span>
+                                {renderRatePill(buMetrics.month_rate, buMetrics.month_target)}
+                              </div>
+                              <div style={{ width: "100%", height: "4px", backgroundColor: "#e2e8f0", borderRadius: "9999px", overflow: "hidden", marginTop: "4px" }}>
+                                <div
+                                  style={{
+                                    width: `${getProgressWidth(buMetrics.month_rate, buMetrics.month_target)}%`,
+                                    height: "100%",
+                                    backgroundColor: getProgressColor(buMetrics.month_rate, buMetrics.month_target),
+                                    borderRadius: "9999px",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+
+                          <td style={{ padding: "9px 16px", verticalAlign: "middle" }}>
+                            <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                                  <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700, color: "#0f172a", fontSize: "12.5px" }}>
+                                    {formatVnd(buMetrics.year_actual)} đ
+                                  </span>
+                                  {Number(buMetrics.year_target) > 0 && (
+                                    <span style={{ fontSize: "11px", color: "#64748b", fontFamily: "ui-monospace, monospace" }}>
+                                      / {formatVndCompact(buMetrics.year_target)}
+                                    </span>
+                                  )}
+                                </div>
+                                {renderRatePill(buMetrics.year_rate, buMetrics.year_target)}
+                              </div>
+                              <div style={{ width: "100%", height: "4px", backgroundColor: "#e2e8f0", borderRadius: "9999px", overflow: "hidden", marginTop: "4px" }}>
+                                <div
+                                  style={{
+                                    width: `${getProgressWidth(buMetrics.year_rate, buMetrics.year_target)}%`,
+                                    height: "100%",
+                                    backgroundColor: getProgressColor(buMetrics.year_rate, buMetrics.year_target),
+                                    borderRadius: "9999px",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Các hàng Miền / Khu vực */}
+                        {filteredRegions.map((regNode) => {
+                          const regMetrics = regNode.metrics;
+                          const allEmps = regNode.children || [];
+                          const isExpanded = expandedRegionIds.has(regNode.id);
+
+                          const q = searchQuery.trim().toLowerCase();
+                          const displayedEmployees = allEmps.filter((emp) => {
+                            if (activeFilter === "warning") {
+                              const m = emp.metrics;
+                              if (!(m?.month_target > 0 && Number(m?.month_rate || 0) < 70)) return false;
+                            }
+                            if (q) {
+                              const matchName = String(emp.name || "").toLowerCase().includes(q);
+                              const matchCode = String(emp.employee_code ?? "").toLowerCase().includes(q);
+                              return matchName || matchCode;
+                            }
+                            return true;
+                          });
+
+                          if (displayedEmployees.length === 0 && (activeFilter === "warning" || q)) return null;
+
+                          return (
+                            <React.Fragment key={regNode.id}>
+                              <tr
+                                style={{
+                                  backgroundColor: isExpanded ? "#f8fafc" : "#ffffff",
+                                  borderBottom: "1px solid #f1f5f9",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => toggleRegion(regNode.id)}
+                              >
+                                <td style={{ padding: "8px 16px 8px 24px", verticalAlign: "middle" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <svg
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      style={{
+                                        width: "12px",
+                                        height: "12px",
+                                        transform: isExpanded ? "rotate(90deg)" : "none",
+                                        color: isExpanded ? "#4f46e5" : "#94a3b8",
+                                        transition: "transform 0.2s ease",
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <path d="M9 5l7 7-7 7" />
                                     </svg>
-                                  </span>
-                                  <span className="region-text font-semibold">{regNode.name}</span>
-                                  <span className="sales-count-pill">
-                                    {displayedEmployees.length} nhân sự
-                                  </span>
-                                </div>
-                              </td>
+                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#1e293b" }}>
+                                      {regNode.name}
+                                    </span>
+                                    <span
+                                      style={{
+                                        fontSize: "10px",
+                                        fontWeight: 500,
+                                        color: "#64748b",
+                                        backgroundColor: "#f1f5f9",
+                                        padding: "1px 6px",
+                                        borderRadius: "9999px",
+                                      }}
+                                    >
+                                      {displayedEmployees.length} nhân sự
+                                    </span>
+                                  </div>
+                                </td>
 
-                              {/* TIẾN ĐỘ THÁNG NÀY */}
-                              <td className="col-cell-progress">
-                                {renderProgressCell(
-                                  regMetrics.month_actual,
-                                  regMetrics.month_target,
-                                  regMetrics.month_rate,
-                                  "Mục tiêu tháng"
-                                )}
-                              </td>
+                                <td style={{ padding: "8px 16px", verticalAlign: "middle" }}>
+                                  <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                                      <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 600, color: "#1e293b", fontSize: "12px" }}>
+                                        {formatVnd(regMetrics.month_actual)} đ
+                                      </span>
+                                      {renderRatePill(regMetrics.month_rate, regMetrics.month_target)}
+                                    </div>
+                                  </div>
+                                </td>
 
-                              {/* TIẾN ĐỘ CẢ NĂM */}
-                              <td className="col-cell-progress">
-                                {renderProgressCell(
-                                  regMetrics.year_actual,
-                                  regMetrics.year_target,
-                                  regMetrics.year_rate,
-                                  "Kế hoạch năm"
-                                )}
-                              </td>
+                                <td style={{ padding: "8px 16px", verticalAlign: "middle" }}>
+                                  <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                                      <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 600, color: "#1e293b", fontSize: "12px" }}>
+                                        {formatVnd(regMetrics.year_actual)} đ
+                                      </span>
+                                      {renderRatePill(regMetrics.year_rate, regMetrics.year_target)}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
 
-                              {/* DOANH SỐ TRONG NGÀY */}
-                              <td className="col-cell-day text-end">
-                                <div className="day-revenue-wrap">
-                                  <span className="day-revenue-amount font-numeric">
-                                    {formatVnd(regMetrics.day_revenue)} đ
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
-
-                            {/* CÁC DÒNG NHÂN VIÊN SALES CON */}
-                            {isExpanded &&
-                              displayedEmployees.map((empNode) => {
-                                const empMetrics = empNode.metrics;
-                                const isLeader = empNode.is_leader;
-
-                                return (
-                                  <tr key={empNode.id || empNode.employee_code} className="row-employee">
-                                    <td className="sticky-col col-employee-name">
-                                      <div className="employee-cell-wrap d-flex align-items-start gap-2">
-                                        <span className={`role-avatar-icon ${isLeader ? "is-leader" : "is-sales"}`}>
-                                          {isLeader ? "👔" : "👤"}
-                                        </span>
-                                        <div className="employee-info d-flex flex-column">
-                                          <div className="d-flex align-items-center gap-1.5">
-                                            <span className="employee-name-text font-bold">
-                                              {empNode.name}
-                                            </span>
-                                            {isLeader && (
-                                              <span className="leader-badge-pill">Trưởng nhóm</span>
-                                            )}
+                              {/* Các dòng Sale cá nhân khi mở rộng */}
+                              {isExpanded &&
+                                displayedEmployees.map((emp) => {
+                                  const empMetrics = emp.metrics;
+                                  const isLeader = emp.is_leader;
+                                  return (
+                                    <tr
+                                      key={emp.id || emp.employee_code}
+                                      style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #f8fafc" }}
+                                    >
+                                      <td style={{ padding: "6px 16px 6px 44px", verticalAlign: "middle" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                                          <div
+                                            style={{
+                                              width: "18px",
+                                              height: "18px",
+                                              borderRadius: "50%",
+                                              backgroundColor: isLeader ? "#eff6ff" : "#f1f5f9",
+                                              color: isLeader ? "#1d4ed8" : "#475569",
+                                              border: isLeader ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                              justifyContent: "center",
+                                              fontSize: "9.5px",
+                                              fontWeight: 700,
+                                              flexShrink: 0,
+                                            }}
+                                          >
+                                            {getInitials(emp.name)}
                                           </div>
-                                          <span className="employee-code-tag">
-                                            Mã NV: {empNode.employee_code}
+                                          <span style={{ fontSize: "11.5px", fontWeight: 500, color: "#0f172a" }}>
+                                            {emp.name}
+                                          </span>
+                                          {isLeader && (
+                                            <span style={{ fontSize: "9px", color: "#1d4ed8", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "0.5px 4px", borderRadius: "3px" }}>
+                                              Trưởng nhóm
+                                            </span>
+                                          )}
+                                          <span style={{ fontSize: "10px", color: "#94a3b8", fontFamily: "ui-monospace, monospace" }}>
+                                            #{emp.employee_code}
                                           </span>
                                         </div>
-                                      </div>
-                                    </td>
+                                      </td>
 
-                                    {/* TIẾN ĐỘ THÁNG NÀY */}
-                                    <td className="col-cell-progress">
-                                      {renderProgressCell(
-                                        empMetrics.month_actual,
-                                        empMetrics.month_target,
-                                        empMetrics.month_rate,
-                                        "Mục tiêu"
-                                      )}
-                                    </td>
+                                      <td style={{ padding: "6px 16px", verticalAlign: "middle" }}>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: "11.5px", color: "#1e293b" }}>
+                                            {formatVnd(empMetrics.month_actual)} đ
+                                          </span>
+                                          {renderRatePill(empMetrics.month_rate, empMetrics.month_target)}
+                                        </div>
+                                      </td>
 
-                                    {/* TIẾN ĐỘ CẢ NĂM */}
-                                    <td className="col-cell-progress">
-                                      {renderProgressCell(
-                                        empMetrics.year_actual,
-                                        empMetrics.year_target,
-                                        empMetrics.year_rate,
-                                        "Kế hoạch"
-                                      )}
-                                    </td>
-
-                                    {/* DOANH SỐ TRONG NGÀY */}
-                                    <td className="col-cell-day text-end">
-                                      <div className="day-revenue-wrap">
-                                        <span className="day-revenue-amount font-numeric emp-day">
-                                          {formatVnd(empMetrics.day_revenue)} đ
-                                        </span>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                          </React.Fragment>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* 3. FOOTER CHÚ GIẢI THỊ GIÁC */}
-          <div className="sales-perf-footer d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2">
-            <div className="legend-items d-flex align-items-center gap-3 flex-wrap">
-              <span className="legend-title font-semibold text-muted">Quy ước màu sắc:</span>
-              <span className="d-inline-flex align-items-center gap-1.5">
-                <span className="color-legend-box bg-emerald" />
-                <span className="sales-rate-badge badge-good">≥ 100%</span>
-                <span className="legend-text">Đạt / Vượt kế hoạch</span>
-              </span>
-              <span className="d-inline-flex align-items-center gap-1.5">
-                <span className="color-legend-box bg-amber" />
-                <span className="sales-rate-badge badge-warn">70% – 99.9%</span>
-                <span className="legend-text">Cần bám sát</span>
-              </span>
-              <span className="d-inline-flex align-items-center gap-1.5">
-                <span className="color-legend-box bg-rose" />
-                <span className="sales-rate-badge badge-danger">&lt; 70%</span>
-                <span className="legend-text">Chậm tiến độ</span>
-              </span>
+                                      <td style={{ padding: "6px 16px", verticalAlign: "middle" }}>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: "11.5px", color: "#1e293b" }}>
+                                            {formatVnd(empMetrics.year_actual)} đ
+                                          </span>
+                                          {renderRatePill(empMetrics.year_rate, empMetrics.year_target)}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                            </React.Fragment>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-
-            <div className="table-guide-hint text-muted mt-2 mt-sm-0">
-              <span>* Nhấp vào hàng <strong>Miền / Khu vực</strong> hoặc nút <strong>Bung tất cả Sales</strong> để xem chi tiết</span>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>

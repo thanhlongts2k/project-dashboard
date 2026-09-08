@@ -102,6 +102,7 @@ export default function DebtAgingReportPage() {
         const resList = val.bus || val.results || val.data || (Array.isArray(val) ? val : []);
         setAllBUsData({
           global_summary: val.global_summary || val.summary || {},
+          data_as_of: val.data_as_of || null,
           results: resList.map((b) => ({
             id: b.id, code: normalizeBuCode(b.code || b.bu_code || b.id), name: b.name || b.bu_name || b.code,
             manager_name: b.manager_name || b.bu_head || b.head_name || "Chưa gán",
@@ -171,9 +172,13 @@ export default function DebtAgingReportPage() {
     finally { setExportingPdf(false); }
   };
 
+  const dateLabel = allBUsData.data_as_of
+    ? `Dữ liệu chốt ngày: ${allBUsData.data_as_of}`
+    : `Ngày báo cáo: ${formatDateDisplay(reportDate)}`;
+
   const pageSubtitle = selectedBu === "ALL"
-    ? `Ngày báo cáo: ${formatDateDisplay(reportDate)} (Kỳ ${period}) | Toàn công ty (Tất cả BU)`
-    : `Ngày báo cáo: ${formatDateDisplay(reportDate)} (Kỳ ${period}) | ${currentBu?.name || agingData.buInfo?.name || selectedBu} | Trưởng BU: ${currentBu?.manager_name || "Chưa gán"}`;
+    ? `${dateLabel} (Kỳ ${period}) | Toàn công ty (Tất cả BU)`
+    : `${dateLabel} (Kỳ ${period}) | ${currentBu?.name || agingData.buInfo?.name || selectedBu} | Trưởng BU: ${currentBu?.manager_name || "Chưa gán"}`;
 
   return (
     <div className="dash" ref={dashRef}>
