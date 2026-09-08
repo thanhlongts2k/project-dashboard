@@ -17,10 +17,10 @@ export function getBuCodeFromKey(key = "") {
     buibizvalue: "BU_IBIZ VALUE",
     eco: "BU_ECO",
     bueco: "BU_ECO",
-    agritech: "BU_ECO",
-    buagritech: "BU_ECO",
-    sab: "BU_ECO",
-    busab: "BU_ECO",
+    agritech: "BU_AGRITECH",
+    buagritech: "BU_AGRITECH",
+    sab: "BU_SAB",
+    busab: "BU_SAB",
     manufacturing: "BU_MANUFACTURING",
     bumanufacturing: "BU_MANUFACTURING",
     dtct: "BU_DTCT",
@@ -240,6 +240,7 @@ export default function SalesPerformanceTable({
 
   // 6. Trạng thái mở rộng các hàng con Miền / Khu vực trong bảng chi tiết
   const [expandedRegionIds, setExpandedRegionIds] = useState(new Set());
+  const [mobileCrossSellingOpen, setMobileCrossSellingOpen] = useState(false);
 
   // 7. Quick Filter Tabs trong bảng chi tiết: 'all' | 'north' | 'south' | 'warning'
   const [activeFilter, setActiveFilter] = useState("all");
@@ -286,13 +287,37 @@ export default function SalesPerformanceTable({
     loadData();
   }, [loadData]);
 
-  // Danh sách phẳng toàn bộ nhân viên Sale từ cây dữ liệu (Deduplicated theo mã nhân viên)
+  // Danh sách phẳng toàn bộ nhân viên Sale chính thức từ cây dữ liệu (Deduplicated theo mã nhân viên)
   const allEmployees = useMemo(() => {
     if (!data?.tree) return [];
     const map = new Map();
     data.tree.forEach((bu) => {
+      // Defense-in-depth: Nếu đang xem BU cụ thể, chỉ xử lý đúng BU node đó hoặc BU cha tương ứng
+      const buCodeNorm = String(bu.code || "").toUpperCase();
+      if (buCode && buCodeNorm && buCodeNorm !== buCode && buCodeNorm !== "TOTAL_ECO_AGRITECH") {
+        return;
+      }
       (bu.children || []).forEach((reg) => {
+        // TỰ ĐỘNG LOẠI TRỪ CỤM BÁN CHÉO KHỎI ALL EMPLOYEES CỦA ACTION HUB & TABS BỘ LỌC
+        if (reg.is_cross_selling || (reg.region_name || reg.name || "").toLowerCase().includes("bán chéo")) {
+          return;
+        }
+
+        const regNameUpper = String(reg.region_name || reg.name || "").toUpperCase();
+        // Nếu đang ở BU_ECO, tuyệt đối không nhận các vùng miền của AGRITECH hoặc SAB
+        if (buCode === "BU_ECO" && (regNameUpper.includes("AGRITECH") || regNameUpper.includes("SAB"))) {
+          return;
+        }
+        if (buCode === "BU_AGRITECH" && (regNameUpper.includes("ECO") || regNameUpper.includes("SAB"))) {
+          return;
+        }
+        if (buCode === "BU_SAB" && (regNameUpper.includes("ECO") || regNameUpper.includes("AGRITECH"))) {
+          return;
+        }
+
         (reg.children || []).forEach((emp) => {
+          if (emp.is_cross_selling) return;
+
           const key = String(emp.employee_code || emp.id || emp.name);
           if (!map.has(key)) {
             map.set(key, {
@@ -317,7 +342,7 @@ export default function SalesPerformanceTable({
       });
     });
     return Array.from(map.values());
-  }, [data]);
+  }, [data, buCode]);
 
   // Danh sách các Miền / Khối con
   const allRegions = useMemo(() => {
@@ -361,6 +386,23 @@ export default function SalesPerformanceTable({
     setExpandedRegionIds(new Set());
   };
 
+  // Khởi tạo: Mặc định mở các khu vực chính thức của BU, thu gọn các khu vực bán chéo
+  useEffect(() => {
+    if (allRegions.length > 0 && expandedRegionIds.size === 0) {
+      const initialExpanded = new Set();
+      allRegions.forEach((r) => {
+        if (!r.is_cross_selling && !(r.region_name || r.name || "").toLowerCase().includes("bán chéo")) {
+          initialExpanded.add(r.id);
+        }
+      });
+      setExpandedRegionIds(initialExpanded);
+    }
+  }, [allRegions]);
+
+  const crossSellingRegion = useMemo(() => {
+    return allRegions.find((r) => r.is_cross_selling || (r.region_name || r.name || "").toLowerCase().includes("bán chéo"));
+  }, [allRegions]);
+
   // Tự động mở rộng tất cả vùng miền khi tìm kiếm có text
   useEffect(() => {
     if (searchQuery.trim() && allRegionIds.length > 0) {
@@ -382,60 +424,84 @@ export default function SalesPerformanceTable({
     ? buTopNode.code.replace(/^BU_/, "")
     : "ECO";
 
-  // 1. TOP VINH DANH (LEADERBOARD): Tính theo MTD hoặc YTD tùy toggle
-  const topPerformers = useMemo(() => {
+  // Danh sách nhân viên kèm số liệu hiển thị chuẩn theo kỳ toggle (MTD / YTD)
+  const mappedEmployees = useMemo(() => {
     if (allEmployees.length === 0) return [];
     const isMtd = hubPeriodType === "MTD";
+    return allEmployees.map((emp) => {
+      const actual = Number(isMtd ? emp.metrics?.month_actual : emp.metrics?.year_actual) || 0;
+      const target = Number(isMtd ? emp.metrics?.month_target : emp.metrics?.year_target) || 0;
+      const rate = Number(isMtd ? emp.metrics?.month_rate : emp.metrics?.year_rate) || 0;
+      const gap = Math.max(0, target - actual);
+      return {
+        ...emp,
+        displayActual: actual,
+        displayTarget: target,
+        displayRate: rate,
+        displayGap: gap,
+      };
+    });
+  }, [allEmployees, hubPeriodType]);
 
-    return [...allEmployees]
-      .map((emp) => {
-        const actual = Number(isMtd ? emp.metrics?.month_actual : emp.metrics?.year_actual) || 0;
-        const target = Number(isMtd ? emp.metrics?.month_target : emp.metrics?.year_target) || 0;
-        const rate = Number(isMtd ? emp.metrics?.month_rate : emp.metrics?.year_rate) || 0;
-        return {
-          ...emp,
-          displayActual: actual,
-          displayTarget: target,
-          displayRate: rate,
-        };
+  // Tìm nhân sự dẫn đầu doanh thu của toàn BU (Top 1 Revenue Driver - bảo vệ miễn trừ cảnh báo)
+  const topRevenueEmployeeId = useMemo(() => {
+    if (mappedEmployees.length === 0) return null;
+    const sortedByActual = [...mappedEmployees].sort((a, b) => b.displayActual - a.displayActual);
+    const top = sortedByActual[0];
+    return top && top.displayActual > 0 ? String(top.employee_code || top.id) : null;
+  }, [mappedEmployees]);
+
+  // 1. BÁO ĐỘNG CHẬM TIẾN ĐỘ (ACTION REQUIRED): Tính theo MTD hoặc YTD tùy toggle
+  const actionRequiredList = useMemo(() => {
+    if (mappedEmployees.length === 0) return [];
+    const isMtd = hubPeriodType === "MTD";
+
+    // Ngưỡng cảnh báo theo nhịp thời gian thực tế:
+    // - MTD (Tháng này, ngày 7/30 ~ 23.3%): cảnh báo người có target mà đạt < 20%
+    // - YTD (Cả năm, tháng 9/12 ~ 70%): cảnh báo người có target mà đạt < 50%
+    const warningRateThreshold = isMtd ? 20 : 50;
+
+    const list = mappedEmployees
+      .filter((e) => {
+        const id = String(e.employee_code || e.id);
+        // NGUYÊN TẮC QUẢN TRỊ 1: Người gánh doanh số cao nhất BU (Top 1 Revenue) được miễn trừ cảnh báo
+        if (topRevenueEmployeeId && id === topRevenueEmployeeId) {
+          return false;
+        }
+        // Phải có chỉ tiêu giao và tỷ lệ hoàn thành thấp hơn ngưỡng nhịp
+        return e.displayTarget > 0 && e.displayRate < warningRateThreshold;
       })
-      .filter((emp) => emp.displayActual > 0 || emp.displayRate > 0)
+      .sort((a, b) => {
+        // Ưu tiên tỷ lệ hoàn thành thấp nhất lên đầu (nguy cấp nhất), sau đó đến số tiền thiếu lớn nhất
+        if (a.displayRate !== b.displayRate) return a.displayRate - b.displayRate;
+        return b.displayGap - a.displayGap;
+      });
+
+    return list.slice(0, 3);
+  }, [mappedEmployees, hubPeriodType, topRevenueEmployeeId]);
+
+  // 2. TOP VINH DANH (LEADERBOARD): Tính theo MTD hoặc YTD tùy toggle
+  const topPerformers = useMemo(() => {
+    if (mappedEmployees.length === 0) return [];
+
+    // NGUYÊN TẮC QUẢN TRỊ 2 (MUTUAL EXCLUSIVITY 2 CHIỀU):
+    // Nhân sự đã nằm trong danh sách Báo Động Chậm Tiến Độ thì KHÔNG trao cúp Vinh Danh
+    const warningIds = new Set(
+      actionRequiredList.map((w) => String(w.employee_code || w.id))
+    );
+
+    return mappedEmployees
+      .filter((emp) => {
+        const id = String(emp.employee_code || emp.id);
+        if (warningIds.has(id)) return false;
+        return emp.displayActual > 0 || emp.displayRate > 0;
+      })
       .sort((a, b) => {
         if (b.displayActual !== a.displayActual) return b.displayActual - a.displayActual;
         return b.displayRate - a.displayRate;
       })
       .slice(0, 3);
-  }, [allEmployees, hubPeriodType]);
-
-  // 2. BÁO ĐỘNG CHẬM TIẾN ĐỘ (ACTION REQUIRED): Tính theo MTD hoặc YTD tùy toggle
-  const actionRequiredList = useMemo(() => {
-    if (allEmployees.length === 0) return [];
-    const isMtd = hubPeriodType === "MTD";
-
-    const withTarget = allEmployees
-      .map((e) => {
-        const target = Number(isMtd ? e.metrics?.month_target : e.metrics?.year_target) || 0;
-        const actual = Number(isMtd ? e.metrics?.month_actual : e.metrics?.year_actual) || 0;
-        const rate = Number(isMtd ? e.metrics?.month_rate : e.metrics?.year_rate) || 0;
-        const gap = Math.max(0, target - actual);
-        return {
-          ...e,
-          displayGap: gap,
-          displayRate: rate,
-          displayTarget: target,
-          displayActual: actual,
-        };
-      })
-      .filter((e) => e.displayTarget > 0 && e.displayRate < 70);
-
-    // Sắp xếp theo tỷ lệ % thấp nhất, sau đó đến khoảng cách thiếu (Gap) lớn nhất
-    withTarget.sort((a, b) => {
-      if (a.displayRate !== b.displayRate) return a.displayRate - b.displayRate;
-      return b.displayGap - a.displayGap;
-    });
-
-    return withTarget.slice(0, 3);
-  }, [allEmployees, hubPeriodType]);
+  }, [mappedEmployees, actionRequiredList]);
 
   // 3. TIẾN ĐỘ THEO KHỐI & VÙNG MIỀN: Tính theo MTD hoặc YTD tùy toggle
   const regionalSummary = useMemo(() => {
@@ -468,9 +534,7 @@ export default function SalesPerformanceTable({
       const isNorth = (emp.regionName || "").includes("Bắc");
       const isSouth =
         (emp.regionName || "").includes("Nam") ||
-        (emp.regionName || "").includes("ECO") ||
-        (emp.regionName || "").includes("AGRITECH") ||
-        (emp.regionName || "").includes("SAB");
+        (emp.regionName || "").includes("ECO");
       if (activeFilter === "north" && !isNorth) return false;
       if (activeFilter === "south" && !isSouth) return false;
       if (activeFilter === "warning") {
@@ -498,7 +562,7 @@ export default function SalesPerformanceTable({
     allEmployees.forEach((emp) => {
       const reg = emp.regionName || "";
       if (reg.includes("Bắc")) north += 1;
-      if (reg.includes("Nam") || reg.includes("ECO") || reg.includes("AGRITECH") || reg.includes("SAB")) south += 1;
+      if (reg.includes("Nam") || reg.includes("ECO")) south += 1;
       const m = emp.metrics;
       if (m?.month_target > 0 && Number(m?.month_rate || 0) < 70) {
         warning += 1;
@@ -1343,7 +1407,7 @@ export default function SalesPerformanceTable({
           ) : (
             <>
               <span style={{ fontSize: "13px" }}>👁️</span>
-              <span>Xem danh sách bảng số liệu chi tiết ({allEmployees.length} nhân sự)</span>
+              <span>Xem danh sách bảng số liệu chi tiết ({allEmployees.length} nhân sự BU)</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: "12px", height: "12px" }}>
                 <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -1466,7 +1530,7 @@ export default function SalesPerformanceTable({
                 }}
                 onClick={() => setActiveFilter("all")}
               >
-                Tất cả ({filterCounts.all})
+                Nhân sự BU ({filterCounts.all})
               </button>
               <button
                 type="button"
@@ -1657,6 +1721,111 @@ export default function SalesPerformanceTable({
                     </div>
                   );
                 })
+              )}
+
+              {/* KHỐI DOANH SỐ BÁN CHÉO & VÃNG LAI TRÊN MOBILE (TỰ ĐỘNG THU GỌN GỌN GÀNG) */}
+              {crossSellingRegion && (activeFilter === "all" || !searchQuery) && (
+                <div
+                  style={{
+                    marginTop: "6px",
+                    backgroundColor: "#fffdf5",
+                    border: "1px solid #fde68a",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    onClick={() => setMobileCrossSellingOpen((prev) => !prev)}
+                    style={{
+                      padding: "9px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      backgroundColor: "#fef3c7",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", minWidth: 0 }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#92400e", whiteSpace: "nowrap" }}>
+                        🔄 Bán chéo & Vãng lai
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "9px",
+                          fontWeight: 600,
+                          color: "#92400e",
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #fde68a",
+                          padding: "1px 4px",
+                          borderRadius: "9999px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {crossSellingRegion.children?.length || 0} ngoài BU
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: "12px", fontWeight: 700, color: "#92400e" }}>
+                        {formatVndCompact(crossSellingRegion.metrics?.year_actual || 0)}
+                      </span>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        style={{
+                          transform: mobileCrossSellingOpen ? "rotate(180deg)" : "none",
+                          transition: "transform 0.2s ease",
+                          color: "#92400e",
+                        }}
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {mobileCrossSellingOpen && (
+                    <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: "8px", backgroundColor: "#ffffff" }}>
+                      {(crossSellingRegion.children || []).map((emp) => {
+                        const m = emp.metrics;
+                        return (
+                          <div
+                            key={emp.id || emp.employee_code}
+                            style={{
+                              backgroundColor: "#fffdf5",
+                              border: "1px solid #fef08a",
+                              borderRadius: "6px",
+                              padding: "8px 10px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "4px",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ fontSize: "12px", fontWeight: 600, color: "#0f172a" }}>
+                                  {emp.name}
+                                </span>
+                                <span style={{ fontSize: "9px", color: "#b45309", backgroundColor: "#fef3c7", border: "1px solid #fde68a", padding: "0.5px 4px", borderRadius: "3px" }}>
+                                  {emp.department_name ? `Bán chéo • ${emp.department_name}` : "Bán chéo"}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: "12px", fontWeight: 700, fontFamily: "ui-monospace, monospace", color: "#0f172a" }}>
+                                {formatVnd(m?.year_actual || 0)} đ
+                              </span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "10px", color: "#64748b" }}>
+                              <span>#{emp.employee_code}</span>
+                              <span style={{ fontStyle: "italic" }}>Ngoài kế hoạch biên chế</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ) : (
@@ -1867,20 +2036,21 @@ export default function SalesPerformanceTable({
                                     >
                                       <path d="M9 5l7 7-7 7" />
                                     </svg>
-                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#1e293b" }}>
-                                      {regNode.name}
+                                    <span style={{ fontSize: "12px", fontWeight: 600, color: regNode.is_cross_selling ? "#92400e" : "#1e293b" }}>
+                                      {regNode.is_cross_selling ? `🔄 ${regNode.name}` : ((!regNode.is_cross_selling && regNode.name.startsWith("Tổng BU")) ? regNode.name.replace("Tổng BU", "Nhân sự BU") : regNode.name)}
                                     </span>
                                     <span
                                       style={{
                                         fontSize: "10px",
                                         fontWeight: 500,
-                                        color: "#64748b",
-                                        backgroundColor: "#f1f5f9",
+                                        color: regNode.is_cross_selling ? "#92400e" : "#64748b",
+                                        backgroundColor: regNode.is_cross_selling ? "#fef3c7" : "#f1f5f9",
+                                        border: regNode.is_cross_selling ? "1px solid #fde68a" : "none",
                                         padding: "1px 6px",
                                         borderRadius: "9999px",
                                       }}
                                     >
-                                      {displayedEmployees.length} nhân sự
+                                      {regNode.is_cross_selling ? `${displayedEmployees.length} nhân sự ngoài BU` : `${displayedEmployees.length} nhân sự`}
                                     </span>
                                   </div>
                                 </td>
@@ -1891,7 +2061,11 @@ export default function SalesPerformanceTable({
                                       <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 600, color: "#1e293b", fontSize: "12px" }}>
                                         {formatVnd(regMetrics.month_actual)} đ
                                       </span>
-                                      {renderRatePill(regMetrics.month_rate, regMetrics.month_target)}
+                                      {regNode.is_cross_selling ? (
+                                        <span style={{ fontSize: "10.5px", color: "#94a3b8", fontStyle: "italic" }}>Ngoài KH</span>
+                                      ) : (
+                                        renderRatePill(regMetrics.month_rate, regMetrics.month_target)
+                                      )}
                                     </div>
                                   </div>
                                 </td>
@@ -1902,7 +2076,11 @@ export default function SalesPerformanceTable({
                                       <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 600, color: "#1e293b", fontSize: "12px" }}>
                                         {formatVnd(regMetrics.year_actual)} đ
                                       </span>
-                                      {renderRatePill(regMetrics.year_rate, regMetrics.year_target)}
+                                      {regNode.is_cross_selling ? (
+                                        <span style={{ fontSize: "10.5px", color: "#94a3b8", fontStyle: "italic" }}>Ngoài KH</span>
+                                      ) : (
+                                        renderRatePill(regMetrics.year_rate, regMetrics.year_target)
+                                      )}
                                     </div>
                                   </div>
                                 </td>
@@ -1913,10 +2091,11 @@ export default function SalesPerformanceTable({
                                 displayedEmployees.map((emp) => {
                                   const empMetrics = emp.metrics;
                                   const isLeader = emp.is_leader;
+                                  const isCross = emp.is_cross_selling || regNode.is_cross_selling;
                                   return (
                                     <tr
                                       key={emp.id || emp.employee_code}
-                                      style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #f8fafc" }}
+                                      style={{ backgroundColor: isCross ? "rgba(255, 251, 235, 0.4)" : "#ffffff", borderBottom: "1px solid #f8fafc" }}
                                     >
                                       <td style={{ padding: "6px 16px 6px 44px", verticalAlign: "middle" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
@@ -1925,9 +2104,9 @@ export default function SalesPerformanceTable({
                                               width: "18px",
                                               height: "18px",
                                               borderRadius: "50%",
-                                              backgroundColor: isLeader ? "#eff6ff" : "#f1f5f9",
-                                              color: isLeader ? "#1d4ed8" : "#475569",
-                                              border: isLeader ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
+                                              backgroundColor: isLeader ? "#eff6ff" : (isCross ? "#fffbeb" : "#f1f5f9"),
+                                              color: isLeader ? "#1d4ed8" : (isCross ? "#b45309" : "#475569"),
+                                              border: isLeader ? "1px solid #bfdbfe" : (isCross ? "1px solid #fde68a" : "1px solid #e2e8f0"),
                                               display: "inline-flex",
                                               alignItems: "center",
                                               justifyContent: "center",
@@ -1946,6 +2125,11 @@ export default function SalesPerformanceTable({
                                               Trưởng nhóm
                                             </span>
                                           )}
+                                          {isCross && (
+                                            <span style={{ fontSize: "9px", color: "#b45309", backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "0.5px 5px", borderRadius: "3px" }}>
+                                              {emp.department_name ? `Bán chéo • ${emp.department_name}` : "Bán chéo"}
+                                            </span>
+                                          )}
                                           <span style={{ fontSize: "10px", color: "#94a3b8", fontFamily: "ui-monospace, monospace" }}>
                                             #{emp.employee_code}
                                           </span>
@@ -1957,7 +2141,11 @@ export default function SalesPerformanceTable({
                                           <span style={{ fontFamily: "ui-monospace, monospace", fontSize: "11.5px", color: "#1e293b" }}>
                                             {formatVnd(empMetrics.month_actual)} đ
                                           </span>
-                                          {renderRatePill(empMetrics.month_rate, empMetrics.month_target)}
+                                          {isCross ? (
+                                            <span style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>—</span>
+                                          ) : (
+                                            renderRatePill(empMetrics.month_rate, empMetrics.month_target)
+                                          )}
                                         </div>
                                       </td>
 
@@ -1966,7 +2154,13 @@ export default function SalesPerformanceTable({
                                           <span style={{ fontFamily: "ui-monospace, monospace", fontSize: "11.5px", color: "#1e293b" }}>
                                             {formatVnd(empMetrics.year_actual)} đ
                                           </span>
-                                          {renderRatePill(empMetrics.year_rate, empMetrics.year_target)}
+                                          {isCross ? (
+                                            <span style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic", fontFamily: "ui-monospace, monospace" }}>
+                                              Ngoài KH
+                                            </span>
+                                          ) : (
+                                            renderRatePill(empMetrics.year_rate, empMetrics.year_target)
+                                          )}
                                         </div>
                                       </td>
                                     </tr>
